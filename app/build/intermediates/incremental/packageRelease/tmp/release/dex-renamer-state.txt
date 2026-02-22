@@ -1,0 +1,10 @@
+#Thu Feb 12 15:42:36 CST 2026
+base.0=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\release\\mergeDexRelease\\classes.dex
+base.1=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\release\\mergeDexRelease\\classes2.dex
+base.2=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\release\\mergeDexRelease\\classes3.dex
+path.0=classes.dex
+path.1=classes2.dex
+path.2=classes3.dex
+renamed.0=classes.dex
+renamed.1=classes2.dex
+renamed.2=classes3.dex

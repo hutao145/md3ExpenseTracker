@@ -1,0 +1,1849 @@
+﻿To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.11.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:buildKotlinToolingMetadata UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preReleaseBuild UP-TO-DATE
+> Task :app:checkReleaseAarMetadata UP-TO-DATE
+> Task :app:generateReleaseResValues UP-TO-DATE
+> Task :app:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :app:generateReleaseResources UP-TO-DATE
+> Task :app:mergeReleaseResources UP-TO-DATE
+> Task :app:packageReleaseResources UP-TO-DATE
+> Task :app:parseReleaseLocalResources UP-TO-DATE
+> Task :app:createReleaseCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksRelease UP-TO-DATE
+> Task :app:processReleaseMainManifest UP-TO-DATE
+> Task :app:processReleaseManifest UP-TO-DATE
+> Task :app:processReleaseManifestForPackage UP-TO-DATE
+> Task :app:processReleaseResources UP-TO-DATE
+> Task :app:kspReleaseKotlin UP-TO-DATE
+> Task :app:compileReleaseKotlin UP-TO-DATE
+> Task :app:javaPreCompileRelease UP-TO-DATE
+> Task :app:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :app:generateReleaseLintVitalReportModel UP-TO-DATE
+> Task :app:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :app:mergeReleaseNativeLibs UP-TO-DATE
+> Task :app:stripReleaseDebugSymbols UP-TO-DATE
+> Task :app:extractReleaseNativeSymbolTables UP-TO-DATE
+> Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
+> Task :app:checkReleaseDuplicateClasses UP-TO-DATE
+> Task :app:dexBuilderRelease UP-TO-DATE
+> Task :app:desugarReleaseFileDependencies UP-TO-DATE
+> Task :app:mergeReleaseStartupProfile UP-TO-DATE
+> Task :app:mergeExtDexRelease UP-TO-DATE
+> Task :app:mergeDexRelease UP-TO-DATE
+> Task :app:mergeReleaseArtProfile UP-TO-DATE
+> Task :app:mergeReleaseGlobalSynthetics UP-TO-DATE
+> Task :app:compileReleaseArtProfile UP-TO-DATE
+> Task :app:mergeReleaseShaders UP-TO-DATE
+> Task :app:compileReleaseShaders NO-SOURCE
+> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :app:mergeReleaseAssets UP-TO-DATE
+> Task :app:compressReleaseAssets UP-TO-DATE
+> Task :app:extractReleaseVersionControlInfo UP-TO-DATE
+> Task :app:processReleaseJavaRes UP-TO-DATE
+> Task :app:mergeReleaseJavaResource UP-TO-DATE
+> Task :app:optimizeReleaseResources UP-TO-DATE
+> Task :app:collectReleaseDependencies UP-TO-DATE
+> Task :app:sdkReleaseDependencyData UP-TO-DATE
+> Task :app:writeReleaseAppMetadata UP-TO-DATE
+> Task :app:writeReleaseSigningConfigVersions UP-TO-DATE
+> Task :app:packageRelease UP-TO-DATE
+> Task :app:createReleaseApkListingFileRedirect UP-TO-DATE
+> Task :app:lintVitalAnalyzeRelease FAILED
+./gradlew : 
+所在位置 行:1 字符: 1
++ ./gradlew assembleRelease 
+--stacktrace --no-daemon 2>&
+1 | Out-File -F ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~
+    + CategoryInfo          
+    : NotSpecified: (:Stri  
+  ng) [], RemoteException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+FAILURE: Build failed with a
+n exception.
+
+* What went wrong:
+Execution failed for task ':
+app:lintVitalAnalyzeRelease'
+.
+> A failure occurred while e
+xecuting com.android.build.g
+radle.internal.lint.AndroidL
+intWorkAction
+   > Unexpected failure duri
+ng lint analysis (this is a 
+bug in lint or one of the li
+braries it depends on)
+     
+     Message: Unexpected fai
+lure during lint analysis (t
+his is a bug in lint or one 
+of the libraries it depends 
+on)
+     
+     Message: Unexpected fai
+lure during lint analysis of
+ ExpenseRepository.kt (this 
+is a bug in lint or one of t
+he libraries it depends on)
+     
+     Message: Found class or
+g.jetbrains.kotlin.analysis.
+api.resolution.KaCallableMem
+berCall, but interface was e
+xpected
+     
+     The crash seems to invo
+lve the detector \\\`android
+x.lifecycle.lint.NonNullable
+MutableLiveDataDetector\\\`.
+     You can try disabling i
+t with something like this:
+     聽聽聽聽android {
+     聽聽聽聽聽聽聽聽lint {
+     聽聽聽聽聽聽聽聽聽聽聽聽disable "Nu
+llSafeMutableLiveData"
+     聽聽聽聽聽聽聽聽}
+     聽聽聽聽}
+     
+     Stack: \\\`Incompatible
+ClassChangeError:NonNullable
+MutableLiveDataDetector$crea
+teUastHandler$1.visitCallExp
+ression(NonNullableMutableLi
+veDataDetector.kt:140)鈫怳Elem
+entVisitor$DispatchUastVisit
+or.visitCallExpression(UElem
+entVisitor.kt:412)鈫怳ElementV
+isitor$DelegatingUastVisitor
+.visitCallExpression(UElemen
+tVisitor.kt:756)鈫怳CallExpres
+sion.accept(UCallExpression.
+kt:94)鈫怳QualifiedReferenceEx
+pression.accept(UQualifiedRe
+ferenceExpression.kt:34)鈫怳Re
+turnExpression.accept(URetur
+nExpression.kt:22)鈫怚mplement
+ationUtilsKt.acceptList(impl
+ementationUtils.kt:15)鈫怳Bloc
+kExpression.accept(UBlockExp
+ression.kt:21)鈫怳Method.accep
+t(UMethod.kt:45)鈫怚mplementat
+ionUtilsKt.acceptList(implem
+entationUtils.kt:15)鈫怉bstrac
+tKotlinUClass.accept(Abstrac
+tKotlinUClass.kt:213)鈫怚mplem
+entationUtilsKt.acceptList(i
+mplementationUtils.kt:15)鈫怳F
+ile.accept(UFile.kt:89)鈫怳ast
+LintUtilsKt.acceptSourceFile
+(UastLintUtils.kt:953)鈫怳Elem
+entVisitor$visitFile$3.run(U
+ElementVisitor.kt:216)鈫怢intC
+lient.runReadAction(LintClie
+nt.kt:1781)鈫怢intDriver$LintC
+lientWrapper.runReadAction(L
+intDriver.kt:2747)鈫怳ElementV
+isitor.visitFile(UElementVis
+itor.kt:213)鈫怢intDriver$visi
+tUastDetectors$1.run(LintDri
+ver.kt:2048)鈫怢intClient.runR
+eadAction(LintClient.kt:1781
+)鈫怢intDriver$LintClientWrapp
+er.runReadAction(LintDriver.
+kt:2747)鈫怢intDriver.visitUas
+tDetectors(LintDriver.kt:204
+8)鈫怢intDriver.visitUast(Lint
+Driver.kt:2010)鈫怢intDriver.r
+unFileDetectors(LintDriver.k
+t:1284)鈫怢intDriver.checkProj
+ect(LintDriver.kt:1070)鈫怢int
+Driver.checkProjectRoot(Lint
+Driver.kt:622)鈫怢intDriver.ac
+cess$checkProjectRoot(LintDr
+iver.kt:174)鈫怢intDriver$anal
+yzeOnly$1.invoke(LintDriver.
+kt:445)鈫怢intDriver$analyzeOn
+ly$1.invoke(LintDriver.kt:44
+2)鈫怢intDriver.doAnalyze(Lint
+Driver.kt:501)鈫怢intDriver.an
+alyzeOnly(LintDriver.kt:442)
+鈫怢intCliClient$analyzeOnly$1
+.invoke(LintCliClient.kt:258
+)鈫怢intCliClient$analyzeOnly$
+1.invoke(LintCliClient.kt:25
+5)鈫怢intCliClient.run(LintCli
+Client.kt:312)鈫怢intCliClient
+.analyzeOnly(LintCliClient.k
+t:255)鈫怣ain.run(Main.java:17
+66)鈫怣ain.run(Main.java:282)鈫
+怐irectMethodHandleAccessor.i
+nvoke(DirectMethodHandleAcce
+ssor.java:104)鈫怣ethod.invoke
+(Method.java:578)鈫怉ndroidLin
+tWorkAction.invokeLintMainRu
+nMethod(AndroidLintWorkActio
+n.kt:103)鈫怉ndroidLintWorkAct
+ion.runLint(AndroidLintWorkA
+ction.kt:90)鈫怉ndroidLintWork
+Action.execute(AndroidLintWo
+rkAction.kt:64)鈫怐efaultWorke
+rServer.execute(DefaultWorke
+rServer.java:63)鈫怤oIsolation
+WorkerFactory$1$1.create(NoI
+solationWorkerFactory.java:6
+6)鈫怤oIsolationWorkerFactory$
+1$1.create(NoIsolationWorker
+Factory.java:62)鈫怌lassLoader
+Utils.executeInClassloader(C
+lassLoaderUtils.java:100)鈫怤o
+IsolationWorkerFactory$1.lam
+bda$execute$0(NoIsolationWor
+kerFactory.java:62)鈫怉bstract
+Worker$1.call(AbstractWorker
+.java:44)鈫怉bstractWorker$1.c
+all(AbstractWorker.java:41)鈫
+怐efaultBuildOperationRunner$
+CallableBuildOperationWorker
+.execute(DefaultBuildOperati
+onRunner.java:209)鈫怐efaultBu
+ildOperationRunner$CallableB
+uildOperationWorker.execute(
+DefaultBuildOperationRunner.
+java:204)鈫怐efaultBuildOperat
+ionRunner$2.execute(DefaultB
+uildOperationRunner.java:66)
+鈫怐efaultBuildOperationRunner
+$2.execute(DefaultBuildOpera
+tionRunner.java:59)鈫怐efaultB
+uildOperationRunner.execute(
+DefaultBuildOperationRunner.
+java:166)鈫怐efaultBuildOperat
+ionRunner.execute(DefaultBui
+ldOperationRunner.java:59)鈫怐
+efaultBuildOperationRunner.c
+all(DefaultBuildOperationRun
+ner.java:53)鈫怉bstractWorker.
+executeWrappedInBuildOperati
+on(AbstractWorker.java:41)鈫怤
+oIsolationWorkerFactory$1.ex
+ecute(NoIsolationWorkerFacto
+ry.java:59)鈫怐efaultWorkerExe
+cutor.lambda$submitWork$0(De
+faultWorkerExecutor.java:174
+)鈫怓utureTask.run(FutureTask.
+java:317)鈫怐efaultConditional
+ExecutionQueue$ExecutionRunn
+er.runExecution(DefaultCondi
+tionalExecutionQueue.java:19
+4)鈫怐efaultConditionalExecuti
+onQueue$ExecutionRunner.acce
+ss$700(DefaultConditionalExe
+cutionQueue.java:127)鈫怐efaul
+tConditionalExecutionQueue$E
+xecutionRunner$1.run(Default
+ConditionalExecutionQueue.ja
+va:169)鈫怓actories$1.create(F
+actories.java:31)鈫怐efaultWor
+kerLeaseService.withLocks(De
+faultWorkerLeaseService.java
+:263)鈫怐efaultWorkerLeaseServ
+ice.runAsWorkerThread(Defaul
+tWorkerLeaseService.java:127
+)鈫怐efaultWorkerLeaseService.
+runAsWorkerThread(DefaultWor
+kerLeaseService.java:132)鈫怐e
+faultConditionalExecutionQue
+ue$ExecutionRunner.runBatch(
+DefaultConditionalExecutionQ
+ueue.java:164)鈫怐efaultCondit
+ionalExecutionQueue$Executio
+nRunner.run(DefaultCondition
+alExecutionQueue.java:133)鈫怑
+xecutors$RunnableAdapter.cal
+l(Executors.java:577)鈫怓uture
+Task.run(FutureTask.java:317
+)鈫怑xecutorPolicy$CatchAndRec
+ordFailures.onExecute(Execut
+orPolicy.java:64)鈫怉bstractMa
+nagedExecutor$1.run(Abstract
+ManagedExecutor.java:48)鈫怲hr
+eadPoolExecutor.runWorker(Th
+readPoolExecutor.java:1144)鈫
+怲hreadPoolExecutor$Worker.ru
+n(ThreadPoolExecutor.java:64
+2)鈫怲hread.run(Thread.java:16
+23)\\\`
+     Stack: \`RuntimeExcepti
+on:LintDriver$Companion.hand
+leDetectorError(LintDriver.k
+t:3740)鈫怢intDriver$Companion
+.handleDetectorError$default
+(LintDriver.kt:3607)鈫怢intDri
+ver$Companion.handleDetector
+Error(LintDriver.kt:3603)鈫怳E
+lementVisitor.visitFile(UEle
+mentVisitor.kt:242)鈫怢intDriv
+er$visitUastDetectors$1.run(
+LintDriver.kt:2048)鈫怢intClie
+nt.runReadAction(LintClient.
+kt:1781)鈫怢intDriver$LintClie
+ntWrapper.runReadAction(Lint
+Driver.kt:2747)鈫怢intDriver.v
+isitUastDetectors(LintDriver
+.kt:2048)鈫怢intDriver.visitUa
+st(LintDriver.kt:2010)鈫怢intD
+river.runFileDetectors(LintD
+river.kt:1284)鈫怢intDriver.ch
+eckProject(LintDriver.kt:107
+0)鈫怢intDriver.checkProjectRo
+ot(LintDriver.kt:622)鈫怢intDr
+iver.access$checkProjectRoot
+(LintDriver.kt:174)鈫怢intDriv
+er$analyzeOnly$1.invoke(Lint
+Driver.kt:445)鈫怢intDriver$an
+alyzeOnly$1.invoke(LintDrive
+r.kt:442)鈫怢intDriver.doAnaly
+ze(LintDriver.kt:501)鈫怢intDr
+iver.analyzeOnly(LintDriver.
+kt:442)鈫怢intCliClient$analyz
+eOnly$1.invoke(LintCliClient
+.kt:258)鈫怢intCliClient$analy
+zeOnly$1.invoke(LintCliClien
+t.kt:255)鈫怢intCliClient.run(
+LintCliClient.kt:312)鈫怢intCl
+iClient.analyzeOnly(LintCliC
+lient.kt:255)鈫怣ain.run(Main.
+java:1766)鈫怣ain.run(Main.jav
+a:282)鈫怐irectMethodHandleAcc
+essor.invoke(DirectMethodHan
+dleAccessor.java:104)鈫怣ethod
+.invoke(Method.java:578)鈫怉nd
+roidLintWorkAction.invokeLin
+tMainRunMethod(AndroidLintWo
+rkAction.kt:103)鈫怉ndroidLint
+WorkAction.runLint(AndroidLi
+ntWorkAction.kt:90)鈫怉ndroidL
+intWorkAction.execute(Androi
+dLintWorkAction.kt:64)鈫怐efau
+ltWorkerServer.execute(Defau
+ltWorkerServer.java:63)鈫怤oIs
+olationWorkerFactory$1$1.cre
+ate(NoIsolationWorkerFactory
+.java:66)鈫怤oIsolationWorkerF
+actory$1$1.create(NoIsolatio
+nWorkerFactory.java:62)鈫怌las
+sLoaderUtils.executeInClassl
+oader(ClassLoaderUtils.java:
+100)鈫怤oIsolationWorkerFactor
+y$1.lambda$execute$0(NoIsola
+tionWorkerFactory.java:62)鈫怉
+bstractWorker$1.call(Abstrac
+tWorker.java:44)鈫怉bstractWor
+ker$1.call(AbstractWorker.ja
+va:41)鈫怐efaultBuildOperation
+Runner$CallableBuildOperatio
+nWorker.execute(DefaultBuild
+OperationRunner.java:209)鈫怐e
+faultBuildOperationRunner$Ca
+llableBuildOperationWorker.e
+xecute(DefaultBuildOperation
+Runner.java:204)鈫怐efaultBuil
+dOperationRunner$2.execute(D
+efaultBuildOperationRunner.j
+ava:66)鈫怐efaultBuildOperatio
+nRunner$2.execute(DefaultBui
+ldOperationRunner.java:59)鈫怐
+efaultBuildOperationRunner.e
+xecute(DefaultBuildOperation
+Runner.java:166)鈫怐efaultBuil
+dOperationRunner.execute(Def
+aultBuildOperationRunner.jav
+a:59)鈫怐efaultBuildOperationR
+unner.call(DefaultBuildOpera
+tionRunner.java:53)鈫怉bstract
+Worker.executeWrappedInBuild
+Operation(AbstractWorker.jav
+a:41)鈫怤oIsolationWorkerFacto
+ry$1.execute(NoIsolationWork
+erFactory.java:59)鈫怐efaultWo
+rkerExecutor.lambda$submitWo
+rk$0(DefaultWorkerExecutor.j
+ava:174)鈫怓utureTask.run(Futu
+reTask.java:317)鈫怐efaultCond
+itionalExecutionQueue$Execut
+ionRunner.runExecution(Defau
+ltConditionalExecutionQueue.
+java:194)鈫怐efaultConditional
+ExecutionQueue$ExecutionRunn
+er.access$700(DefaultConditi
+onalExecutionQueue.java:127)
+鈫怐efaultConditionalExecution
+Queue$ExecutionRunner$1.run(
+DefaultConditionalExecutionQ
+ueue.java:169)鈫怓actories$1.c
+reate(Factories.java:31)鈫怐ef
+aultWorkerLeaseService.withL
+ocks(DefaultWorkerLeaseServi
+ce.java:263)鈫怐efaultWorkerLe
+aseService.runAsWorkerThread
+(DefaultWorkerLeaseService.j
+ava:127)鈫怐efaultWorkerLeaseS
+ervice.runAsWorkerThread(Def
+aultWorkerLeaseService.java:
+132)鈫怐efaultConditionalExecu
+tionQueue$ExecutionRunner.ru
+nBatch(DefaultConditionalExe
+cutionQueue.java:164)鈫怐efaul
+tConditionalExecutionQueue$E
+xecutionRunner.run(DefaultCo
+nditionalExecutionQueue.java
+:133)鈫怑xecutors$RunnableAdap
+ter.call(Executors.java:577)
+鈫怓utureTask.run(FutureTask.j
+ava:317)鈫怑xecutorPolicy$Catc
+hAndRecordFailures.onExecute
+(ExecutorPolicy.java:64)鈫怉bs
+tractManagedExecutor$1.run(A
+bstractManagedExecutor.java:
+48)鈫怲hreadPoolExecutor.runWo
+rker(ThreadPoolExecutor.java
+:1144)鈫怲hreadPoolExecutor$Wo
+rker.run(ThreadPoolExecutor.
+java:642)鈫怲hread.run(Thread.
+java:1623)\`
+     Stack: `RuntimeExceptio
+n:LintDriver$Companion.handl
+eDetectorError(LintDriver.kt
+:3740)鈫怢intDriver$Companion.
+handleDetectorError$default(
+LintDriver.kt:3607)鈫怢intDriv
+er$Companion.handleDetectorE
+rror(LintDriver.kt:3603)鈫怢in
+tDriver$analyzeOnly$1.invoke
+(LintDriver.kt:447)鈫怢intDriv
+er$analyzeOnly$1.invoke(Lint
+Driver.kt:442)鈫怢intDriver.do
+Analyze(LintDriver.kt:501)鈫怢
+intDriver.analyzeOnly(LintDr
+iver.kt:442)鈫怢intCliClient$a
+nalyzeOnly$1.invoke(LintCliC
+lient.kt:258)鈫怢intCliClient$
+analyzeOnly$1.invoke(LintCli
+Client.kt:255)鈫怢intCliClient
+.run(LintCliClient.kt:312)鈫怢
+intCliClient.analyzeOnly(Lin
+tCliClient.kt:255)鈫怣ain.run(
+Main.java:1766)鈫怣ain.run(Mai
+n.java:282)鈫怐irectMethodHand
+leAccessor.invoke(DirectMeth
+odHandleAccessor.java:104)鈫怣
+ethod.invoke(Method.java:578
+)鈫怉ndroidLintWorkAction.invo
+keLintMainRunMethod(AndroidL
+intWorkAction.kt:103)鈫怉ndroi
+dLintWorkAction.runLint(Andr
+oidLintWorkAction.kt:90)鈫怉nd
+roidLintWorkAction.execute(A
+ndroidLintWorkAction.kt:64)鈫
+怐efaultWorkerServer.execute(
+DefaultWorkerServer.java:63)
+鈫怤oIsolationWorkerFactory$1$
+1.create(NoIsolationWorkerFa
+ctory.java:66)鈫怤oIsolationWo
+rkerFactory$1$1.create(NoIso
+lationWorkerFactory.java:62)
+鈫怌lassLoaderUtils.executeInC
+lassloader(ClassLoaderUtils.
+java:100)鈫怤oIsolationWorkerF
+actory$1.lambda$execute$0(No
+IsolationWorkerFactory.java:
+62)鈫怉bstractWorker$1.call(Ab
+stractWorker.java:44)鈫怉bstra
+ctWorker$1.call(AbstractWork
+er.java:41)鈫怐efaultBuildOper
+ationRunner$CallableBuildOpe
+rationWorker.execute(Default
+BuildOperationRunner.java:20
+9)鈫怐efaultBuildOperationRunn
+er$CallableBuildOperationWor
+ker.execute(DefaultBuildOper
+ationRunner.java:204)鈫怐efaul
+tBuildOperationRunner$2.exec
+ute(DefaultBuildOperationRun
+ner.java:66)鈫怐efaultBuildOpe
+rationRunner$2.execute(Defau
+ltBuildOperationRunner.java:
+59)鈫怐efaultBuildOperationRun
+ner.execute(DefaultBuildOper
+ationRunner.java:166)鈫怐efaul
+tBuildOperationRunner.execut
+e(DefaultBuildOperationRunne
+r.java:59)鈫怐efaultBuildOpera
+tionRunner.call(DefaultBuild
+OperationRunner.java:53)鈫怉bs
+tractWorker.executeWrappedIn
+BuildOperation(AbstractWorke
+r.java:41)鈫怤oIsolationWorker
+Factory$1.execute(NoIsolatio
+nWorkerFactory.java:59)鈫怐efa
+ultWorkerExecutor.lambda$sub
+mitWork$0(DefaultWorkerExecu
+tor.java:174)鈫怓utureTask.run
+(FutureTask.java:317)鈫怐efaul
+tConditionalExecutionQueue$E
+xecutionRunner.runExecution(
+DefaultConditionalExecutionQ
+ueue.java:194)鈫怐efaultCondit
+ionalExecutionQueue$Executio
+nRunner.access$700(DefaultCo
+nditionalExecutionQueue.java
+:127)鈫怐efaultConditionalExec
+utionQueue$ExecutionRunner$1
+.run(DefaultConditionalExecu
+tionQueue.java:169)鈫怓actorie
+s$1.create(Factories.java:31
+)鈫怐efaultWorkerLeaseService.
+withLocks(DefaultWorkerLease
+Service.java:263)鈫怐efaultWor
+kerLeaseService.runAsWorkerT
+hread(DefaultWorkerLeaseServ
+ice.java:127)鈫怐efaultWorkerL
+easeService.runAsWorkerThrea
+d(DefaultWorkerLeaseService.
+java:132)鈫怐efaultConditional
+ExecutionQueue$ExecutionRunn
+er.runBatch(DefaultCondition
+alExecutionQueue.java:164)鈫怐
+efaultConditionalExecutionQu
+eue$ExecutionRunner.run(Defa
+ultConditionalExecutionQueue
+.java:133)鈫怑xecutors$Runnabl
+eAdapter.call(Executors.java
+:577)鈫怓utureTask.run(FutureT
+ask.java:317)鈫怑xecutorPolicy
+$CatchAndRecordFailures.onEx
+ecute(ExecutorPolicy.java:64
+)鈫怉bstractManagedExecutor$1.
+run(AbstractManagedExecutor.
+java:48)鈫怲hreadPoolExecutor.
+runWorker(ThreadPoolExecutor
+.java:1144)鈫怲hreadPoolExecut
+or$Worker.run(ThreadPoolExec
+utor.java:642)鈫怲hread.run(Th
+read.java:1623)`
+
+* Try:
+> Run with --info or --debug
+ option to get more log outp
+ut.
+> Run with --scan to get ful
+l insights.
+> Get more help at https://h
+elp.gradle.org.
+
+* Exception is:
+org.gradle.api.tasks.TaskExe
+cutionException: Execution f
+ailed for task ':app:lintVit
+alAnalyzeRelease'.
+	at org.gradle.api.internal.
+tasks.execution.ExecuteActio
+nsTaskExecuter.lambda$execut
+eIfValid$1(ExecuteActionsTas
+kExecuter.java:130)
+	at org.gradle.internal.Try$
+Failure.ifSuccessfulOrElse(T
+ry.java:293)
+	at org.gradle.api.internal.
+tasks.execution.ExecuteActio
+nsTaskExecuter.executeIfVali
+d(ExecuteActionsTaskExecuter
+.java:128)
+	at org.gradle.api.internal.
+tasks.execution.ExecuteActio
+nsTaskExecuter.execute(Execu
+teActionsTaskExecuter.java:1
+16)
+	at org.gradle.api.internal.
+tasks.execution.FinalizeProp
+ertiesTaskExecuter.execute(F
+inalizePropertiesTaskExecute
+r.java:46)
+	at org.gradle.api.internal.
+tasks.execution.ResolveTaskE
+xecutionModeExecuter.execute
+(ResolveTaskExecutionModeExe
+cuter.java:51)
+	at org.gradle.api.internal.
+tasks.execution.SkipTaskWith
+NoActionsExecuter.execute(Sk
+ipTaskWithNoActionsExecuter.
+java:57)
+	at org.gradle.api.internal.
+tasks.execution.SkipOnlyIfTa
+skExecuter.execute(SkipOnlyI
+fTaskExecuter.java:74)
+	at org.gradle.api.internal.
+tasks.execution.CatchExcepti
+onTaskExecuter.execute(Catch
+ExceptionTaskExecuter.java:3
+6)
+	at org.gradle.api.internal.
+tasks.execution.EventFiringT
+askExecuter$1.executeTask(Ev
+entFiringTaskExecuter.java:7
+7)
+	at org.gradle.api.internal.
+tasks.execution.EventFiringT
+askExecuter$1.call(EventFiri
+ngTaskExecuter.java:55)
+	at org.gradle.api.internal.
+tasks.execution.EventFiringT
+askExecuter$1.call(EventFiri
+ngTaskExecuter.java:52)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$CallableBuildOperatio
+nWorker.execute(DefaultBuild
+OperationRunner.java:209)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$CallableBuildOperatio
+nWorker.execute(DefaultBuild
+OperationRunner.java:204)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$2.execute(DefaultBuil
+dOperationRunner.java:66)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$2.execute(DefaultBuil
+dOperationRunner.java:59)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.execute(DefaultBuildO
+perationRunner.java:166)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.execute(DefaultBuildO
+perationRunner.java:59)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.call(DefaultBuildOper
+ationRunner.java:53)
+	at org.gradle.api.internal.
+tasks.execution.EventFiringT
+askExecuter.execute(EventFir
+ingTaskExecuter.java:52)
+	at org.gradle.execution.pla
+n.LocalTaskNodeExecutor.exec
+ute(LocalTaskNodeExecutor.ja
+va:42)
+	at org.gradle.execution.tas
+kgraph.DefaultTaskExecutionG
+raph$InvokeNodeExecutorsActi
+on.execute(DefaultTaskExecut
+ionGraph.java:331)
+	at org.gradle.execution.tas
+kgraph.DefaultTaskExecutionG
+raph$InvokeNodeExecutorsActi
+on.execute(DefaultTaskExecut
+ionGraph.java:318)
+	at org.gradle.execution.tas
+kgraph.DefaultTaskExecutionG
+raph$BuildOperationAwareExec
+utionAction.lambda$execute$0
+(DefaultTaskExecutionGraph.j
+ava:314)
+	at org.gradle.internal.oper
+ations.CurrentBuildOperation
+Ref.with(CurrentBuildOperati
+onRef.java:85)
+	at org.gradle.execution.tas
+kgraph.DefaultTaskExecutionG
+raph$BuildOperationAwareExec
+utionAction.execute(DefaultT
+askExecutionGraph.java:314)
+	at org.gradle.execution.tas
+kgraph.DefaultTaskExecutionG
+raph$BuildOperationAwareExec
+utionAction.execute(DefaultT
+askExecutionGraph.java:303)
+	at org.gradle.execution.pla
+n.DefaultPlanExecutor$Execut
+orWorker.execute(DefaultPlan
+Executor.java:459)
+	at org.gradle.execution.pla
+n.DefaultPlanExecutor$Execut
+orWorker.run(DefaultPlanExec
+utor.java:376)
+	at org.gradle.internal.conc
+urrent.ExecutorPolicy$CatchA
+ndRecordFailures.onExecute(E
+xecutorPolicy.java:64)
+	at org.gradle.internal.conc
+urrent.AbstractManagedExecut
+or$1.run(AbstractManagedExec
+utor.java:48)
+Caused by: org.gradle.worker
+s.internal.DefaultWorkerExec
+utor$WorkExecutionException:
+ A failure occurred while ex
+ecuting com.android.build.gr
+adle.internal.lint.AndroidLi
+ntWorkAction
+	at org.gradle.workers.inter
+nal.DefaultWorkerExecutor$Wo
+rkItemExecution.waitForCompl
+etion(DefaultWorkerExecutor.
+java:287)
+	at org.gradle.internal.work
+.DefaultAsyncWorkTracker.lam
+bda$waitForItemsAndGatherFai
+lures$2(DefaultAsyncWorkTrac
+ker.java:130)
+	at org.gradle.internal.Fact
+ories$1.create(Factories.jav
+a:31)
+	at org.gradle.internal.work
+.DefaultWorkerLeaseService.w
+ithoutLocks(DefaultWorkerLea
+seService.java:335)
+	at org.gradle.internal.work
+.DefaultWorkerLeaseService.w
+ithoutLocks(DefaultWorkerLea
+seService.java:318)
+	at org.gradle.internal.work
+.DefaultWorkerLeaseService.w
+ithoutLock(DefaultWorkerLeas
+eService.java:323)
+	at org.gradle.internal.work
+.DefaultAsyncWorkTracker.wai
+tForItemsAndGatherFailures(D
+efaultAsyncWorkTracker.java:
+126)
+	at org.gradle.internal.work
+.DefaultAsyncWorkTracker.wai
+tForItemsAndGatherFailures(D
+efaultAsyncWorkTracker.java:
+92)
+	at org.gradle.internal.work
+.DefaultAsyncWorkTracker.wai
+tForAll(DefaultAsyncWorkTrac
+ker.java:78)
+	at org.gradle.internal.work
+.DefaultAsyncWorkTracker.wai
+tForCompletion(DefaultAsyncW
+orkTracker.java:66)
+	at org.gradle.api.internal.
+tasks.execution.TaskExecutio
+n$3.run(TaskExecution.java:2
+52)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$1.execute(DefaultBuil
+dOperationRunner.java:29)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$1.execute(DefaultBuil
+dOperationRunner.java:26)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$2.execute(DefaultBuil
+dOperationRunner.java:66)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$2.execute(DefaultBuil
+dOperationRunner.java:59)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.execute(DefaultBuildO
+perationRunner.java:166)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.execute(DefaultBuildO
+perationRunner.java:59)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.run(DefaultBuildOpera
+tionRunner.java:47)
+	at org.gradle.api.internal.
+tasks.execution.TaskExecutio
+n.executeAction(TaskExecutio
+n.java:229)
+	at org.gradle.api.internal.
+tasks.execution.TaskExecutio
+n.executeActions(TaskExecuti
+on.java:212)
+	at org.gradle.api.internal.
+tasks.execution.TaskExecutio
+n.executeWithPreviousOutputF
+iles(TaskExecution.java:195)
+	at org.gradle.api.internal.
+tasks.execution.TaskExecutio
+n.execute(TaskExecution.java
+:162)
+	at org.gradle.internal.exec
+ution.steps.ExecuteStep.exec
+uteInternal(ExecuteStep.java
+:105)
+	at org.gradle.internal.exec
+ution.steps.ExecuteStep.acce
+ss$000(ExecuteStep.java:44)
+	at org.gradle.internal.exec
+ution.steps.ExecuteStep$1.ca
+ll(ExecuteStep.java:59)
+	at org.gradle.internal.exec
+ution.steps.ExecuteStep$1.ca
+ll(ExecuteStep.java:56)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$CallableBuildOperatio
+nWorker.execute(DefaultBuild
+OperationRunner.java:209)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$CallableBuildOperatio
+nWorker.execute(DefaultBuild
+OperationRunner.java:204)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$2.execute(DefaultBuil
+dOperationRunner.java:66)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$2.execute(DefaultBuil
+dOperationRunner.java:59)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.execute(DefaultBuildO
+perationRunner.java:166)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.execute(DefaultBuildO
+perationRunner.java:59)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.call(DefaultBuildOper
+ationRunner.java:53)
+	at org.gradle.internal.exec
+ution.steps.ExecuteStep.exec
+ute(ExecuteStep.java:56)
+	at org.gradle.internal.exec
+ution.steps.ExecuteStep.exec
+ute(ExecuteStep.java:44)
+	at org.gradle.internal.exec
+ution.steps.CancelExecutionS
+tep.execute(CancelExecutionS
+tep.java:42)
+	at org.gradle.internal.exec
+ution.steps.TimeoutStep.exec
+uteWithoutTimeout(TimeoutSte
+p.java:75)
+	at org.gradle.internal.exec
+ution.steps.TimeoutStep.exec
+ute(TimeoutStep.java:55)
+	at org.gradle.internal.exec
+ution.steps.PreCreateOutputP
+arentsStep.execute(PreCreate
+OutputParentsStep.java:50)
+	at org.gradle.internal.exec
+ution.steps.PreCreateOutputP
+arentsStep.execute(PreCreate
+OutputParentsStep.java:28)
+	at org.gradle.internal.exec
+ution.steps.RemovePreviousOu
+tputsStep.execute(RemovePrev
+iousOutputsStep.java:67)
+	at org.gradle.internal.exec
+ution.steps.RemovePreviousOu
+tputsStep.execute(RemovePrev
+iousOutputsStep.java:37)
+	at org.gradle.internal.exec
+ution.steps.BroadcastChangin
+gOutputsStep.execute(Broadca
+stChangingOutputsStep.java:6
+1)
+	at org.gradle.internal.exec
+ution.steps.BroadcastChangin
+gOutputsStep.execute(Broadca
+stChangingOutputsStep.java:2
+6)
+	at org.gradle.internal.exec
+ution.steps.CaptureOutputsAf
+terExecutionStep.execute(Cap
+tureOutputsAfterExecutionSte
+p.java:69)
+	at org.gradle.internal.exec
+ution.steps.CaptureOutputsAf
+terExecutionStep.execute(Cap
+tureOutputsAfterExecutionSte
+p.java:46)
+	at org.gradle.internal.exec
+ution.steps.ResolveInputChan
+gesStep.execute(ResolveInput
+ChangesStep.java:40)
+	at org.gradle.internal.exec
+ution.steps.ResolveInputChan
+gesStep.execute(ResolveInput
+ChangesStep.java:29)
+	at org.gradle.internal.exec
+ution.steps.BuildCacheStep.e
+xecuteWithoutCache(BuildCach
+eStep.java:189)
+	at org.gradle.internal.exec
+ution.steps.BuildCacheStep.l
+ambda$execute$1(BuildCacheSt
+ep.java:75)
+	at org.gradle.internal.Eith
+er$Right.fold(Either.java:17
+5)
+	at org.gradle.internal.exec
+ution.caching.CachingState.f
+old(CachingState.java:62)
+	at org.gradle.internal.exec
+ution.steps.BuildCacheStep.e
+xecute(BuildCacheStep.java:7
+3)
+	at org.gradle.internal.exec
+ution.steps.BuildCacheStep.e
+xecute(BuildCacheStep.java:4
+8)
+	at org.gradle.internal.exec
+ution.steps.StoreExecutionSt
+ateStep.execute(StoreExecuti
+onStateStep.java:46)
+	at org.gradle.internal.exec
+ution.steps.StoreExecutionSt
+ateStep.execute(StoreExecuti
+onStateStep.java:35)
+	at org.gradle.internal.exec
+ution.steps.SkipUpToDateStep
+.executeBecause(SkipUpToDate
+Step.java:75)
+	at org.gradle.internal.exec
+ution.steps.SkipUpToDateStep
+.lambda$execute$2(SkipUpToDa
+teStep.java:53)
+	at org.gradle.internal.exec
+ution.steps.SkipUpToDateStep
+.execute(SkipUpToDateStep.ja
+va:53)
+	at org.gradle.internal.exec
+ution.steps.SkipUpToDateStep
+.execute(SkipUpToDateStep.ja
+va:35)
+	at org.gradle.internal.exec
+ution.steps.legacy.MarkSnaps
+hottingInputsFinishedStep.ex
+ecute(MarkSnapshottingInputs
+FinishedStep.java:37)
+	at org.gradle.internal.exec
+ution.steps.legacy.MarkSnaps
+hottingInputsFinishedStep.ex
+ecute(MarkSnapshottingInputs
+FinishedStep.java:27)
+	at org.gradle.internal.exec
+ution.steps.ResolveIncrement
+alCachingStateStep.executeDe
+legate(ResolveIncrementalCac
+hingStateStep.java:49)
+	at org.gradle.internal.exec
+ution.steps.ResolveIncrement
+alCachingStateStep.executeDe
+legate(ResolveIncrementalCac
+hingStateStep.java:27)
+	at org.gradle.internal.exec
+ution.steps.AbstractResolveC
+achingStateStep.execute(Abst
+ractResolveCachingStateStep.
+java:71)
+	at org.gradle.internal.exec
+ution.steps.AbstractResolveC
+achingStateStep.execute(Abst
+ractResolveCachingStateStep.
+java:39)
+	at org.gradle.internal.exec
+ution.steps.ResolveChangesSt
+ep.execute(ResolveChangesSte
+p.java:65)
+	at org.gradle.internal.exec
+ution.steps.ResolveChangesSt
+ep.execute(ResolveChangesSte
+p.java:36)
+	at org.gradle.internal.exec
+ution.steps.ValidateStep.exe
+cute(ValidateStep.java:107)
+	at org.gradle.internal.exec
+ution.steps.ValidateStep.exe
+cute(ValidateStep.java:56)
+	at org.gradle.internal.exec
+ution.steps.AbstractCaptureS
+tateBeforeExecutionStep.exec
+ute(AbstractCaptureStateBefo
+reExecutionStep.java:64)
+	at org.gradle.internal.exec
+ution.steps.AbstractCaptureS
+tateBeforeExecutionStep.exec
+ute(AbstractCaptureStateBefo
+reExecutionStep.java:43)
+	at org.gradle.internal.exec
+ution.steps.AbstractSkipEmpt
+yWorkStep.executeWithNonEmpt
+ySources(AbstractSkipEmptyWo
+rkStep.java:125)
+	at org.gradle.internal.exec
+ution.steps.AbstractSkipEmpt
+yWorkStep.execute(AbstractSk
+ipEmptyWorkStep.java:56)
+	at org.gradle.internal.exec
+ution.steps.AbstractSkipEmpt
+yWorkStep.execute(AbstractSk
+ipEmptyWorkStep.java:36)
+	at org.gradle.internal.exec
+ution.steps.legacy.MarkSnaps
+hottingInputsStartedStep.exe
+cute(MarkSnapshottingInputsS
+tartedStep.java:38)
+	at org.gradle.internal.exec
+ution.steps.LoadPreviousExec
+utionStateStep.execute(LoadP
+reviousExecutionStateStep.ja
+va:36)
+	at org.gradle.internal.exec
+ution.steps.LoadPreviousExec
+utionStateStep.execute(LoadP
+reviousExecutionStateStep.ja
+va:23)
+	at org.gradle.internal.exec
+ution.steps.HandleStaleOutpu
+tsStep.execute(HandleStaleOu
+tputsStep.java:75)
+	at org.gradle.internal.exec
+ution.steps.HandleStaleOutpu
+tsStep.execute(HandleStaleOu
+tputsStep.java:41)
+	at org.gradle.internal.exec
+ution.steps.AssignMutableWor
+kspaceStep.lambda$execute$0(
+AssignMutableWorkspaceStep.j
+ava:35)
+	at org.gradle.api.internal.
+tasks.execution.TaskExecutio
+n$4.withWorkspace(TaskExecut
+ion.java:289)
+	at org.gradle.internal.exec
+ution.steps.AssignMutableWor
+kspaceStep.execute(AssignMut
+ableWorkspaceStep.java:31)
+	at org.gradle.internal.exec
+ution.steps.AssignMutableWor
+kspaceStep.execute(AssignMut
+ableWorkspaceStep.java:22)
+	at org.gradle.internal.exec
+ution.steps.ChoosePipelineSt
+ep.execute(ChoosePipelineSte
+p.java:40)
+	at org.gradle.internal.exec
+ution.steps.ChoosePipelineSt
+ep.execute(ChoosePipelineSte
+p.java:23)
+	at org.gradle.internal.exec
+ution.steps.ExecuteWorkBuild
+OperationFiringStep.lambda$e
+xecute$2(ExecuteWorkBuildOpe
+rationFiringStep.java:67)
+	at org.gradle.internal.exec
+ution.steps.ExecuteWorkBuild
+OperationFiringStep.execute(
+ExecuteWorkBuildOperationFir
+ingStep.java:67)
+	at org.gradle.internal.exec
+ution.steps.ExecuteWorkBuild
+OperationFiringStep.execute(
+ExecuteWorkBuildOperationFir
+ingStep.java:39)
+	at org.gradle.internal.exec
+ution.steps.IdentityCacheSte
+p.execute(IdentityCacheStep.
+java:46)
+	at org.gradle.internal.exec
+ution.steps.IdentityCacheSte
+p.execute(IdentityCacheStep.
+java:34)
+	at org.gradle.internal.exec
+ution.steps.IdentifyStep.exe
+cute(IdentifyStep.java:48)
+	at org.gradle.internal.exec
+ution.steps.IdentifyStep.exe
+cute(IdentifyStep.java:35)
+	at org.gradle.internal.exec
+ution.impl.DefaultExecutionE
+ngine$1.execute(DefaultExecu
+tionEngine.java:61)
+	at org.gradle.api.internal.
+tasks.execution.ExecuteActio
+nsTaskExecuter.executeIfVali
+d(ExecuteActionsTaskExecuter
+.java:127)
+	at org.gradle.api.internal.
+tasks.execution.ExecuteActio
+nsTaskExecuter.execute(Execu
+teActionsTaskExecuter.java:1
+16)
+	at org.gradle.api.internal.
+tasks.execution.FinalizeProp
+ertiesTaskExecuter.execute(F
+inalizePropertiesTaskExecute
+r.java:46)
+	at org.gradle.api.internal.
+tasks.execution.ResolveTaskE
+xecutionModeExecuter.execute
+(ResolveTaskExecutionModeExe
+cuter.java:51)
+	at org.gradle.api.internal.
+tasks.execution.SkipTaskWith
+NoActionsExecuter.execute(Sk
+ipTaskWithNoActionsExecuter.
+java:57)
+	at org.gradle.api.internal.
+tasks.execution.SkipOnlyIfTa
+skExecuter.execute(SkipOnlyI
+fTaskExecuter.java:74)
+	at org.gradle.api.internal.
+tasks.execution.CatchExcepti
+onTaskExecuter.execute(Catch
+ExceptionTaskExecuter.java:3
+6)
+	at org.gradle.api.internal.
+tasks.execution.EventFiringT
+askExecuter$1.executeTask(Ev
+entFiringTaskExecuter.java:7
+7)
+	at org.gradle.api.internal.
+tasks.execution.EventFiringT
+askExecuter$1.call(EventFiri
+ngTaskExecuter.java:55)
+	at org.gradle.api.internal.
+tasks.execution.EventFiringT
+askExecuter$1.call(EventFiri
+ngTaskExecuter.java:52)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$CallableBuildOperatio
+nWorker.execute(DefaultBuild
+OperationRunner.java:209)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$CallableBuildOperatio
+nWorker.execute(DefaultBuild
+OperationRunner.java:204)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$2.execute(DefaultBuil
+dOperationRunner.java:66)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$2.execute(DefaultBuil
+dOperationRunner.java:59)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.execute(DefaultBuildO
+perationRunner.java:166)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.execute(DefaultBuildO
+perationRunner.java:59)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.call(DefaultBuildOper
+ationRunner.java:53)
+	at org.gradle.api.internal.
+tasks.execution.EventFiringT
+askExecuter.execute(EventFir
+ingTaskExecuter.java:52)
+	at org.gradle.execution.pla
+n.LocalTaskNodeExecutor.exec
+ute(LocalTaskNodeExecutor.ja
+va:42)
+	at org.gradle.execution.tas
+kgraph.DefaultTaskExecutionG
+raph$InvokeNodeExecutorsActi
+on.execute(DefaultTaskExecut
+ionGraph.java:331)
+	at org.gradle.execution.tas
+kgraph.DefaultTaskExecutionG
+raph$InvokeNodeExecutorsActi
+on.execute(DefaultTaskExecut
+ionGraph.java:318)
+	at org.gradle.execution.tas
+kgraph.DefaultTaskExecutionG
+raph$BuildOperationAwareExec
+utionAction.lambda$execute$0
+(DefaultTaskExecutionGraph.j
+ava:314)
+	at org.gradle.internal.oper
+ations.CurrentBuildOperation
+Ref.with(CurrentBuildOperati
+onRef.java:85)
+	at org.gradle.execution.tas
+kgraph.DefaultTaskExecutionG
+raph$BuildOperationAwareExec
+utionAction.execute(DefaultT
+askExecutionGraph.java:314)
+	at org.gradle.execution.tas
+kgraph.DefaultTaskExecutionG
+raph$BuildOperationAwareExec
+utionAction.execute(DefaultT
+askExecutionGraph.java:303)
+	at org.gradle.execution.pla
+n.DefaultPlanExecutor$Execut
+orWorker.execute(DefaultPlan
+Executor.java:459)
+	at org.gradle.execution.pla
+n.DefaultPlanExecutor$Execut
+orWorker.run(DefaultPlanExec
+utor.java:376)
+	at org.gradle.internal.conc
+urrent.ExecutorPolicy$CatchA
+ndRecordFailures.onExecute(E
+xecutorPolicy.java:64)
+	at org.gradle.internal.conc
+urrent.AbstractManagedExecut
+or$1.run(AbstractManagedExec
+utor.java:48)
+Caused by: java.lang.Runtime
+Exception: Unexpected failur
+e during lint analysis (this
+ is a bug in lint or one of 
+the libraries it depends on)
+
+Message: Unexpected failure 
+during lint analysis (this i
+s a bug in lint or one of th
+e libraries it depends on)
+
+Message: Unexpected failure 
+during lint analysis of Expe
+nseRepository.kt (this is a 
+bug in lint or one of the li
+braries it depends on)
+
+Message: Found class org.jet
+brains.kotlin.analysis.api.r
+esolution.KaCallableMemberCa
+ll, but interface was expect
+ed
+
+The crash seems to involve t
+he detector \\\`androidx.lif
+ecycle.lint.NonNullableMutab
+leLiveDataDetector\\\`.
+You can try disabling it wit
+h something like this:
+聽聽聽聽android {
+聽聽聽聽聽聽聽聽lint {
+聽聽聽聽聽聽聽聽聽聽聽聽disable "NullSaf
+eMutableLiveData"
+聽聽聽聽聽聽聽聽}
+聽聽聽聽}
+
+Stack: \\\`IncompatibleClass
+ChangeError:NonNullableMutab
+leLiveDataDetector$createUas
+tHandler$1.visitCallExpressi
+on(NonNullableMutableLiveDat
+aDetector.kt:140)鈫怳ElementVi
+sitor$DispatchUastVisitor.vi
+sitCallExpression(UElementVi
+sitor.kt:412)鈫怳ElementVisito
+r$DelegatingUastVisitor.visi
+tCallExpression(UElementVisi
+tor.kt:756)鈫怳CallExpression.
+accept(UCallExpression.kt:94
+)鈫怳QualifiedReferenceExpress
+ion.accept(UQualifiedReferen
+ceExpression.kt:34)鈫怳ReturnE
+xpression.accept(UReturnExpr
+ession.kt:22)鈫怚mplementation
+UtilsKt.acceptList(implement
+ationUtils.kt:15)鈫怳BlockExpr
+ession.accept(UBlockExpressi
+on.kt:21)鈫怳Method.accept(UMe
+thod.kt:45)鈫怚mplementationUt
+ilsKt.acceptList(implementat
+ionUtils.kt:15)鈫怉bstractKotl
+inUClass.accept(AbstractKotl
+inUClass.kt:213)鈫怚mplementat
+ionUtilsKt.acceptList(implem
+entationUtils.kt:15)鈫怳File.a
+ccept(UFile.kt:89)鈫怳astLintU
+tilsKt.acceptSourceFile(Uast
+LintUtils.kt:953)鈫怳ElementVi
+sitor$visitFile$3.run(UEleme
+ntVisitor.kt:216)鈫怢intClient
+.runReadAction(LintClient.kt
+:1781)鈫怢intDriver$LintClient
+Wrapper.runReadAction(LintDr
+iver.kt:2747)鈫怳ElementVisito
+r.visitFile(UElementVisitor.
+kt:213)鈫怢intDriver$visitUast
+Detectors$1.run(LintDriver.k
+t:2048)鈫怢intClient.runReadAc
+tion(LintClient.kt:1781)鈫怢in
+tDriver$LintClientWrapper.ru
+nReadAction(LintDriver.kt:27
+47)鈫怢intDriver.visitUastDete
+ctors(LintDriver.kt:2048)鈫怢i
+ntDriver.visitUast(LintDrive
+r.kt:2010)鈫怢intDriver.runFil
+eDetectors(LintDriver.kt:128
+4)鈫怢intDriver.checkProject(L
+intDriver.kt:1070)鈫怢intDrive
+r.checkProjectRoot(LintDrive
+r.kt:622)鈫怢intDriver.access$
+checkProjectRoot(LintDriver.
+kt:174)鈫怢intDriver$analyzeOn
+ly$1.invoke(LintDriver.kt:44
+5)鈫怢intDriver$analyzeOnly$1.
+invoke(LintDriver.kt:442)鈫怢i
+ntDriver.doAnalyze(LintDrive
+r.kt:501)鈫怢intDriver.analyze
+Only(LintDriver.kt:442)鈫怢int
+CliClient$analyzeOnly$1.invo
+ke(LintCliClient.kt:258)鈫怢in
+tCliClient$analyzeOnly$1.inv
+oke(LintCliClient.kt:255)鈫怢i
+ntCliClient.run(LintCliClien
+t.kt:312)鈫怢intCliClient.anal
+yzeOnly(LintCliClient.kt:255
+)鈫怣ain.run(Main.java:1766)鈫怣
+ain.run(Main.java:282)鈫怐irec
+tMethodHandleAccessor.invoke
+(DirectMethodHandleAccessor.
+java:104)鈫怣ethod.invoke(Meth
+od.java:578)鈫怉ndroidLintWork
+Action.invokeLintMainRunMeth
+od(AndroidLintWorkAction.kt:
+103)鈫怉ndroidLintWorkAction.r
+unLint(AndroidLintWorkAction
+.kt:90)鈫怉ndroidLintWorkActio
+n.execute(AndroidLintWorkAct
+ion.kt:64)鈫怐efaultWorkerServ
+er.execute(DefaultWorkerServ
+er.java:63)鈫怤oIsolationWorke
+rFactory$1$1.create(NoIsolat
+ionWorkerFactory.java:66)鈫怤o
+IsolationWorkerFactory$1$1.c
+reate(NoIsolationWorkerFacto
+ry.java:62)鈫怌lassLoaderUtils
+.executeInClassloader(ClassL
+oaderUtils.java:100)鈫怤oIsola
+tionWorkerFactory$1.lambda$e
+xecute$0(NoIsolationWorkerFa
+ctory.java:62)鈫怉bstractWorke
+r$1.call(AbstractWorker.java
+:44)鈫怉bstractWorker$1.call(A
+bstractWorker.java:41)鈫怐efau
+ltBuildOperationRunner$Calla
+bleBuildOperationWorker.exec
+ute(DefaultBuildOperationRun
+ner.java:209)鈫怐efaultBuildOp
+erationRunner$CallableBuildO
+perationWorker.execute(Defau
+ltBuildOperationRunner.java:
+204)鈫怐efaultBuildOperationRu
+nner$2.execute(DefaultBuildO
+perationRunner.java:66)鈫怐efa
+ultBuildOperationRunner$2.ex
+ecute(DefaultBuildOperationR
+unner.java:59)鈫怐efaultBuildO
+perationRunner.execute(Defau
+ltBuildOperationRunner.java:
+166)鈫怐efaultBuildOperationRu
+nner.execute(DefaultBuildOpe
+rationRunner.java:59)鈫怐efaul
+tBuildOperationRunner.call(D
+efaultBuildOperationRunner.j
+ava:53)鈫怉bstractWorker.execu
+teWrappedInBuildOperation(Ab
+stractWorker.java:41)鈫怤oIsol
+ationWorkerFactory$1.execute
+(NoIsolationWorkerFactory.ja
+va:59)鈫怐efaultWorkerExecutor
+.lambda$submitWork$0(Default
+WorkerExecutor.java:174)鈫怓ut
+ureTask.run(FutureTask.java:
+317)鈫怐efaultConditionalExecu
+tionQueue$ExecutionRunner.ru
+nExecution(DefaultConditiona
+lExecutionQueue.java:194)鈫怐e
+faultConditionalExecutionQue
+ue$ExecutionRunner.access$70
+0(DefaultConditionalExecutio
+nQueue.java:127)鈫怐efaultCond
+itionalExecutionQueue$Execut
+ionRunner$1.run(DefaultCondi
+tionalExecutionQueue.java:16
+9)鈫怓actories$1.create(Factor
+ies.java:31)鈫怐efaultWorkerLe
+aseService.withLocks(Default
+WorkerLeaseService.java:263)
+鈫怐efaultWorkerLeaseService.r
+unAsWorkerThread(DefaultWork
+erLeaseService.java:127)鈫怐ef
+aultWorkerLeaseService.runAs
+WorkerThread(DefaultWorkerLe
+aseService.java:132)鈫怐efault
+ConditionalExecutionQueue$Ex
+ecutionRunner.runBatch(Defau
+ltConditionalExecutionQueue.
+java:164)鈫怐efaultConditional
+ExecutionQueue$ExecutionRunn
+er.run(DefaultConditionalExe
+cutionQueue.java:133)鈫怑xecut
+ors$RunnableAdapter.call(Exe
+cutors.java:577)鈫怓utureTask.
+run(FutureTask.java:317)鈫怑xe
+cutorPolicy$CatchAndRecordFa
+ilures.onExecute(ExecutorPol
+icy.java:64)鈫怉bstractManaged
+Executor$1.run(AbstractManag
+edExecutor.java:48)鈫怲hreadPo
+olExecutor.runWorker(ThreadP
+oolExecutor.java:1144)鈫怲hrea
+dPoolExecutor$Worker.run(Thr
+eadPoolExecutor.java:642)鈫怲h
+read.run(Thread.java:1623)\\
+\`
+Stack: \`RuntimeException:Li
+ntDriver$Companion.handleDet
+ectorError(LintDriver.kt:374
+0)鈫怢intDriver$Companion.hand
+leDetectorError$default(Lint
+Driver.kt:3607)鈫怢intDriver$C
+ompanion.handleDetectorError
+(LintDriver.kt:3603)鈫怳Elemen
+tVisitor.visitFile(UElementV
+isitor.kt:242)鈫怢intDriver$vi
+sitUastDetectors$1.run(LintD
+river.kt:2048)鈫怢intClient.ru
+nReadAction(LintClient.kt:17
+81)鈫怢intDriver$LintClientWra
+pper.runReadAction(LintDrive
+r.kt:2747)鈫怢intDriver.visitU
+astDetectors(LintDriver.kt:2
+048)鈫怢intDriver.visitUast(Li
+ntDriver.kt:2010)鈫怢intDriver
+.runFileDetectors(LintDriver
+.kt:1284)鈫怢intDriver.checkPr
+oject(LintDriver.kt:1070)鈫怢i
+ntDriver.checkProjectRoot(Li
+ntDriver.kt:622)鈫怢intDriver.
+access$checkProjectRoot(Lint
+Driver.kt:174)鈫怢intDriver$an
+alyzeOnly$1.invoke(LintDrive
+r.kt:445)鈫怢intDriver$analyze
+Only$1.invoke(LintDriver.kt:
+442)鈫怢intDriver.doAnalyze(Li
+ntDriver.kt:501)鈫怢intDriver.
+analyzeOnly(LintDriver.kt:44
+2)鈫怢intCliClient$analyzeOnly
+$1.invoke(LintCliClient.kt:2
+58)鈫怢intCliClient$analyzeOnl
+y$1.invoke(LintCliClient.kt:
+255)鈫怢intCliClient.run(LintC
+liClient.kt:312)鈫怢intCliClie
+nt.analyzeOnly(LintCliClient
+.kt:255)鈫怣ain.run(Main.java:
+1766)鈫怣ain.run(Main.java:282
+)鈫怐irectMethodHandleAccessor
+.invoke(DirectMethodHandleAc
+cessor.java:104)鈫怣ethod.invo
+ke(Method.java:578)鈫怉ndroidL
+intWorkAction.invokeLintMain
+RunMethod(AndroidLintWorkAct
+ion.kt:103)鈫怉ndroidLintWorkA
+ction.runLint(AndroidLintWor
+kAction.kt:90)鈫怉ndroidLintWo
+rkAction.execute(AndroidLint
+WorkAction.kt:64)鈫怐efaultWor
+kerServer.execute(DefaultWor
+kerServer.java:63)鈫怤oIsolati
+onWorkerFactory$1$1.create(N
+oIsolationWorkerFactory.java
+:66)鈫怤oIsolationWorkerFactor
+y$1$1.create(NoIsolationWork
+erFactory.java:62)鈫怌lassLoad
+erUtils.executeInClassloader
+(ClassLoaderUtils.java:100)鈫
+怤oIsolationWorkerFactory$1.l
+ambda$execute$0(NoIsolationW
+orkerFactory.java:62)鈫怉bstra
+ctWorker$1.call(AbstractWork
+er.java:44)鈫怉bstractWorker$1
+.call(AbstractWorker.java:41
+)鈫怐efaultBuildOperationRunne
+r$CallableBuildOperationWork
+er.execute(DefaultBuildOpera
+tionRunner.java:209)鈫怐efault
+BuildOperationRunner$Callabl
+eBuildOperationWorker.execut
+e(DefaultBuildOperationRunne
+r.java:204)鈫怐efaultBuildOper
+ationRunner$2.execute(Defaul
+tBuildOperationRunner.java:6
+6)鈫怐efaultBuildOperationRunn
+er$2.execute(DefaultBuildOpe
+rationRunner.java:59)鈫怐efaul
+tBuildOperationRunner.execut
+e(DefaultBuildOperationRunne
+r.java:166)鈫怐efaultBuildOper
+ationRunner.execute(DefaultB
+uildOperationRunner.java:59)
+鈫怐efaultBuildOperationRunner
+.call(DefaultBuildOperationR
+unner.java:53)鈫怉bstractWorke
+r.executeWrappedInBuildOpera
+tion(AbstractWorker.java:41)
+鈫怤oIsolationWorkerFactory$1.
+execute(NoIsolationWorkerFac
+tory.java:59)鈫怐efaultWorkerE
+xecutor.lambda$submitWork$0(
+DefaultWorkerExecutor.java:1
+74)鈫怓utureTask.run(FutureTas
+k.java:317)鈫怐efaultCondition
+alExecutionQueue$ExecutionRu
+nner.runExecution(DefaultCon
+ditionalExecutionQueue.java:
+194)鈫怐efaultConditionalExecu
+tionQueue$ExecutionRunner.ac
+cess$700(DefaultConditionalE
+xecutionQueue.java:127)鈫怐efa
+ultConditionalExecutionQueue
+$ExecutionRunner$1.run(Defau
+ltConditionalExecutionQueue.
+java:169)鈫怓actories$1.create
+(Factories.java:31)鈫怐efaultW
+orkerLeaseService.withLocks(
+DefaultWorkerLeaseService.ja
+va:263)鈫怐efaultWorkerLeaseSe
+rvice.runAsWorkerThread(Defa
+ultWorkerLeaseService.java:1
+27)鈫怐efaultWorkerLeaseServic
+e.runAsWorkerThread(DefaultW
+orkerLeaseService.java:132)鈫
+怐efaultConditionalExecutionQ
+ueue$ExecutionRunner.runBatc
+h(DefaultConditionalExecutio
+nQueue.java:164)鈫怐efaultCond
+itionalExecutionQueue$Execut
+ionRunner.run(DefaultConditi
+onalExecutionQueue.java:133)
+鈫怑xecutors$RunnableAdapter.c
+all(Executors.java:577)鈫怓utu
+reTask.run(FutureTask.java:3
+17)鈫怑xecutorPolicy$CatchAndR
+ecordFailures.onExecute(Exec
+utorPolicy.java:64)鈫怉bstract
+ManagedExecutor$1.run(Abstra
+ctManagedExecutor.java:48)鈫怲
+hreadPoolExecutor.runWorker(
+ThreadPoolExecutor.java:1144
+)鈫怲hreadPoolExecutor$Worker.
+run(ThreadPoolExecutor.java:
+642)鈫怲hread.run(Thread.java:
+1623)\`
+Stack: `RuntimeException:Lin
+tDriver$Companion.handleDete
+ctorError(LintDriver.kt:3740
+)鈫怢intDriver$Companion.handl
+eDetectorError$default(LintD
+river.kt:3607)鈫怢intDriver$Co
+mpanion.handleDetectorError(
+LintDriver.kt:3603)鈫怢intDriv
+er$analyzeOnly$1.invoke(Lint
+Driver.kt:447)鈫怢intDriver$an
+alyzeOnly$1.invoke(LintDrive
+r.kt:442)鈫怢intDriver.doAnaly
+ze(LintDriver.kt:501)鈫怢intDr
+iver.analyzeOnly(LintDriver.
+kt:442)鈫怢intCliClient$analyz
+eOnly$1.invoke(LintCliClient
+.kt:258)鈫怢intCliClient$analy
+zeOnly$1.invoke(LintCliClien
+t.kt:255)鈫怢intCliClient.run(
+LintCliClient.kt:312)鈫怢intCl
+iClient.analyzeOnly(LintCliC
+lient.kt:255)鈫怣ain.run(Main.
+java:1766)鈫怣ain.run(Main.jav
+a:282)鈫怐irectMethodHandleAcc
+essor.invoke(DirectMethodHan
+dleAccessor.java:104)鈫怣ethod
+.invoke(Method.java:578)鈫怉nd
+roidLintWorkAction.invokeLin
+tMainRunMethod(AndroidLintWo
+rkAction.kt:103)鈫怉ndroidLint
+WorkAction.runLint(AndroidLi
+ntWorkAction.kt:90)鈫怉ndroidL
+intWorkAction.execute(Androi
+dLintWorkAction.kt:64)鈫怐efau
+ltWorkerServer.execute(Defau
+ltWorkerServer.java:63)鈫怤oIs
+olationWorkerFactory$1$1.cre
+ate(NoIsolationWorkerFactory
+.java:66)鈫怤oIsolationWorkerF
+actory$1$1.create(NoIsolatio
+nWorkerFactory.java:62)鈫怌las
+sLoaderUtils.executeInClassl
+oader(ClassLoaderUtils.java:
+100)鈫怤oIsolationWorkerFactor
+y$1.lambda$execute$0(NoIsola
+tionWorkerFactory.java:62)鈫怉
+bstractWorker$1.call(Abstrac
+tWorker.java:44)鈫怉bstractWor
+ker$1.call(AbstractWorker.ja
+va:41)鈫怐efaultBuildOperation
+Runner$CallableBuildOperatio
+nWorker.execute(DefaultBuild
+OperationRunner.java:209)鈫怐e
+faultBuildOperationRunner$Ca
+llableBuildOperationWorker.e
+xecute(DefaultBuildOperation
+Runner.java:204)鈫怐efaultBuil
+dOperationRunner$2.execute(D
+efaultBuildOperationRunner.j
+ava:66)鈫怐efaultBuildOperatio
+nRunner$2.execute(DefaultBui
+ldOperationRunner.java:59)鈫怐
+efaultBuildOperationRunner.e
+xecute(DefaultBuildOperation
+Runner.java:166)鈫怐efaultBuil
+dOperationRunner.execute(Def
+aultBuildOperationRunner.jav
+a:59)鈫怐efaultBuildOperationR
+unner.call(DefaultBuildOpera
+tionRunner.java:53)鈫怉bstract
+Worker.executeWrappedInBuild
+Operation(AbstractWorker.jav
+a:41)鈫怤oIsolationWorkerFacto
+ry$1.execute(NoIsolationWork
+erFactory.java:59)鈫怐efaultWo
+rkerExecutor.lambda$submitWo
+rk$0(DefaultWorkerExecutor.j
+ava:174)鈫怓utureTask.run(Futu
+reTask.java:317)鈫怐efaultCond
+itionalExecutionQueue$Execut
+ionRunner.runExecution(Defau
+ltConditionalExecutionQueue.
+java:194)鈫怐efaultConditional
+ExecutionQueue$ExecutionRunn
+er.access$700(DefaultConditi
+onalExecutionQueue.java:127)
+鈫怐efaultConditionalExecution
+Queue$ExecutionRunner$1.run(
+DefaultConditionalExecutionQ
+ueue.java:169)鈫怓actories$1.c
+reate(Factories.java:31)鈫怐ef
+aultWorkerLeaseService.withL
+ocks(DefaultWorkerLeaseServi
+ce.java:263)鈫怐efaultWorkerLe
+aseService.runAsWorkerThread
+(DefaultWorkerLeaseService.j
+ava:127)鈫怐efaultWorkerLeaseS
+ervice.runAsWorkerThread(Def
+aultWorkerLeaseService.java:
+132)鈫怐efaultConditionalExecu
+tionQueue$ExecutionRunner.ru
+nBatch(DefaultConditionalExe
+cutionQueue.java:164)鈫怐efaul
+tConditionalExecutionQueue$E
+xecutionRunner.run(DefaultCo
+nditionalExecutionQueue.java
+:133)鈫怑xecutors$RunnableAdap
+ter.call(Executors.java:577)
+鈫怓utureTask.run(FutureTask.j
+ava:317)鈫怑xecutorPolicy$Catc
+hAndRecordFailures.onExecute
+(ExecutorPolicy.java:64)鈫怉bs
+tractManagedExecutor$1.run(A
+bstractManagedExecutor.java:
+48)鈫怲hreadPoolExecutor.runWo
+rker(ThreadPoolExecutor.java
+:1144)鈫怲hreadPoolExecutor$Wo
+rker.run(ThreadPoolExecutor.
+java:642)鈫怲hread.run(Thread.
+java:1623)`
+	at com.android.tools.lint.c
+lient.api.LintDriver$Compani
+on.handleDetectorError(LintD
+river.kt:3740)
+	at com.android.tools.lint.c
+lient.api.LintDriver$Compani
+on.handleDetectorError$defau
+lt(LintDriver.kt:3607)
+	at com.android.tools.lint.c
+lient.api.LintDriver$Compani
+on.handleDetectorError(LintD
+river.kt:3603)
+	at com.android.tools.lint.c
+lient.api.LintDriver.doAnaly
+ze(LintDriver.kt:503)
+	at com.android.tools.lint.c
+lient.api.LintDriver.analyze
+Only(LintDriver.kt:442)
+	at com.android.tools.lint.L
+intCliClient$analyzeOnly$1.i
+nvoke(LintCliClient.kt:258)
+	at com.android.tools.lint.L
+intCliClient$analyzeOnly$1.i
+nvoke(LintCliClient.kt:255)
+	at com.android.tools.lint.L
+intCliClient.run(LintCliClie
+nt.kt:312)
+	at com.android.tools.lint.L
+intCliClient.analyzeOnly(Lin
+tCliClient.kt:255)
+	at com.android.tools.lint.M
+ain.run(Main.java:1766)
+	at com.android.tools.lint.M
+ain.run(Main.java:282)
+	at java.base/jdk.internal.r
+eflect.DirectMethodHandleAcc
+essor.invoke(DirectMethodHan
+dleAccessor.java:104)
+	at com.android.build.gradle
+.internal.lint.AndroidLintWo
+rkAction.invokeLintMainRunMe
+thod(AndroidLintWorkAction.k
+t:103)
+	at com.android.build.gradle
+.internal.lint.AndroidLintWo
+rkAction.runLint(AndroidLint
+WorkAction.kt:90)
+47 actionable tasks: 1 executed, 46 up-to-date
+	at com.android.build.gradle
+.internal.lint.AndroidLintWo
+rkAction.execute(AndroidLint
+WorkAction.kt:64)
+	at org.gradle.workers.inter
+nal.DefaultWorkerServer.exec
+ute(DefaultWorkerServer.java
+:63)
+	at org.gradle.workers.inter
+nal.NoIsolationWorkerFactory
+$1$1.create(NoIsolationWorke
+rFactory.java:66)
+	at org.gradle.workers.inter
+nal.NoIsolationWorkerFactory
+$1$1.create(NoIsolationWorke
+rFactory.java:62)
+	at org.gradle.internal.clas
+sloader.ClassLoaderUtils.exe
+cuteInClassloader(ClassLoade
+rUtils.java:100)
+	at org.gradle.workers.inter
+nal.NoIsolationWorkerFactory
+$1.lambda$execute$0(NoIsolat
+ionWorkerFactory.java:62)
+	at org.gradle.workers.inter
+nal.AbstractWorker$1.call(Ab
+stractWorker.java:44)
+	at org.gradle.workers.inter
+nal.AbstractWorker$1.call(Ab
+stractWorker.java:41)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$CallableBuildOperatio
+nWorker.execute(DefaultBuild
+OperationRunner.java:209)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$CallableBuildOperatio
+nWorker.execute(DefaultBuild
+OperationRunner.java:204)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$2.execute(DefaultBuil
+dOperationRunner.java:66)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner$2.execute(DefaultBuil
+dOperationRunner.java:59)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.execute(DefaultBuildO
+perationRunner.java:166)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.execute(DefaultBuildO
+perationRunner.java:59)
+	at org.gradle.internal.oper
+ations.DefaultBuildOperation
+Runner.call(DefaultBuildOper
+ationRunner.java:53)
+	at org.gradle.workers.inter
+nal.AbstractWorker.executeWr
+appedInBuildOperation(Abstra
+ctWorker.java:41)
+	at org.gradle.workers.inter
+nal.NoIsolationWorkerFactory
+$1.execute(NoIsolationWorker
+Factory.java:59)
+	at org.gradle.workers.inter
+nal.DefaultWorkerExecutor.la
+mbda$submitWork$0(DefaultWor
+kerExecutor.java:174)
+	at org.gradle.internal.work
+.DefaultConditionalExecution
+Queue$ExecutionRunner.runExe
+cution(DefaultConditionalExe
+cutionQueue.java:194)
+	at org.gradle.internal.work
+.DefaultConditionalExecution
+Queue$ExecutionRunner.access
+$700(DefaultConditionalExecu
+tionQueue.java:127)
+	at org.gradle.internal.work
+.DefaultConditionalExecution
+Queue$ExecutionRunner$1.run(
+DefaultConditionalExecutionQ
+ueue.java:169)
+	at org.gradle.internal.Fact
+ories$1.create(Factories.jav
+a:31)
+	at org.gradle.internal.work
+.DefaultWorkerLeaseService.w
+ithLocks(DefaultWorkerLeaseS
+ervice.java:263)
+	at org.gradle.internal.work
+.DefaultWorkerLeaseService.r
+unAsWorkerThread(DefaultWork
+erLeaseService.java:127)
+	at org.gradle.internal.work
+.DefaultWorkerLeaseService.r
+unAsWorkerThread(DefaultWork
+erLeaseService.java:132)
+	at org.gradle.internal.work
+.DefaultConditionalExecution
+Queue$ExecutionRunner.runBat
+ch(DefaultConditionalExecuti
+onQueue.java:164)
+	at org.gradle.internal.work
+.DefaultConditionalExecution
+Queue$ExecutionRunner.run(De
+faultConditionalExecutionQue
+ue.java:133)
+	... 2 more
+
+
+BUILD FAILED in 16s

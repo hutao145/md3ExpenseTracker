@@ -1,0 +1,7 @@
+R_DEF: Internal format may change without notice
+local
+drawable ic_widget_add
+drawable widget_background
+string app_name
+style Theme.ExpenseTracker
+xml expense_widget_info
