@@ -1598,6 +1598,8 @@ layout size_match_match
 layout size_match_wrap
 layout size_wrap_match
 layout size_wrap_wrap
+mipmap ic_launcher
+mipmap ic_launcher_round
 raw glance_appwidget_keep
 string androidx_compose_foundation_autofill
 string androidx_compose_ui_autofill

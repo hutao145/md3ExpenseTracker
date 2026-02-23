@@ -7,9 +7,11 @@ import com.example.expensetracker.data.ExpenseRepository
 import com.example.expensetracker.ui.model.CategorySummaryUiModel
 import com.example.expensetracker.ui.model.DailyExpenseUiModel
 import com.example.expensetracker.ui.model.ExpenseItemUiModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -49,7 +51,7 @@ data class ExpenseUiState(
     val isDateRangeApplied: Boolean = false
 )
 
-private data class DateRangeFilterState(
+data class DateRangeFilterState(
     val startDate: LocalDate? = null,
     val endDate: LocalDate? = null,
     val startDateInput: String = "",
@@ -67,7 +69,7 @@ class ExpenseViewModel(
         .ofPattern("uuuu-MM-dd", Locale.CHINA)
         .withResolverStyle(ResolverStyle.STRICT)
 
-    private val dateRangeFilterState = MutableStateFlow(DateRangeFilterState())
+    val dateRangeFilterState = MutableStateFlow(DateRangeFilterState())
     private val monthlyBudgetCentState = MutableStateFlow<Long?>(null)
     private val searchQueryState = MutableStateFlow("")
 
@@ -232,6 +234,59 @@ class ExpenseViewModel(
     fun deleteMultipleExpenses(ids: Set<Long>) {
         viewModelScope.launch {
             ids.forEach { id -> repository.deleteExpense(id) }
+        }
+    }
+
+    private val _syncMessage = MutableStateFlow<String?>(null)
+    val syncMessage: StateFlow<String?> = _syncMessage.asStateFlow()
+
+    fun clearSyncMessage() {
+        _syncMessage.value = null
+    }
+
+    fun syncFromAutoAccounting() {
+        viewModelScope.launch {
+            // 在 IO 线程执行网络请求
+            val newBills = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                com.example.expensetracker.data.remote.AutoAccountingService.fetchUnsyncedBills()
+            }
+
+            if (newBills.isEmpty()) {
+                _syncMessage.value = "没有需要同步的账单"
+                return@launch
+            }
+
+            var successCount = 0
+            for (bill in newBills) {
+                // 将服务器金额 (元) 转换为我们应用存储的 (分)
+                val amountCent = (bill.money * 100).toLong()
+                
+                // 拼接备注
+                val note = buildString {
+                    if (bill.shopName.isNotEmpty()) append(bill.shopName).append(" ")
+                    if (bill.shopItem.isNotEmpty()) append(bill.shopItem).append(" ")
+                    if (bill.remark.isNotEmpty()) append(bill.remark)
+                }.trim()
+
+                // 落库
+                repository.addExpense(
+                    amountCent = amountCent,
+                    type = bill.typeId,
+                    category = if (bill.cateName.isEmpty()) "其他" else bill.cateName,
+                    note = note,
+                    dateMillis = bill.time
+                )
+
+                // 标记为已同步
+                val marked = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.example.expensetracker.data.remote.AutoAccountingService.markAsSynced(bill.id)
+                }
+                if (marked) {
+                    successCount++
+                }
+            }
+            
+            _syncMessage.value = "成功同步了 $successCount 笔新账单"
         }
     }
 

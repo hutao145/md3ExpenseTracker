@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:2:1-32:12
-INJECTED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:2:1-32:12
-INJECTED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:2:1-32:12
-INJECTED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:2:1-32:12
+ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:2:1-36:12
+INJECTED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:2:1-36:12
+INJECTED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:2:1-36:12
+INJECTED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:2:1-36:12
 MERGED from [androidx.activity:activity:1.9.3] C:\Users\ctrl\.gradle\caches\8.11.1\transforms\52293124f9e1d10aa963799b6f4d699e\transformed\activity-1.9.3\AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.glance:glance:1.1.1] C:\Users\ctrl\.gradle\caches\8.11.1\transforms\b79196ce4a6e8072e79976304353c6e0\transformed\glance-1.1.1\AndroidManifest.xml:2:1-7:12
 MERGED from [androidx.glance:glance-appwidget:1.1.1] C:\Users\ctrl\.gradle\caches\8.11.1\transforms\5293ff678a91bba6726342a6425809b1\transformed\glance-appwidget-1.1.1\AndroidManifest.xml:17:1-61:12
@@ -88,9 +88,13 @@ MERGED from [androidx.print:print:1.0.0] C:\Users\ctrl\.gradle\caches\8.11.1\tra
 		INJECTED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml
 	xmlns:android
 		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:2:11-69
+uses-permission#android.permission.INTERNET
+ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:3:5-67
+	android:name
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:3:22-64
 application
-ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:4:5-30:19
-INJECTED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:4:5-30:19
+ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:5:5-34:19
+INJECTED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:5:5-34:19
 MERGED from [androidx.glance:glance-appwidget:1.1.1] C:\Users\ctrl\.gradle\caches\8.11.1\transforms\5293ff678a91bba6726342a6425809b1\transformed\glance-appwidget-1.1.1\AndroidManifest.xml:22:5-59:19
 MERGED from [androidx.glance:glance-appwidget:1.1.1] C:\Users\ctrl\.gradle\caches\8.11.1\transforms\5293ff678a91bba6726342a6425809b1\transformed\glance-appwidget-1.1.1\AndroidManifest.xml:22:5-59:19
 MERGED from [androidx.compose.ui:ui-tooling-android:1.10.2] C:\Users\ctrl\.gradle\caches\8.11.1\transforms\b173bd9d9652a05a38e35901ec0a0317\transformed\ui-tooling\AndroidManifest.xml:22:5-26:19
@@ -120,47 +124,53 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] C:\Users\ctrl\.gradle\cache
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.16.0] C:\Users\ctrl\.gradle\caches\8.11.1\transforms\f004a0c7f07594a1aad7e07b7a4e5b0f\transformed\core-1.16.0\AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:7:9-35
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:11:9-35
 	android:label
-		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:6:9-41
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:10:9-41
+	android:roundIcon
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:9:9-54
+	android:icon
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:8:9-43
 	android:allowBackup
-		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:5:9-35
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:7:9-35
 	android:theme
-		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:8:9-52
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:12:9-52
+	android:usesCleartextTraffic
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:6:9-44
 activity#com.example.expensetracker.MainActivity
-ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:9:9-17:20
+ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:13:9-21:20
 	android:exported
-		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:11:13-36
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:15:13-36
 	android:name
-		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:10:13-41
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:14:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:12:13-16:29
+ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:16:13-20:29
 action#android.intent.action.MAIN
-ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:13:17-69
+ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:17:17-69
 	android:name
-		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:13:25-66
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:17:25-66
 category#android.intent.category.LAUNCHER
-ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:15:17-77
+ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:19:17-77
 	android:name
-		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:15:27-74
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:19:27-74
 receiver#com.example.expensetracker.widget.ExpenseAppWidgetReceiver
-ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:19:9-28:20
+ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:23:9-32:20
 	android:exported
-		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:21:13-36
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:25:13-36
 	android:name
-		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:20:13-60
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:24:13-60
 intent-filter#action:name:android.appwidget.action.APPWIDGET_UPDATE
-ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:22:13-24:29
+ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:26:13-28:29
 action#android.appwidget.action.APPWIDGET_UPDATE
-ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:23:17-84
+ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:27:17-84
 	android:name
-		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:23:25-81
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:27:25-81
 meta-data#android.appwidget.provider
-ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:25:13-27:63
+ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:29:13-31:63
 	android:resource
-		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:27:17-60
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:31:17-60
 	android:name
-		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:26:17-58
+		ADDED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml:30:17-58
 uses-sdk
 INJECTED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from E:\AI\ai projects\md3 book\app\src\main\AndroidManifest.xml

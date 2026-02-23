@@ -46,7 +46,7 @@ public final class ExpenseDao_Impl implements ExpenseDao {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR ABORT INTO `expenses` (`id`,`amountCent`,`category`,`note`,`createdAtEpochMillis`) VALUES (nullif(?, 0),?,?,?,?)";
+        return "INSERT OR ABORT INTO `expenses` (`id`,`amountCent`,`type`,`category`,`note`,`createdAtEpochMillis`) VALUES (nullif(?, 0),?,?,?,?,?)";
       }
 
       @Override
@@ -54,16 +54,17 @@ public final class ExpenseDao_Impl implements ExpenseDao {
           @NonNull final ExpenseEntity entity) {
         statement.bindLong(1, entity.getId());
         statement.bindLong(2, entity.getAmountCent());
-        statement.bindString(3, entity.getCategory());
-        statement.bindString(4, entity.getNote());
-        statement.bindLong(5, entity.getCreatedAtEpochMillis());
+        statement.bindLong(3, entity.getType());
+        statement.bindString(4, entity.getCategory());
+        statement.bindString(5, entity.getNote());
+        statement.bindLong(6, entity.getCreatedAtEpochMillis());
       }
     };
     this.__insertionAdapterOfExpenseEntity_1 = new EntityInsertionAdapter<ExpenseEntity>(__db) {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR REPLACE INTO `expenses` (`id`,`amountCent`,`category`,`note`,`createdAtEpochMillis`) VALUES (nullif(?, 0),?,?,?,?)";
+        return "INSERT OR REPLACE INTO `expenses` (`id`,`amountCent`,`type`,`category`,`note`,`createdAtEpochMillis`) VALUES (nullif(?, 0),?,?,?,?,?)";
       }
 
       @Override
@@ -71,9 +72,10 @@ public final class ExpenseDao_Impl implements ExpenseDao {
           @NonNull final ExpenseEntity entity) {
         statement.bindLong(1, entity.getId());
         statement.bindLong(2, entity.getAmountCent());
-        statement.bindString(3, entity.getCategory());
-        statement.bindString(4, entity.getNote());
-        statement.bindLong(5, entity.getCreatedAtEpochMillis());
+        statement.bindLong(3, entity.getType());
+        statement.bindString(4, entity.getCategory());
+        statement.bindString(5, entity.getNote());
+        statement.bindLong(6, entity.getCreatedAtEpochMillis());
       }
     };
     this.__preparedStmtOfUpdateById = new SharedSQLiteStatement(__db) {
@@ -83,6 +85,7 @@ public final class ExpenseDao_Impl implements ExpenseDao {
         final String _query = "\n"
                 + "        UPDATE expenses\n"
                 + "        SET amountCent = ?,\n"
+                + "            type = ?,\n"
                 + "            category = ?,\n"
                 + "            note = ?\n"
                 + "        WHERE id = ?\n"
@@ -138,8 +141,8 @@ public final class ExpenseDao_Impl implements ExpenseDao {
   }
 
   @Override
-  public Object updateById(final long id, final long amountCent, final String category,
-      final String note, final Continuation<? super Integer> $completion) {
+  public Object updateById(final long id, final long amountCent, final int type,
+      final String category, final String note, final Continuation<? super Integer> $completion) {
     return CoroutinesRoom.execute(__db, true, new Callable<Integer>() {
       @Override
       @NonNull
@@ -148,10 +151,12 @@ public final class ExpenseDao_Impl implements ExpenseDao {
         int _argIndex = 1;
         _stmt.bindLong(_argIndex, amountCent);
         _argIndex = 2;
-        _stmt.bindString(_argIndex, category);
+        _stmt.bindLong(_argIndex, type);
         _argIndex = 3;
-        _stmt.bindString(_argIndex, note);
+        _stmt.bindString(_argIndex, category);
         _argIndex = 4;
+        _stmt.bindString(_argIndex, note);
+        _argIndex = 5;
         _stmt.bindLong(_argIndex, id);
         try {
           __db.beginTransaction();
@@ -210,6 +215,7 @@ public final class ExpenseDao_Impl implements ExpenseDao {
         try {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
           final int _cursorIndexOfAmountCent = CursorUtil.getColumnIndexOrThrow(_cursor, "amountCent");
+          final int _cursorIndexOfType = CursorUtil.getColumnIndexOrThrow(_cursor, "type");
           final int _cursorIndexOfCategory = CursorUtil.getColumnIndexOrThrow(_cursor, "category");
           final int _cursorIndexOfNote = CursorUtil.getColumnIndexOrThrow(_cursor, "note");
           final int _cursorIndexOfCreatedAtEpochMillis = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAtEpochMillis");
@@ -220,13 +226,15 @@ public final class ExpenseDao_Impl implements ExpenseDao {
             _tmpId = _cursor.getLong(_cursorIndexOfId);
             final long _tmpAmountCent;
             _tmpAmountCent = _cursor.getLong(_cursorIndexOfAmountCent);
+            final int _tmpType;
+            _tmpType = _cursor.getInt(_cursorIndexOfType);
             final String _tmpCategory;
             _tmpCategory = _cursor.getString(_cursorIndexOfCategory);
             final String _tmpNote;
             _tmpNote = _cursor.getString(_cursorIndexOfNote);
             final long _tmpCreatedAtEpochMillis;
             _tmpCreatedAtEpochMillis = _cursor.getLong(_cursorIndexOfCreatedAtEpochMillis);
-            _item = new ExpenseEntity(_tmpId,_tmpAmountCent,_tmpCategory,_tmpNote,_tmpCreatedAtEpochMillis);
+            _item = new ExpenseEntity(_tmpId,_tmpAmountCent,_tmpType,_tmpCategory,_tmpNote,_tmpCreatedAtEpochMillis);
             _result.add(_item);
           }
           return _result;
@@ -260,6 +268,7 @@ public final class ExpenseDao_Impl implements ExpenseDao {
         try {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
           final int _cursorIndexOfAmountCent = CursorUtil.getColumnIndexOrThrow(_cursor, "amountCent");
+          final int _cursorIndexOfType = CursorUtil.getColumnIndexOrThrow(_cursor, "type");
           final int _cursorIndexOfCategory = CursorUtil.getColumnIndexOrThrow(_cursor, "category");
           final int _cursorIndexOfNote = CursorUtil.getColumnIndexOrThrow(_cursor, "note");
           final int _cursorIndexOfCreatedAtEpochMillis = CursorUtil.getColumnIndexOrThrow(_cursor, "createdAtEpochMillis");
@@ -270,13 +279,15 @@ public final class ExpenseDao_Impl implements ExpenseDao {
             _tmpId = _cursor.getLong(_cursorIndexOfId);
             final long _tmpAmountCent;
             _tmpAmountCent = _cursor.getLong(_cursorIndexOfAmountCent);
+            final int _tmpType;
+            _tmpType = _cursor.getInt(_cursorIndexOfType);
             final String _tmpCategory;
             _tmpCategory = _cursor.getString(_cursorIndexOfCategory);
             final String _tmpNote;
             _tmpNote = _cursor.getString(_cursorIndexOfNote);
             final long _tmpCreatedAtEpochMillis;
             _tmpCreatedAtEpochMillis = _cursor.getLong(_cursorIndexOfCreatedAtEpochMillis);
-            _item = new ExpenseEntity(_tmpId,_tmpAmountCent,_tmpCategory,_tmpNote,_tmpCreatedAtEpochMillis);
+            _item = new ExpenseEntity(_tmpId,_tmpAmountCent,_tmpType,_tmpCategory,_tmpNote,_tmpCreatedAtEpochMillis);
             _result.add(_item);
           }
           return _result;

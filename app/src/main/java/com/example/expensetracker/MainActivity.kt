@@ -109,7 +109,8 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onStatisticsClick = {
                                     currentScreen = Screen.Statistics
-                                }
+                                },
+                                viewModel = expenseViewModel
                             )
                         }
                         Screen.Settings -> {

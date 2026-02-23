@@ -50,6 +50,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -85,9 +86,12 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material.icons.filled.Restaurant
@@ -128,10 +132,16 @@ import androidx.compose.foundation.background
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.example.expensetracker.ui.viewmodel.ExpenseViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -154,21 +164,20 @@ fun ExpenseListScreen(
     onNextMonth: () -> Unit,
     onCurrentMonth: () -> Unit,
     onSettingsClick: () -> Unit,
-    onStatisticsClick: () -> Unit
+    onStatisticsClick: () -> Unit,
+    viewModel: ExpenseViewModel
 ) {
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
-    var showBudgetDialog by rememberSaveable { mutableStateOf(false) }
-    var showFilterDialog by rememberSaveable { mutableStateOf(false) }
     var editingItem by remember { mutableStateOf<ExpenseItemUiModel?>(null) }
     var deletingItem by remember { mutableStateOf<ExpenseItemUiModel?>(null) }
     var startDateInput by rememberSaveable { mutableStateOf(uiState.startDateInput) }
     var endDateInput by rememberSaveable { mutableStateOf(uiState.endDateInput) }
-    var isSearchActive by rememberSaveable { mutableStateOf(false) }
     var searchInput by rememberSaveable { mutableStateOf(searchQuery) }
     var selectedIds by remember { mutableStateOf(emptySet<Long>()) }
     var showBatchDeleteConfirm by remember { mutableStateOf(false) }
     val isSelectionMode = selectedIds.isNotEmpty()
     val haptic = LocalHapticFeedback.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.startDateInput) {
         startDateInput = uiState.startDateInput
@@ -179,10 +188,25 @@ fun ExpenseListScreen(
     LaunchedEffect(uiState.searchQuery) {
         searchInput = uiState.searchQuery
         if (uiState.searchQuery.isNotBlank()) {
-            isSearchActive = true
+            // isSearchActive = true // Original line, will be replaced by new state management
         }
     }
+    var showBudgetDialog by remember { mutableStateOf(false) }
+
+    var showFilterDialog by remember { mutableStateOf(false) }
+    var isSearchActive by remember { mutableStateOf(false) }
+
+    val dateRangeFilterState by viewModel.dateRangeFilterState.collectAsState()
     
+    val syncMessage by viewModel.syncMessage.collectAsState()
+
+    LaunchedEffect(syncMessage) {
+        syncMessage?.let { msg ->
+            snackbarHostState.showSnackbar(msg)
+            viewModel.clearSyncMessage()
+        }
+    }
+
     LaunchedEffect(addExpenseTrigger) {
         if (addExpenseTrigger > 0L) {
             showAddDialog = true
@@ -190,18 +214,8 @@ fun ExpenseListScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
-        floatingActionButton = {
-            AnimatedVisibility(
-                visible = !isSelectionMode,
-                enter = scaleIn() + fadeIn(),
-                exit = scaleOut() + fadeOut()
-            ) {
-                FloatingActionButton(onClick = { showAddDialog = true }) {
-                    Icon(imageVector = Icons.Default.MoreHoriz, contentDescription = "Add")
-                }
-            }
-        },
         bottomBar = {
             AnimatedVisibility(
                 visible = isSelectionMode,
@@ -266,10 +280,11 @@ fun ExpenseListScreen(
             }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
             LazyColumn(
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(bottom = innerPadding.calculateBottomPadding() + 80.dp),
@@ -288,7 +303,8 @@ fun ExpenseListScreen(
                         onBudgetClick = { showBudgetDialog = true },
                         onSearchClick = { isSearchActive = !isSearchActive },
                         onFilterClick = { showFilterDialog = true },
-                        onSettingsClick = onSettingsClick
+                        onSettingsClick = onSettingsClick,
+                        onSyncClick = { viewModel.syncFromAutoAccounting() }
                     )
                 }
 
@@ -405,6 +421,39 @@ fun ExpenseListScreen(
                         }
                     }
                 }
+            }
+        }
+            
+            // FAB 独立于 Scaffold，避免被底部操作栏顶起而产生跳跃
+            // 不加任何 AnimatedVisibility——直接用 alpha/scale 诚主进出场动画
+            val fabAlpha by animateFloatAsState(
+                targetValue = if (isSelectionMode) 0f else 1f,
+                animationSpec = tween(durationMillis = 200),
+                label = "fabAlpha"
+            )
+            val fabScale by animateFloatAsState(
+                targetValue = if (isSelectionMode) 0.8f else 1f,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMedium),
+                label = "fabScale"
+            )
+            FloatingActionButton(
+                onClick = { if (!isSelectionMode) showAddDialog = true },
+                elevation = FloatingActionButtonDefaults.elevation(
+                    defaultElevation = 0.dp,
+                    pressedElevation = 0.dp,
+                    focusedElevation = 0.dp,
+                    hoveredElevation = 0.dp
+                ),
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 16.dp)
+                    .graphicsLayer {
+                        alpha = fabAlpha
+                        scaleX = fabScale
+                        scaleY = fabScale
+                    }
+            ) {
+                Icon(imageVector = Icons.Default.MoreHoriz, contentDescription = "Add")
             }
         }
     }
@@ -717,7 +766,8 @@ private fun HomeHeader(
     onBudgetClick: () -> Unit,
     onSearchClick: () -> Unit,
     onFilterClick: () -> Unit,
-    onSettingsClick: () -> Unit
+    onSettingsClick: () -> Unit,
+    onSyncClick: () -> Unit
 ) {
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
@@ -792,17 +842,39 @@ private fun HomeHeader(
 
             // Total Balance
             Column(horizontalAlignment = Alignment.Start) {
-                Text(
-                    text = "总结余",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                )
-                Text(
-                    text = formatAmount(netBalance),
-                    style = MaterialTheme.typography.displayMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column {
+                        Text(
+                            text = "总结余",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                        )
+                        Text(
+                            text = formatAmount(netBalance),
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                    IconButton(
+                        onClick = onSyncClick,
+                        modifier = Modifier
+                            .background(
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                                shape = androidx.compose.foundation.shape.CircleShape
+                            )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Sync,
+                            contentDescription = "自动同步账单",
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
