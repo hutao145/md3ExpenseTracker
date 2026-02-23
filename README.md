@@ -1,5 +1,9 @@
 # 📒 MD3 记账本
 
+<div align="right">
+  <strong>简体中文</strong> | <a href="README_EN.md">English</a>
+</div>
+
 一款基于 **Material Design 3** 设计规范的 Android 本地记账应用，采用现代 Jetpack 技术栈构建，支持收支管理、分类统计、日期筛选以及与 [AutoAccounting（自动记账）](https://github.com/AutoAccountingOrg/AutoAccounting) 模块的账单同步。
 
 ---
