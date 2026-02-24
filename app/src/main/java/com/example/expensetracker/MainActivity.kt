@@ -28,7 +28,7 @@ import com.example.expensetracker.widget.ExpenseAppWidget
 import androidx.glance.appwidget.updateAll
 
 enum class Screen {
-    Home, Settings, Statistics
+    Home, Settings, Statistics, Backup
 }
 
 class MainActivity : ComponentActivity() {
@@ -44,16 +44,21 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ExpenseTrackerTheme {
+                val sharedPreferences = applicationContext.getSharedPreferences("ExpenseAppPrefs", android.content.Context.MODE_PRIVATE)
                 val expenseViewModel: ExpenseViewModel = viewModel(
-                    factory = ExpenseViewModel.factory(repository)
+                    factory = ExpenseViewModel.factory(repository, sharedPreferences)
                 )
                 val uiState by expenseViewModel.uiState.collectAsStateWithLifecycle()
 
                 val addExpenseTriggerValue by addExpenseTrigger.collectAsState()
                 var currentScreen by remember { mutableStateOf(Screen.Home) }
 
-                BackHandler(enabled = currentScreen == Screen.Settings || currentScreen == Screen.Statistics) {
-                    currentScreen = Screen.Home
+                BackHandler(enabled = currentScreen != Screen.Home) {
+                    if (currentScreen == Screen.Backup) {
+                        currentScreen = Screen.Settings
+                    } else {
+                        currentScreen = Screen.Home
+                    }
                 }
 
                 Crossfade(targetState = currentScreen, label = "ScreenTransition") { screen ->
@@ -116,14 +121,21 @@ class MainActivity : ComponentActivity() {
                         Screen.Settings -> {
                             SettingsScreen(
                                 onBackClick = { currentScreen = Screen.Home },
+                                onBackupClick = { currentScreen = Screen.Backup },
+                                onGenerateTestData = {
+                                    expenseViewModel.generateTestData()
+                                }
+                            )
+                        }
+                        Screen.Backup -> {
+                            com.example.expensetracker.ui.screen.BackupScreen(
+                                viewModel = expenseViewModel,
+                                onBackClick = { currentScreen = Screen.Settings },
                                 onExportUri = { uri ->
                                     expenseViewModel.exportDataToUri(applicationContext, uri)
                                 },
                                 onImportUri = { uri ->
                                     expenseViewModel.importDataFromUri(applicationContext, uri)
-                                },
-                                onGenerateTestData = {
-                                    expenseViewModel.generateTestData()
                                 }
                             )
                         }

@@ -24,6 +24,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
 import java.util.Locale
 import android.content.Context
+import android.content.SharedPreferences
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -59,9 +60,36 @@ data class DateRangeFilterState(
     val errorMessage: String? = null
 )
 
+data class WebDavState(
+    val url: String = "https://data.cstcloud.cn/dav",
+    val username: String = "",
+    val password: String = "",
+    val path: String = "md3_expense_backup", // now acts as a directory
+    val isTesting: Boolean = false,
+    val isBackingUp: Boolean = false,
+    val isRestoring: Boolean = false,
+    val isFetchingFiles: Boolean = false,
+    val isDeletingFile: Boolean = false,
+    val fileList: List<com.example.expensetracker.data.remote.WebDavFileItem> = emptyList(),
+    val showRestoreDialog: Boolean = false,
+    val message: String? = null
+)
+
 class ExpenseViewModel(
-    private val repository: ExpenseRepository
+    private val repository: ExpenseRepository,
+    private val sharedPreferences: SharedPreferences
 ) : ViewModel() {
+
+    private val _webDavState = MutableStateFlow(
+        WebDavState(
+            url = sharedPreferences.getString("webdav_url", "https://data.cstcloud.cn/dav") ?: "https://data.cstcloud.cn/dav",
+            username = sharedPreferences.getString("webdav_username", "") ?: "",
+            password = sharedPreferences.getString("webdav_password", "") ?: "",
+            path = sharedPreferences.getString("webdav_path", "md3_expense_backup") ?: "md3_expense_backup"
+        )
+    )
+    val webDavState: StateFlow<WebDavState> = _webDavState.asStateFlow()
+    private val webDavClient = com.example.expensetracker.data.remote.WebDavClient()
 
     private val zoneId: ZoneId = ZoneId.systemDefault()
     private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.CHINA)
@@ -572,13 +600,195 @@ class ExpenseViewModel(
         }
     }
 
+    fun dismissRestoreDialog() { _webDavState.value = _webDavState.value.copy(showRestoreDialog = false) }
+
+    fun updateWebDavUrl(url: String) { 
+        _webDavState.value = _webDavState.value.copy(url = url)
+        sharedPreferences.edit().putString("webdav_url", url).apply()
+    }
+    fun updateWebDavUsername(username: String) { 
+        _webDavState.value = _webDavState.value.copy(username = username)
+        sharedPreferences.edit().putString("webdav_username", username).apply()
+    }
+    fun updateWebDavPassword(password: String) { 
+        _webDavState.value = _webDavState.value.copy(password = password)
+        sharedPreferences.edit().putString("webdav_password", password).apply()
+    }
+    fun updateWebDavPath(path: String) { 
+        _webDavState.value = _webDavState.value.copy(path = path)
+        sharedPreferences.edit().putString("webdav_path", path).apply()
+    }
+    fun clearWebDavMessage() { _webDavState.value = _webDavState.value.copy(message = null) }
+
+    fun fetchWebDavFileList() {
+        val state = _webDavState.value
+        if (state.url.isBlank() || state.username.isBlank() || state.password.isBlank()) {
+            _webDavState.value = state.copy(message = "请填写完整的配置信息")
+            return
+        }
+
+        _webDavState.value = state.copy(isFetchingFiles = true, showRestoreDialog = true, message = null)
+        viewModelScope.launch {
+            val list = withContext(Dispatchers.IO) {
+                val fullUrl = if (state.url.endsWith("/")) state.url + state.path else "${state.url}/${state.path}"
+                // Add trailing slash if not present to ensure we list the directory properly
+                val dirUrl = if (fullUrl.endsWith("/")) fullUrl else "$fullUrl/"
+                webDavClient.listFiles(dirUrl, state.username, state.password)
+            }
+            _webDavState.value = _webDavState.value.copy(
+                isFetchingFiles = false,
+                fileList = list
+            )
+        }
+    }
+
+    fun deleteWebDavFile(fileName: String) {
+        val state = _webDavState.value
+        _webDavState.value = state.copy(isDeletingFile = true, message = null)
+        viewModelScope.launch {
+            val success = withContext(Dispatchers.IO) {
+                val fullUrl = if (state.url.endsWith("/")) state.url + state.path else "${state.url}/${state.path}"
+                val dirUrl = if (fullUrl.endsWith("/")) fullUrl else "$fullUrl/"
+                val fileUrl = dirUrl + fileName
+                webDavClient.deleteFile(fileUrl, state.username, state.password)
+            }
+            if (success) {
+                _webDavState.value = _webDavState.value.copy(isDeletingFile = false, message = "删除成功")
+                fetchWebDavFileList() // refresh list
+            } else {
+                _webDavState.value = _webDavState.value.copy(isDeletingFile = false, message = "删除失败")
+            }
+        }
+    }
+
+    fun testWebDavConnection() {
+        val state = _webDavState.value
+        if (state.url.isBlank() || state.username.isBlank() || state.password.isBlank()) {
+            _webDavState.value = state.copy(message = "请填写完整的配置信息")
+            return
+        }
+        
+        _webDavState.value = state.copy(isTesting = true, message = null)
+        viewModelScope.launch {
+            val success = withContext(Dispatchers.IO) {
+                webDavClient.testConnection(state.url, state.username, state.password)
+            }
+            _webDavState.value = _webDavState.value.copy(
+                isTesting = false, 
+                message = if (success) "测试连接成功" else "测试连接失败"
+            )
+        }
+    }
+
+    fun backupToWebDav(context: Context) {
+        val state = _webDavState.value
+        if (state.url.isBlank() || state.username.isBlank() || state.password.isBlank() || state.path.isBlank()) {
+            _webDavState.value = state.copy(message = "请填写完整的配置信息")
+            return
+        }
+
+        _webDavState.value = state.copy(isBackingUp = true, message = null)
+        viewModelScope.launch {
+            val success = withContext(Dispatchers.IO) {
+                try {
+                    val file = java.io.File(context.cacheDir, "temp_backup.csv")
+                    val expenses = repository.getAllExpensesSnapshot()
+                    val sb = StringBuilder()
+                    sb.append("\uFEFF")
+                    sb.append("日期,类型,分类,金额(元),备注\n")
+
+                    val csvFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                    expenses.forEach { entity ->
+                        val date = LocalDateTime.ofInstant(
+                            Instant.ofEpochMilli(entity.createdAtEpochMillis),
+                            ZoneId.systemDefault()
+                        ).format(csvFormatter)
+
+                        val amount = BigDecimal(entity.amountCent)
+                            .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
+                            .toString()
+                        
+                        val typeStr = if (entity.type == 1) "收入" else "支出"
+                        val note = entity.note.replace("\"", "\"\"")
+                        val safeNote = if (note.contains(",") || note.contains("\n")) "\"$note\"" else note
+
+                        sb.append("$date,$typeStr,${entity.category},$amount,$safeNote\n")
+                    }
+
+                    // Use timestamp for file name
+                    val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(java.util.Date())
+                    val fileName = "backup_$timestamp.csv"
+                    
+                    file.writeText(sb.toString())
+
+                    val fullUrl = if (state.url.endsWith("/")) state.url + state.path else "${state.url}/${state.path}"
+                    val dirUrl = if (fullUrl.endsWith("/")) fullUrl else "$fullUrl/"
+                    val targetUrl = dirUrl + fileName
+                    
+                    val result = webDavClient.uploadFile(targetUrl, state.username, state.password, file)
+                    file.delete()
+                    result
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+
+            _webDavState.value = _webDavState.value.copy(
+                isBackingUp = false,
+                message = if (success) "备份上传成功" else "备份上传失败"
+            )
+        }
+    }
+
+    fun restoreFromWebDav(context: Context, fileName: String) {
+        val state = _webDavState.value
+        if (state.url.isBlank() || state.username.isBlank() || state.password.isBlank() || state.path.isBlank()) {
+            _webDavState.value = state.copy(message = "请填写完整的配置信息")
+            return
+        }
+
+        _webDavState.value = state.copy(isRestoring = true, showRestoreDialog = false, message = null)
+        viewModelScope.launch {
+            val success = withContext(Dispatchers.IO) {
+                try {
+                    val file = java.io.File(context.cacheDir, fileName)
+                    val fullUrl = if (state.url.endsWith("/")) state.url + state.path else "${state.url}/${state.path}"
+                    val dirUrl = if (fullUrl.endsWith("/")) fullUrl else "$fullUrl/"
+                    val sourceUrl = dirUrl + fileName
+                    
+                    val downloaded = webDavClient.downloadFile(sourceUrl, state.username, state.password, file)
+                    if (downloaded) {
+                        // 借用现有的 import 逻辑
+                        val uri = android.net.Uri.fromFile(file)
+                        importDataFromUri(context, uri)
+                        // Note: file.delete() might be too early if importDataFromUri is async and reads the file later in IO dispatcher
+                        // Considering the existing importDataFromUri logic launches async IO, we shouldn't delete immediately here.
+                        true
+                    } else {
+                        false
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    false
+                }
+            }
+
+            // 因为 importDataFromUri 是异步的，这里仅仅表示文件拉取和解析触发成功
+            _webDavState.value = _webDavState.value.copy(
+                isRestoring = false,
+                message = if (success) "恢复任务已触发成功" else "从云端恢复失败"
+            )
+        }
+    }
+
     companion object {
-        fun factory(repository: ExpenseRepository): ViewModelProvider.Factory {
+        fun factory(repository: ExpenseRepository, sharedPreferences: SharedPreferences): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
                     if (modelClass.isAssignableFrom(ExpenseViewModel::class.java)) {
-                        return ExpenseViewModel(repository) as T
+                        return ExpenseViewModel(repository, sharedPreferences) as T
                     }
                     throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
                 }
