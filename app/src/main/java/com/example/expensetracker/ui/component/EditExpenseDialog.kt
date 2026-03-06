@@ -187,24 +187,32 @@ fun EditExpenseDialog(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         
-                        FlowRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.heightIn(min = 130.dp)
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            currentSuggestions.forEach { label ->
-                                FilterChip(
-                                    selected = categoryInput == label,
-                                    onClick = { categoryInput = label },
-                                    label = { Text(label) },
-                                    leadingIcon = {
-                                        Icon(
-                                            imageVector = getCategoryIcon(label),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(18.dp)
+                            currentSuggestions.chunked(4).forEach { row ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    row.forEach { label ->
+                                        FilterChip(
+                                            modifier = Modifier.weight(1f),
+                                            selected = categoryInput == label,
+                                            onClick = { categoryInput = label },
+                                            label = { Text(label, maxLines = 1) },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = getCategoryIcon(label),
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                            }
                                         )
                                     }
-                                )
+                                    repeat(4 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
+                                }
                             }
                         }
                     }

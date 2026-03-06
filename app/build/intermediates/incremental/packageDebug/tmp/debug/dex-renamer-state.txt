@@ -1,4 +1,4 @@
-#Fri Mar 06 20:20:36 CST 2026
+#Fri Mar 06 21:42:00 CST 2026
 base.0=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes.dex
 base.1=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\0\\classes.dex
 base.10=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes2.dex
