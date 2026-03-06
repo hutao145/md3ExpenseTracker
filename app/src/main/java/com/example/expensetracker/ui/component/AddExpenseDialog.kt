@@ -64,7 +64,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import androidx.compose.foundation.clickable
-import com.example.expensetracker.ui.screen.getCategoryIcon
+import com.example.expensetracker.ui.util.getCategoryIcon
 
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SegmentedButton

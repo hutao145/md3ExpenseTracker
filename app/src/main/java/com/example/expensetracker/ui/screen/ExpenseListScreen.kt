@@ -81,6 +81,7 @@ import com.example.expensetracker.ui.model.CategorySummaryUiModel
 import com.example.expensetracker.ui.model.DailyExpenseUiModel
 import com.example.expensetracker.ui.model.ExpenseItemUiModel
 import com.example.expensetracker.ui.viewmodel.ExpenseUiState
+import com.example.expensetracker.ui.util.getCategoryIcon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward

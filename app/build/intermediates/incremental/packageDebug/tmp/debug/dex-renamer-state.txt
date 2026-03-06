@@ -1,16 +1,16 @@
-#Mon Feb 23 20:45:28 CST 2026
-base.0=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes.dex
-base.1=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\0\\classes.dex
-base.10=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes2.dex
-base.11=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes3.dex
-base.2=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\12\\classes.dex
-base.3=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\14\\classes.dex
-base.4=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\15\\classes.dex
-base.5=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\4\\classes.dex
-base.6=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\6\\classes.dex
-base.7=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\7\\classes.dex
-base.8=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\8\\classes.dex
-base.9=E\:\\AI\\ai projects\\md3 book\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\9\\classes.dex
+#Fri Mar 06 18:30:26 CST 2026
+base.0=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes.dex
+base.1=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\0\\classes.dex
+base.10=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes2.dex
+base.11=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeExtDexDebug\\classes3.dex
+base.2=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\12\\classes.dex
+base.3=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\14\\classes.dex
+base.4=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\15\\classes.dex
+base.5=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\4\\classes.dex
+base.6=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\6\\classes.dex
+base.7=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\7\\classes.dex
+base.8=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\8\\classes.dex
+base.9=E\:\\AI\\ai projects\\md3ExpenseTracker\\app\\build\\intermediates\\dex\\debug\\mergeProjectDexDebug\\9\\classes.dex
 path.0=classes.dex
 path.1=0/classes.dex
 path.10=classes2.dex

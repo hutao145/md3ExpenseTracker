@@ -70,4 +70,11 @@ dependencies {
     // Jetpack Glance for App Widgets
     implementation("androidx.glance:glance-appwidget:1.1.1")
     implementation("androidx.glance:glance-material3:1.1.1")
+    dependencies {
+        // 添加 OkHttp 依赖
+        implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+        // 如果你以后需要用到日志拦截器，也可以顺便加上这一行
+        // implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    }
 }

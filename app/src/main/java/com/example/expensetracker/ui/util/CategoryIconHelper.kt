@@ -1,4 +1,4 @@
-package com.example.expensetracker.ui.screen
+package com.example.expensetracker.ui.util
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
