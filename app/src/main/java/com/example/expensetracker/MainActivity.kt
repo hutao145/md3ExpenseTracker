@@ -26,15 +26,27 @@ import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
 import com.example.expensetracker.widget.ExpenseAppWidget
 import androidx.glance.appwidget.updateAll
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.Modifier
+import com.example.expensetracker.ui.screen.AssetScreen
 
 enum class Screen {
-    Home, Settings, Statistics, Backup
+    Home, Asset, Statistics, Settings, Backup
 }
 
 class MainActivity : ComponentActivity() {
 
     private val database by lazy { ExpenseDatabase.getInstance(applicationContext) }
-    private val repository by lazy { ExpenseRepository(database.expenseDao()) }
+    private val repository by lazy { ExpenseRepository(database.expenseDao(), database.assetDao()) }
     
     private val addExpenseTrigger = MutableStateFlow(0L)
 
@@ -61,89 +73,128 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                Crossfade(targetState = currentScreen, label = "ScreenTransition") { screen ->
-                    when (screen) {
-                        Screen.Home -> {
-                            ExpenseListScreen(
-                                uiState = uiState,
-                                isAmountValid = expenseViewModel::isAmountValid,
-                                searchQuery = uiState.searchQuery,
-                                addExpenseTrigger = addExpenseTriggerValue,
-                                onSearchQueryChange = { query ->
-                                    expenseViewModel.updateSearchQuery(query)
-                                },
-                                onAddExpense = { amountInput, type, category, note, dateMillis ->
-                                    expenseViewModel.addExpense(amountInput, type, category, note, dateMillis)
-                                    updateWidget()
-                                },
-                                onUpdateExpense = { id, amountInput, type, category, note ->
-                                    expenseViewModel.updateExpense(id, amountInput, type, category, note)
-                                    updateWidget()
-                                },
-                                onDeleteExpense = { id ->
-                                    expenseViewModel.deleteExpense(id)
-                                    updateWidget()
-                                },
-                                onDeleteMultipleExpenses = { ids ->
-                                    expenseViewModel.deleteMultipleExpenses(ids)
-                                    updateWidget()
-                                },
-                                onApplyDateRange = { startDateInput, endDateInput ->
-                                    expenseViewModel.applyDateRange(startDateInput, endDateInput)
-                                },
-                                onClearDateRange = {
-                                    expenseViewModel.clearDateRange()
-                                },
-                                onSetMonthlyBudget = { amountInput ->
-                                    expenseViewModel.setMonthlyBudget(amountInput)
-                                },
-                                onClearMonthlyBudget = {
-                                    expenseViewModel.clearMonthlyBudget()
-                                },
-                                onPreviousMonth = {
-                                    expenseViewModel.goToPreviousMonth()
-                                },
-                                onNextMonth = {
-                                    expenseViewModel.goToNextMonth()
-                                },
-                                onCurrentMonth = {
-                                    expenseViewModel.goToCurrentMonth()
-                                },
-                                onSettingsClick = {
-                                    currentScreen = Screen.Settings
-                                },
-                                onStatisticsClick = {
-                                    currentScreen = Screen.Statistics
-                                },
-                                viewModel = expenseViewModel
-                            )
+                val mainScreens = listOf(Screen.Home, Screen.Asset, Screen.Statistics)
+
+                Scaffold(
+                    bottomBar = {
+                        if (currentScreen in mainScreens) {
+                            NavigationBar {
+                                NavigationBarItem(
+                                    selected = currentScreen == Screen.Home,
+                                    onClick = { currentScreen = Screen.Home },
+                                    icon = { Icon(Icons.Default.Edit, contentDescription = "记账") },
+                                    label = { Text("记账") }
+                                )
+                                NavigationBarItem(
+                                    selected = currentScreen == Screen.Asset,
+                                    onClick = { currentScreen = Screen.Asset },
+                                    icon = { Icon(Icons.Default.AccountBalance, contentDescription = "资产") },
+                                    label = { Text("资产") }
+                                )
+                                NavigationBarItem(
+                                    selected = currentScreen == Screen.Statistics,
+                                    onClick = { currentScreen = Screen.Statistics },
+                                    icon = { Icon(Icons.Default.BarChart, contentDescription = "统计") },
+                                    label = { Text("统计") }
+                                )
+                            }
                         }
-                        Screen.Settings -> {
-                            SettingsScreen(
-                                onBackClick = { currentScreen = Screen.Home },
-                                onBackupClick = { currentScreen = Screen.Backup },
-                                onGenerateTestData = {
-                                    expenseViewModel.generateTestData()
-                                }
-                            )
-                        }
-                        Screen.Backup -> {
-                            com.example.expensetracker.ui.screen.BackupScreen(
-                                viewModel = expenseViewModel,
-                                onBackClick = { currentScreen = Screen.Settings },
-                                onExportUri = { uri ->
-                                    expenseViewModel.exportDataToUri(applicationContext, uri)
-                                },
-                                onImportUri = { uri ->
-                                    expenseViewModel.importDataFromUri(applicationContext, uri)
-                                }
-                            )
-                        }
-                        Screen.Statistics -> {
-                            com.example.expensetracker.ui.screen.StatisticsScreen(
-                                uiState = uiState,
-                                onBackClick = { currentScreen = Screen.Home }
-                            )
+                    }
+                ) { innerPadding ->
+                    Crossfade(
+                        targetState = currentScreen,
+                        label = "ScreenTransition",
+                        modifier = Modifier.padding(innerPadding)
+                    ) { screen ->
+                        when (screen) {
+                            Screen.Home -> {
+                                ExpenseListScreen(
+                                    uiState = uiState,
+                                    isAmountValid = expenseViewModel::isAmountValid,
+                                    searchQuery = uiState.searchQuery,
+                                    addExpenseTrigger = addExpenseTriggerValue,
+                                    onSearchQueryChange = { query ->
+                                        expenseViewModel.updateSearchQuery(query)
+                                    },
+                                    onAddExpense = { amountInput, type, category, note, assetId, dateMillis ->
+                                        expenseViewModel.addExpense(amountInput, type, category, note, assetId, dateMillis)
+                                        updateWidget()
+                                    },
+                                    onUpdateExpense = { id, amountInput, type, category, note, assetId ->
+                                        expenseViewModel.updateExpense(id, amountInput, type, category, note, assetId)
+                                        updateWidget()
+                                    },
+                                    onDeleteExpense = { id ->
+                                        expenseViewModel.deleteExpense(id)
+                                        updateWidget()
+                                    },
+                                    onDeleteMultipleExpenses = { ids ->
+                                        expenseViewModel.deleteMultipleExpenses(ids)
+                                        updateWidget()
+                                    },
+                                    onApplyDateRange = { startDateInput, endDateInput ->
+                                        expenseViewModel.applyDateRange(startDateInput, endDateInput)
+                                    },
+                                    onClearDateRange = {
+                                        expenseViewModel.clearDateRange()
+                                    },
+                                    onSetMonthlyBudget = { amountInput ->
+                                        expenseViewModel.setMonthlyBudget(amountInput)
+                                    },
+                                    onClearMonthlyBudget = {
+                                        expenseViewModel.clearMonthlyBudget()
+                                    },
+                                    onPreviousMonth = {
+                                        expenseViewModel.goToPreviousMonth()
+                                    },
+                                    onNextMonth = {
+                                        expenseViewModel.goToNextMonth()
+                                    },
+                                    onCurrentMonth = {
+                                        expenseViewModel.goToCurrentMonth()
+                                    },
+                                    onSettingsClick = {
+                                        currentScreen = Screen.Settings
+                                    },
+                                    onStatisticsClick = {
+                                        currentScreen = Screen.Statistics
+                                    },
+                                    viewModel = expenseViewModel
+                                )
+                            }
+                            Screen.Asset -> {
+                                AssetScreen(viewModel = expenseViewModel)
+                            }
+                            Screen.Settings -> {
+                                SettingsScreen(
+                                    onBackClick = { currentScreen = Screen.Home },
+                                    onBackupClick = { currentScreen = Screen.Backup },
+                                    onGenerateTestData = {
+                                        expenseViewModel.generateTestData()
+                                    }
+                                )
+                            }
+                            Screen.Backup -> {
+                                com.example.expensetracker.ui.screen.BackupScreen(
+                                    viewModel = expenseViewModel,
+                                    onBackClick = { currentScreen = Screen.Settings },
+                                    onExportUri = { uri ->
+                                        expenseViewModel.exportDataToUri(applicationContext, uri)
+                                    },
+                                    onImportUri = { uri ->
+                                        expenseViewModel.importDataFromUri(applicationContext, uri)
+                                    }
+                                )
+                            }
+                            Screen.Statistics -> {
+                                com.example.expensetracker.ui.screen.StatisticsScreen(
+                                    uiState = uiState,
+                                    onBackClick = { currentScreen = Screen.Home },
+                                    onDateRangeChanged = { start, end ->
+                                        expenseViewModel.applyDateRange(start, end)
+                                    }
+                                )
+                            }
                         }
                     }
                 }

@@ -138,6 +138,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.collectAsState
@@ -153,8 +154,8 @@ fun ExpenseListScreen(
     searchQuery: String,
     addExpenseTrigger: Long = 0L,
     onSearchQueryChange: (String) -> Unit,
-    onAddExpense: (amountInput: String, type: Int, category: String, note: String, dateMillis: Long) -> Unit,
-    onUpdateExpense: (id: Long, amountInput: String, type: Int, category: String, note: String) -> Unit,
+    onAddExpense: (amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) -> Unit,
+    onUpdateExpense: (id: Long, amountInput: String, type: Int, category: String, note: String, assetId: Long?) -> Unit,
     onDeleteExpense: (id: Long) -> Unit,
     onDeleteMultipleExpenses: (ids: Set<Long>) -> Unit,
     onApplyDateRange: (startDateInput: String, endDateInput: String) -> Unit,
@@ -439,22 +440,18 @@ fun ExpenseListScreen(
             )
             FloatingActionButton(
                 onClick = { if (!isSelectionMode) showAddDialog = true },
-                elevation = FloatingActionButtonDefaults.elevation(
-                    defaultElevation = 0.dp,
-                    pressedElevation = 0.dp,
-                    focusedElevation = 0.dp,
-                    hoveredElevation = 0.dp
-                ),
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 16.dp)
+                    .padding(end = 24.dp, bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 24.dp)
                     .graphicsLayer {
                         alpha = fabAlpha
                         scaleX = fabScale
                         scaleY = fabScale
-                    }
+                    },
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
             ) {
-                Icon(imageVector = Icons.Default.MoreHoriz, contentDescription = "Add")
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
             }
         }
     }
@@ -484,10 +481,11 @@ fun ExpenseListScreen(
 
     if (showAddDialog) {
         AddExpenseDialog(
+            assets = uiState.assets,
             isAmountValid = isAmountValid,
             onDismissRequest = { showAddDialog = false },
-            onConfirm = { amountInput, type, category, note, dateMillis ->
-                onAddExpense(amountInput, type, category, note, dateMillis)
+            onConfirm = { amountInput, type, category, note, assetId, dateMillis ->
+                onAddExpense(amountInput, type, category, note, assetId, dateMillis)
                 showAddDialog = false
             }
         )
@@ -522,15 +520,17 @@ fun ExpenseListScreen(
 
     editingItem?.let { target ->
         EditExpenseDialog(
+            assets = uiState.assets,
             expenseId = target.id,
             initialAmountInput = formatAmountInput(target.amountCent),
             initialType = target.type,
             initialCategory = target.category,
             initialNote = target.note,
+            initialAssetId = target.assetId,
             isAmountValid = isAmountValid,
             onDismissRequest = { editingItem = null },
-            onConfirm = { id, amountInput, type, category, note ->
-                 onUpdateExpense(id, amountInput, type, category, note)
+            onConfirm = { id, amountInput, type, category, note, assetId ->
+                 onUpdateExpense(id, amountInput, type, category, note, assetId)
                  editingItem = null
             }
         )
@@ -1479,12 +1479,28 @@ private fun ExpenseItemRow(
         Column(
             modifier = Modifier.weight(1f)
         ) {
-            Text(
-                text = item.category,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = item.category,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (item.assetName != null) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = item.assetName,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
             if (item.note.isNotBlank()) {
                 Text(
                     text = item.note,

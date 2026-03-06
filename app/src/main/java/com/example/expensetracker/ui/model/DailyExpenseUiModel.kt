@@ -5,7 +5,9 @@ data class ExpenseItemUiModel(
     val amountCent: Long,
     val type: Int,
     val category: String,
-    val note: String
+    val note: String,
+    val assetId: Long? = null,
+    val assetName: String? = null
 )
 
 data class DailyExpenseUiModel(

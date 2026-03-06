@@ -54,17 +54,21 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 
+import com.example.expensetracker.data.local.AssetEntity
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EditExpenseDialog(
+    assets: List<AssetEntity>,
     expenseId: Long,
     initialAmountInput: String,
     initialType: Int,
     initialCategory: String,
     initialNote: String,
+    initialAssetId: Long?,
     isAmountValid: (String) -> Boolean,
     onDismissRequest: () -> Unit,
-    onConfirm: (id: Long, amountInput: String, type: Int, category: String, note: String) -> Unit
+    onConfirm: (id: Long, amountInput: String, type: Int, category: String, note: String, assetId: Long?) -> Unit
 ) {
     var amountInput by rememberSaveable(expenseId) { mutableStateOf(initialAmountInput) }
     var selectedType by rememberSaveable(expenseId) { mutableStateOf(initialType) }
@@ -72,6 +76,7 @@ fun EditExpenseDialog(
         mutableStateOf(initialCategory.ifBlank { "其他" })
     }
     var noteInput by rememberSaveable(expenseId) { mutableStateOf(initialNote) }
+    var selectedAssetId by rememberSaveable(expenseId) { mutableStateOf(initialAssetId) }
 
     val expenseSuggestions = listOf("餐饮", "交通", "购物", "日用", "娱乐", "住房", "其他")
     val incomeSuggestions = listOf("薪资", "奖金", "理财", "收债", "其他")
@@ -204,6 +209,35 @@ fun EditExpenseDialog(
                         }
                     }
 
+                    // Asset Selection
+                    if (assets.isNotEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "关联资产 (可选)",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                FilterChip(
+                                    selected = selectedAssetId == null,
+                                    onClick = { selectedAssetId = null },
+                                    label = { Text("不关联") }
+                                )
+                                assets.forEach { asset ->
+                                    FilterChip(
+                                        selected = selectedAssetId == asset.id,
+                                        onClick = { selectedAssetId = asset.id },
+                                        label = { Text(asset.name) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     // Note Input
                     OutlinedTextField(
                         value = noteInput,
@@ -235,7 +269,7 @@ fun EditExpenseDialog(
                         TextButton(
                             onClick = {
                                 if (amountValid) {
-                                    onConfirm(expenseId, amountInput, selectedType, categoryInput, noteInput)
+                                    onConfirm(expenseId, amountInput, selectedType, categoryInput, noteInput, selectedAssetId)
                                     dismiss()
                                 }
                             },

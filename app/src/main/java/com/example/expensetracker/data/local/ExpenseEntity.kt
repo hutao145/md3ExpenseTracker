@@ -11,5 +11,6 @@ data class ExpenseEntity(
     val type: Int = 0, // 0 = Expense, 1 = Income
     val category: String = "其他",
     val note: String = "",
+    val assetId: Long? = null,
     val createdAtEpochMillis: Long
 )

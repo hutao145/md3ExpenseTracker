@@ -76,5 +76,12 @@ dependencies {
 
         // 如果你以后需要用到日志拦截器，也可以顺便加上这一行
         // implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    }
+    dependencies {
+        // 基础图标库（如果还没添加）
+        implementation("androidx.compose.material:material-icons-core")
+        // 扩展图标库（包含 'Add' 图标）
+        implementation("androidx.compose.material:material-icons-extended")
     }
 }

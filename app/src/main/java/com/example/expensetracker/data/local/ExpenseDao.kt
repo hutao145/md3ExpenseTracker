@@ -15,6 +15,9 @@ interface ExpenseDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(expenses: List<ExpenseEntity>)
 
+    @Query("SELECT * FROM expenses WHERE id = :id")
+    suspend fun getExpenseById(id: Long): ExpenseEntity?
+
     @Query(
         """
         SELECT *
@@ -39,7 +42,8 @@ interface ExpenseDao {
         SET amountCent = :amountCent,
             type = :type,
             category = :category,
-            note = :note
+            note = :note,
+            assetId = :assetId
         WHERE id = :id
         """
     )
@@ -48,7 +52,8 @@ interface ExpenseDao {
         amountCent: Long,
         type: Int,
         category: String,
-        note: String
+        note: String,
+        assetId: Long?
     ): Int
 
     @Query("DELETE FROM expenses WHERE id = :id")

@@ -70,17 +70,21 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 
+import com.example.expensetracker.data.local.AssetEntity
+
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AddExpenseDialog(
+    assets: List<AssetEntity>,
     isAmountValid: (String) -> Boolean,
     onDismissRequest: () -> Unit,
-    onConfirm: (amountInput: String, type: Int, category: String, note: String, dateMillis: Long) -> Unit
+    onConfirm: (amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) -> Unit
 ) {
     var amountInput by rememberSaveable { mutableStateOf("") }
     var selectedType by rememberSaveable { mutableStateOf(0) } // 0 = Expense, 1 = Income
     var categoryInput by rememberSaveable { mutableStateOf("其他") }
     var noteInput by rememberSaveable { mutableStateOf("") }
+    var selectedAssetId by rememberSaveable { mutableStateOf<Long?>(null) }
     var dateMillis by rememberSaveable { mutableStateOf(System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
 
@@ -218,6 +222,35 @@ fun AddExpenseDialog(
                         }
                     }
 
+                    // Asset Selection
+                    if (assets.isNotEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "关联资产 (可选)",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                FilterChip(
+                                    selected = selectedAssetId == null,
+                                    onClick = { selectedAssetId = null },
+                                    label = { Text("不关联") }
+                                )
+                                assets.forEach { asset ->
+                                    FilterChip(
+                                        selected = selectedAssetId == asset.id,
+                                        onClick = { selectedAssetId = asset.id },
+                                        label = { Text(asset.name) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     // Date Input
                     val dateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.CHINA).withZone(ZoneId.systemDefault()) }
                     
@@ -285,7 +318,7 @@ fun AddExpenseDialog(
                         TextButton(
                             onClick = {
                                 if (amountValid) {
-                                    onConfirm(amountInput, selectedType, categoryInput, noteInput, dateMillis)
+                                    onConfirm(amountInput, selectedType, categoryInput, noteInput, selectedAssetId, dateMillis)
                                     dismiss()
                                 }
                             },

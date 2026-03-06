@@ -7,6 +7,7 @@ import com.example.expensetracker.data.ExpenseRepository
 import com.example.expensetracker.ui.model.CategorySummaryUiModel
 import com.example.expensetracker.ui.model.DailyExpenseUiModel
 import com.example.expensetracker.ui.model.ExpenseItemUiModel
+import com.example.expensetracker.data.local.AssetEntity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -49,7 +50,8 @@ data class ExpenseUiState(
     val startDateInput: String = "",
     val endDateInput: String = "",
     val dateRangeError: String? = null,
-    val isDateRangeApplied: Boolean = false
+    val isDateRangeApplied: Boolean = false,
+    val assets: List<AssetEntity> = emptyList()
 )
 
 data class DateRangeFilterState(
@@ -107,10 +109,11 @@ class ExpenseViewModel(
 
     val uiState: StateFlow<ExpenseUiState> = combine(
         repository.observeExpenses(),
+        repository.observeAssets(),
         dateRangeFilterState,
         monthlyBudgetCentState,
         searchQueryState
-    ) { expenses, dateRangeFilter, monthlyBudgetCent, searchQuery ->
+    ) { expenses, assets, dateRangeFilter, monthlyBudgetCent, searchQuery ->
         val filteredByDate = expenses.filter { entity ->
             val expenseDate = Instant.ofEpochMilli(entity.createdAtEpochMillis)
                 .atZone(zoneId)
@@ -197,7 +200,9 @@ class ExpenseViewModel(
                                 amountCent = item.amountCent,
                                 type = item.type,
                                 category = item.category,
-                                note = item.note
+                                note = item.note,
+                                assetId = item.assetId,
+                                assetName = item.assetId?.let { assetId -> assets.find { it.id == assetId }?.name }
                             )
                         }
                     )
@@ -216,7 +221,8 @@ class ExpenseViewModel(
             startDateInput = dateRangeFilter.startDateInput,
             endDateInput = dateRangeFilter.endDateInput,
             dateRangeError = dateRangeFilter.errorMessage,
-            isDateRangeApplied = dateRangeFilter.startDate != null || dateRangeFilter.endDate != null
+            isDateRangeApplied = dateRangeFilter.startDate != null || dateRangeFilter.endDate != null,
+            assets = assets
         )
     }
         .stateIn(
@@ -225,7 +231,7 @@ class ExpenseViewModel(
             initialValue = ExpenseUiState()
         )
 
-    fun addExpense(amountInput: String, type: Int, category: String, note: String, dateMillis: Long) {
+    fun addExpense(amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) {
         val amountCent = parseAmountToCent(amountInput) ?: return
 
         viewModelScope.launch {
@@ -234,12 +240,13 @@ class ExpenseViewModel(
                 type = type,
                 category = category,
                 note = note,
+                assetId = assetId,
                 dateMillis = dateMillis
             )
         }
     }
 
-    fun updateExpense(id: Long, amountInput: String, type: Int, category: String, note: String) {
+    fun updateExpense(id: Long, amountInput: String, type: Int, category: String, note: String, assetId: Long?) {
         val amountCent = parseAmountToCent(amountInput) ?: return
 
         viewModelScope.launch {
@@ -248,7 +255,8 @@ class ExpenseViewModel(
                 amountCent = amountCent,
                 type = type,
                 category = category,
-                note = note
+                note = note,
+                assetId = assetId
             )
         }
     }
@@ -262,6 +270,26 @@ class ExpenseViewModel(
     fun deleteMultipleExpenses(ids: Set<Long>) {
         viewModelScope.launch {
             ids.forEach { id -> repository.deleteExpense(id) }
+        }
+    }
+
+    fun addAsset(nameInput: String, amountInput: String, type: Int, dateMillis: Long = System.currentTimeMillis()) {
+        val amountCent = parseAmountToCent(amountInput) ?: return
+        viewModelScope.launch {
+            repository.addAsset(nameInput, amountCent, type, dateMillis)
+        }
+    }
+
+    fun updateAsset(id: Long, nameInput: String, amountInput: String, type: Int) {
+        val amountCent = parseAmountToCent(amountInput) ?: return
+        viewModelScope.launch {
+            repository.updateAsset(id, nameInput, amountCent, type)
+        }
+    }
+
+    fun deleteAsset(id: Long) {
+        viewModelScope.launch {
+            repository.deleteAsset(id)
         }
     }
 
