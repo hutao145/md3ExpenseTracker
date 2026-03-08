@@ -51,7 +51,10 @@ data class ExpenseUiState(
     val endDateInput: String = "",
     val dateRangeError: String? = null,
     val isDateRangeApplied: Boolean = false,
-    val assets: List<AssetEntity> = emptyList()
+    val assets: List<AssetEntity> = emptyList(),
+    val dynamicColorEnabled: Boolean = true,
+    val themeColor: String = "Pink",
+    val amoledDarkModeEnabled: Boolean = false
 )
 
 data class DateRangeFilterState(
@@ -102,6 +105,9 @@ class ExpenseViewModel(
     val dateRangeFilterState = MutableStateFlow(DateRangeFilterState())
     private val monthlyBudgetCentState = MutableStateFlow<Long?>(null)
     private val searchQueryState = MutableStateFlow("")
+    private val dynamicColorEnabledState = MutableStateFlow(sharedPreferences.getBoolean("theme_dynamic_color", true))
+    private val themeColorState = MutableStateFlow(sharedPreferences.getString("theme_color_seed", "Pink") ?: "Pink")
+    private val amoledDarkModeEnabledState = MutableStateFlow(sharedPreferences.getBoolean("theme_amoled_dark_mode", false))
 
     init {
         goToCurrentMonth()
@@ -112,8 +118,20 @@ class ExpenseViewModel(
         repository.observeAssets(),
         dateRangeFilterState,
         monthlyBudgetCentState,
-        searchQueryState
-    ) { expenses, assets, dateRangeFilter, monthlyBudgetCent, searchQuery ->
+        combine(
+            searchQueryState, 
+            dynamicColorEnabledState, 
+            themeColorState, 
+            amoledDarkModeEnabledState
+        ) { q, d, t, a -> 
+            data class Config(val q: String, val d: Boolean, val t: String, val a: Boolean)
+            Config(q, d, t, a) 
+        }
+    ) { expenses, assets, dateRangeFilter, monthlyBudgetCent, config ->
+        val searchQuery = config.q
+        val dynamicColorEnabled = config.d
+        val themeColor = config.t
+        val amoledDarkModeEnabled = config.a
         val filteredByDate = expenses.filter { entity ->
             val expenseDate = Instant.ofEpochMilli(entity.createdAtEpochMillis)
                 .atZone(zoneId)
@@ -222,7 +240,10 @@ class ExpenseViewModel(
             endDateInput = dateRangeFilter.endDateInput,
             dateRangeError = dateRangeFilter.errorMessage,
             isDateRangeApplied = dateRangeFilter.startDate != null || dateRangeFilter.endDate != null,
-            assets = assets
+            assets = assets,
+            dynamicColorEnabled = dynamicColorEnabled,
+            themeColor = themeColor,
+            amoledDarkModeEnabled = amoledDarkModeEnabled
         )
     }
         .stateIn(
@@ -230,6 +251,21 @@ class ExpenseViewModel(
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = ExpenseUiState()
         )
+
+    fun updateDynamicColor(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("theme_dynamic_color", enabled).apply()
+        dynamicColorEnabledState.value = enabled
+    }
+
+    fun updateThemeColor(color: String) {
+        sharedPreferences.edit().putString("theme_color_seed", color).apply()
+        themeColorState.value = color
+    }
+    
+    fun updateAmoledDarkMode(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("theme_amoled_dark_mode", enabled).apply()
+        amoledDarkModeEnabledState.value = enabled
+    }
 
     fun addExpense(amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) {
         val amountCent = parseAmountToCent(amountInput) ?: return
@@ -302,7 +338,20 @@ class ExpenseViewModel(
 
     fun syncFromAutoAccounting() {
         viewModelScope.launch {
-            // 在 IO 线程执行网络请求
+            // 在 IO 线程执行网路请求
+            val currentAssets = uiState.value.assets
+            val currentHash = currentAssets.hashCode().toString()
+            val lastHash = sharedPreferences.getString("last_synced_assets_hash", "")
+            
+            if (currentHash != lastHash) {
+                val pushSuccess = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    com.example.expensetracker.data.remote.AutoAccountingService.syncAssets(currentAssets)
+                }
+                if (pushSuccess) {
+                    sharedPreferences.edit().putString("last_synced_assets_hash", currentHash).apply()
+                }
+            }
+
             val newBills = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 com.example.expensetracker.data.remote.AutoAccountingService.fetchUnsyncedBills()
             }
@@ -324,13 +373,25 @@ class ExpenseViewModel(
                     if (bill.remark.isNotEmpty()) append(bill.remark)
                 }.trim()
 
+                // 记录资产映射：优先取账单自带的 accountName，如果没有则进行模糊匹配
+                var matchedAssetId: Long? = null
+                val searchKeys = listOf(bill.accountName, bill.shopName, bill.remark).filter { it.isNotBlank() }
+                
+                for (asset in currentAssets) {
+                    if (searchKeys.any { it.contains(asset.name, ignoreCase = true) }) {
+                        matchedAssetId = asset.id
+                        break
+                    }
+                }
+
                 // 落库
                 repository.addExpense(
                     amountCent = amountCent,
                     type = bill.typeId,
                     category = if (bill.cateName.isEmpty()) "其他" else bill.cateName,
                     note = note,
-                    dateMillis = bill.time
+                    dateMillis = bill.time,
+                    assetId = matchedAssetId
                 )
 
                 // 标记为已同步
@@ -603,7 +664,7 @@ class ExpenseViewModel(
 
         return try {
             val amountYuan = normalized.toBigDecimal()
-            if (amountYuan <= BigDecimal.ZERO) {
+            if (amountYuan < BigDecimal.ZERO) {
                 null
             } else {
                 amountYuan

@@ -8,6 +8,8 @@ import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.MessageDigest
+import com.example.expensetracker.data.local.AssetEntity
 
 object AutoAccountingService {
     private const val TAG = "AutoAccountingService"
@@ -21,7 +23,8 @@ object AutoAccountingService {
         val cateName: String,
         val shopName: String,
         val shopItem: String,
-        val remark: String
+        val remark: String,
+        val accountName: String
     )
 
     /**
@@ -56,7 +59,12 @@ object AutoAccountingService {
                                 cateName = item.optString("cateName", ""),
                                 shopName = item.optString("shopName", ""),
                                 shopItem = item.optString("shopItem", ""),
-                                remark = item.optString("remark", "")
+                                remark = item.optString("remark", ""),
+                                accountName = item.optString("accountNameFrom", "")
+                                    .ifEmpty { item.optString("accountName", "") }
+                                    .ifEmpty { item.optString("account", "") }
+                                    .ifEmpty { item.optString("assetName", "") }
+                                    .ifEmpty { item.optString("asset", "") }
                             )
                         )
                     }
@@ -117,6 +125,78 @@ object AutoAccountingService {
             1 // 收入
         } else {
             0 // 支出
+        }
+    }
+
+    /**
+     * 将应用的资产列表变更为指定的 JSON 数组格式，并推送给自动记账服务。
+     */
+    fun syncAssets(assets: List<AssetEntity>): Boolean {
+        try {
+            val jsonArray = JSONArray()
+            for (asset in assets) {
+                val assetJson = JSONObject()
+                assetJson.put("name", asset.name)
+                val typeStr = when (asset.type) {
+                    0 -> "NORMAL"
+                    1 -> "CREDIT"
+                    2 -> "BORROWER"
+                    else -> "NORMAL"
+                }
+                assetJson.put("type", typeStr)
+                assetJson.put("currency", "CNY")
+                assetJson.put("sort", 0) // Default sort
+                jsonArray.put(assetJson)
+            }
+
+            val jsonData = jsonArray.toString()
+            val md5 = md5Digest(jsonData)
+
+            val url = URL("$BASE_URL/assets/put?md5=$md5")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Content-Type", "text/json; charset=UTF-8")
+            connection.doOutput = true
+            connection.connectTimeout = 3000
+            connection.readTimeout = 3000
+
+            val writer = OutputStreamWriter(connection.outputStream, "UTF-8")
+            writer.write(jsonData)
+            writer.flush()
+            writer.close()
+
+            val responseCode = connection.responseCode
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                val reader = BufferedReader(InputStreamReader(connection.inputStream))
+                val responseContent = reader.readText()
+                reader.close()
+                val jsonObject = JSONObject(responseContent)
+                return jsonObject.getInt("code") == 200
+            } else {
+                Log.e(TAG, "Push assets response HTTP Code: $responseCode")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Push assets Exception: ${e.message}")
+        }
+        return false
+    }
+
+    private fun md5Digest(input: String): String {
+        return try {
+            val md = MessageDigest.getInstance("MD5")
+            val messageDigest = md.digest(input.toByteArray(Charsets.UTF_8))
+            val hexString = StringBuilder()
+            for (b in messageDigest) {
+                val hex = Integer.toHexString(0xFF and b.toInt())
+                if (hex.length == 1) {
+                    hexString.append('0')
+                }
+                hexString.append(hex)
+            }
+            hexString.toString()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ""
         }
     }
 }

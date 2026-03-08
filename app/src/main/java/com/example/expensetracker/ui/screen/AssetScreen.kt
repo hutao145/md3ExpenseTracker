@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.expensetracker.data.local.AssetEntity
 import com.example.expensetracker.ui.component.AddAssetDialog
+import com.example.expensetracker.ui.component.EditAssetDialog
 import com.example.expensetracker.ui.viewmodel.ExpenseViewModel
 
 @Composable
@@ -52,6 +53,7 @@ fun AssetScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var editingAsset by remember { mutableStateOf<AssetEntity?>(null) }
 
     val assets = uiState.assets
     val regularAssets = assets.filter { it.type == 0 }
@@ -106,7 +108,10 @@ fun AssetScreen(
                 }
 
                 items(assets) { asset ->
-                    AssetItemCard(asset = asset)
+                    AssetItemCard(
+                        asset = asset,
+                        onClick = { editingAsset = asset }
+                    )
                 }
             }
         }
@@ -133,6 +138,22 @@ fun AssetScreen(
             onConfirm = { name, amount, type ->
                 viewModel.addAsset(name, amount, type)
                 showAddDialog = false
+            }
+        )
+    }
+
+    editingAsset?.let { asset ->
+        EditAssetDialog(
+            asset = asset,
+            isAmountValid = viewModel::isAmountValid,
+            onDismissRequest = { editingAsset = null },
+            onConfirm = { id, name, amount, type ->
+                viewModel.updateAsset(id, name, amount, type)
+                editingAsset = null
+            },
+            onDelete = { id ->
+                viewModel.deleteAsset(id)
+                editingAsset = null
             }
         )
     }
@@ -214,14 +235,18 @@ fun AssetSummaryCard(
 }
 
 @Composable
-fun AssetItemCard(asset: AssetEntity) {
+fun AssetItemCard(
+    asset: AssetEntity,
+    onClick: () -> Unit
+) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 4.dp),
         color = Color.White,
         shape = RoundedCornerShape(16.dp),
-        shadowElevation = 1.dp
+        shadowElevation = 1.dp,
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier

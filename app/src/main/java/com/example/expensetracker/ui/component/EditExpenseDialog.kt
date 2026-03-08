@@ -22,24 +22,19 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.Alignment
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.material3.AlertDialogDefaults
-import androidx.compose.material3.Surface
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +51,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 
 import com.example.expensetracker.data.local.AssetEntity
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun EditExpenseDialog(
     assets: List<AssetEntity>,
@@ -72,19 +67,25 @@ fun EditExpenseDialog(
 ) {
     var amountInput by rememberSaveable(expenseId) { mutableStateOf(initialAmountInput) }
     var selectedType by rememberSaveable(expenseId) { mutableStateOf(initialType) }
+    var isCustomCategory by rememberSaveable(expenseId) {
+        mutableStateOf(!listOf("餐饮", "交通", "购物", "日用", "娱乐", "住房", "薪资", "奖金", "理财", "收债", "其他", "").contains(initialCategory))
+    }
     var categoryInput by rememberSaveable(expenseId) {
-        mutableStateOf(initialCategory.ifBlank { "其他" })
+        mutableStateOf(if (isCustomCategory) "自定义" else initialCategory.ifBlank { "其他" })
+    }
+    var customCategoryInput by rememberSaveable(expenseId) {
+        mutableStateOf(if (isCustomCategory) initialCategory else "")
     }
     var noteInput by rememberSaveable(expenseId) { mutableStateOf(initialNote) }
     var selectedAssetId by rememberSaveable(expenseId) { mutableStateOf(initialAssetId) }
 
-    val expenseSuggestions = listOf("餐饮", "交通", "购物", "日用", "娱乐", "住房", "其他")
-    val incomeSuggestions = listOf("薪资", "奖金", "理财", "收债", "其他")
+    val expenseSuggestions = listOf("餐饮", "交通", "购物", "日用", "娱乐", "住房", "自定义", "其他")
+    val incomeSuggestions = listOf("薪资", "奖金", "理财", "收债", "自定义", "其他")
     val currentSuggestions = if (selectedType == 0) expenseSuggestions else incomeSuggestions
 
     // Ensure currently selected category is valid for type
     LaunchedEffect(selectedType) {
-        if (!currentSuggestions.contains(categoryInput) && categoryInput != "其他") {
+        if (!currentSuggestions.contains(categoryInput) && categoryInput != "其他" && categoryInput != "自定义") {
             categoryInput = "其他"
         }
     }
@@ -94,45 +95,23 @@ fun EditExpenseDialog(
     val showAmountError = amountInput.isNotBlank() && !amountValid
     val showCategoryError = categoryInput.isBlank()
 
-    var showDialog by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        showDialog = true
-    }
-
-    fun dismiss() {
-        showDialog = false
-        scope.launch {
-            delay(300)
-            onDismissRequest()
-        }
-    }
-
-    Dialog(
-        onDismissRequest = { dismiss() },
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState
     ) {
-        AnimatedVisibility(
-            visible = showDialog,
-            enter = scaleIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeIn(),
-            exit = scaleOut(animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeOut()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .navigationBarsPadding()
+                .imePadding()
+                .verticalScroll(androidx.compose.foundation.rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth(0.92f)
-                    .padding(16.dp),
-                shape = RoundedCornerShape(28.dp),
-                color = AlertDialogDefaults.containerColor,
-                tonalElevation = AlertDialogDefaults.TonalElevation
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(24.dp)
-                        .verticalScroll(androidx.compose.foundation.rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
                     Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(28.dp), tint = MaterialTheme.colorScheme.secondary)
                     
                     Text(text = "编辑记录", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface)
@@ -215,6 +194,16 @@ fun EditExpenseDialog(
                                 }
                             }
                         }
+                        
+                        androidx.compose.animation.AnimatedVisibility(visible = categoryInput == "自定义") {
+                            OutlinedTextField(
+                                value = customCategoryInput,
+                                onValueChange = { customCategoryInput = it },
+                                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                                label = { Text("输入自定义分类") },
+                                singleLine = true
+                            )
+                        }
                     }
 
                     // Asset Selection
@@ -264,30 +253,34 @@ fun EditExpenseDialog(
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
-
-                    // Buttons
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp, bottom = 24.dp),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        TextButton(onClick = { dismiss() }) {
-                            Text("取消")
-                        }
-                        Spacer(modifier = Modifier.size(8.dp))
                         TextButton(
                             onClick = {
-                                if (amountValid) {
-                                    onConfirm(expenseId, amountInput, selectedType, categoryInput, noteInput, selectedAssetId)
-                                    dismiss()
+                                scope.launch { sheetState.hide() }.invokeOnCompletion { onDismissRequest() }
+                            }
+                        ) {
+                            Text("取消", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        TextButton(
+                            onClick = {
+                                if (amountValid && categoryValid) {
+                                    val finalCategory = if (categoryInput == "自定义") {
+                                        customCategoryInput.trim().ifBlank { "其他" }
+                                    } else categoryInput
+                                    onConfirm(expenseId, amountInput, selectedType, finalCategory, noteInput, selectedAssetId)
+                                    scope.launch { sheetState.hide() }.invokeOnCompletion { onDismissRequest() }
                                 }
                             },
-                            enabled = amountValid
+                            enabled = amountValid && categoryValid
                         ) {
                             Text("保存")
                         }
                     }
-                }
-            }
         }
     }
 }

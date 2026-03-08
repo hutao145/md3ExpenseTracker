@@ -65,13 +65,14 @@ fun AddExpenseDialog(
     var amountInput by rememberSaveable { mutableStateOf("") }
     var selectedType by rememberSaveable { mutableStateOf(0) }
     var categoryInput by rememberSaveable { mutableStateOf("其他") }
+    var customCategoryInput by rememberSaveable { mutableStateOf("") }
     var noteInput by rememberSaveable { mutableStateOf("") }
     var selectedAssetId by rememberSaveable { mutableStateOf<Long?>(null) }
     var dateMillis by rememberSaveable { mutableStateOf(System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    val expenseSuggestions = listOf("餐饮", "交通", "购物", "日用", "娱乐", "住房", "其他")
-    val incomeSuggestions = listOf("薪资", "奖金", "理财", "收债", "其他")
+    val expenseSuggestions = listOf("餐饮", "交通", "购物", "日用", "娱乐", "住房", "自定义", "其他")
+    val incomeSuggestions = listOf("薪资", "奖金", "理财", "收债", "自定义", "其他")
     val currentSuggestions = if (selectedType == 0) expenseSuggestions else incomeSuggestions
 
     LaunchedEffect(selectedType) {
@@ -163,6 +164,16 @@ fun AddExpenseDialog(
                         repeat(4 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
                     }
                 }
+                
+                androidx.compose.animation.AnimatedVisibility(visible = categoryInput == "自定义") {
+                    OutlinedTextField(
+                        value = customCategoryInput,
+                        onValueChange = { customCategoryInput = it },
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        label = { Text("输入自定义分类") },
+                        singleLine = true
+                    )
+                }
             }
 
             // 关联资产
@@ -240,7 +251,11 @@ fun AddExpenseDialog(
                 Button(
                     onClick = {
                         if (amountValid) {
-                            onConfirm(amountInput, selectedType, categoryInput, noteInput, selectedAssetId, dateMillis)
+                            val finalCategory = if (categoryInput == "自定义") {
+                                customCategoryInput.trim().ifBlank { "其他" }
+                            } else categoryInput
+                            
+                            onConfirm(amountInput, selectedType, finalCategory, noteInput, selectedAssetId, dateMillis)
                             scope.launch { sheetState.hide() }.invokeOnCompletion { onDismissRequest() }
                         }
                     },

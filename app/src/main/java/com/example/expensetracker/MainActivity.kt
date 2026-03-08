@@ -55,12 +55,17 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
         enableEdgeToEdge()
         setContent {
-            ExpenseTrackerTheme {
-                val sharedPreferences = applicationContext.getSharedPreferences("ExpenseAppPrefs", android.content.Context.MODE_PRIVATE)
-                val expenseViewModel: ExpenseViewModel = viewModel(
-                    factory = ExpenseViewModel.factory(repository, sharedPreferences)
-                )
-                val uiState by expenseViewModel.uiState.collectAsStateWithLifecycle()
+            val sharedPreferences = applicationContext.getSharedPreferences("ExpenseAppPrefs", android.content.Context.MODE_PRIVATE)
+            val expenseViewModel: ExpenseViewModel = viewModel(
+                factory = ExpenseViewModel.factory(repository, sharedPreferences)
+            )
+            val uiState by expenseViewModel.uiState.collectAsStateWithLifecycle()
+
+            ExpenseTrackerTheme(
+                dynamicColor = uiState.dynamicColorEnabled,
+                themeColor = uiState.themeColor,
+                amoledDarkModeEnabled = uiState.amoledDarkModeEnabled
+            ) {
 
                 val addExpenseTriggerValue by addExpenseTrigger.collectAsState()
                 var currentScreen by remember { mutableStateOf(Screen.Home) }
@@ -167,6 +172,10 @@ class MainActivity : ComponentActivity() {
                             }
                             Screen.Settings -> {
                                 SettingsScreen(
+                                    uiState = uiState,
+                                    onDynamicColorChange = { expenseViewModel.updateDynamicColor(it) },
+                                    onThemeColorChange = { expenseViewModel.updateThemeColor(it) },
+                                    onAmoledDarkModeChange = { expenseViewModel.updateAmoledDarkMode(it) },
                                     onBackClick = { currentScreen = Screen.Home },
                                     onBackupClick = { currentScreen = Screen.Backup },
                                     onGenerateTestData = {

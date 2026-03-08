@@ -139,6 +139,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.collectAsState
@@ -215,6 +216,9 @@ fun ExpenseListScreen(
         }
     }
 
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val scope = rememberCoroutineScope()
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
@@ -288,6 +292,7 @@ fun ExpenseListScreen(
                     .fillMaxSize()
             ) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.weight(1f),
                 contentPadding = PaddingValues(bottom = innerPadding.calculateBottomPadding() + 80.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -389,7 +394,12 @@ fun ExpenseListScreen(
                         CategorySummaryCard(
                             categorySummaries = uiState.categorySummaries,
                             totalExpenseCent = uiState.totalExpenseCent,
-                            onStatisticsClick = onStatisticsClick
+                            onStatisticsClick = onStatisticsClick,
+                            onCategoryClick = { categoryName ->
+                                searchInput = categoryName
+                                onSearchQueryChange(categoryName)
+                                isSearchActive = true
+                            }
                         )
                     }
                 }
@@ -438,8 +448,7 @@ fun ExpenseListScreen(
                 animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMedium),
                 label = "fabScale"
             )
-            FloatingActionButton(
-                onClick = { if (!isSelectionMode) showAddDialog = true },
+            Row(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(end = 24.dp, bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() + 24.dp)
@@ -448,10 +457,35 @@ fun ExpenseListScreen(
                         scaleX = fabScale
                         scaleY = fabScale
                     },
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
+                // 回到顶部按钮
+                AnimatedVisibility(
+                    visible = listState.firstVisibleItemIndex > 0 && !isSelectionMode,
+                    enter = fadeIn() + scaleIn(),
+                    exit = fadeOut() + scaleOut()
+                ) {
+                    androidx.compose.material3.SmallFloatingActionButton(
+                        onClick = {
+                            scope.launch {
+                                listState.animateScrollToItem(0)
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ) {
+                        Icon(imageVector = Icons.Default.KeyboardArrowUp, contentDescription = "回到顶部")
+                    }
+                }
+
+                FloatingActionButton(
+                    onClick = { if (!isSelectionMode) showAddDialog = true },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
+                }
             }
         }
     }
@@ -1147,7 +1181,8 @@ private fun EmptyStateCard(isDateRangeApplied: Boolean) {
 private fun CategorySummaryCard(
     categorySummaries: List<CategorySummaryUiModel>,
     totalExpenseCent: Long,
-    onStatisticsClick: () -> Unit
+    onStatisticsClick: () -> Unit,
+    onCategoryClick: (String) -> Unit
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -1189,7 +1224,12 @@ private fun CategorySummaryCard(
             } else {
                 categorySummaries.forEach { summary ->
                     val percent = summary.totalExpenseCent.toDouble() / totalExpenseCent.toDouble()
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        modifier = Modifier
+                            .clickable { onCategoryClick(summary.category) }
+                            .padding(vertical = 4.dp)
+                    ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
