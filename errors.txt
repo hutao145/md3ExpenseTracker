@@ -1,0 +1,9 @@
+﻿
+.\gradlew.bat : e: file
+  ed: (e: file:///E:   
+e: file:///E:/AI/ai%20p
+e: file:///E:/AI/ai%20p
+e: file:///E:/AI/ai%20p
+FAILURE: Build failed w
+
+

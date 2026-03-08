@@ -1,5 +1,7 @@
 package com.example.expensetracker.ui.screen
 
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -87,21 +90,39 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
         ) {
-            SettingsItem(
-                icon = Icons.Default.Backup,
-                title = "备份与恢复",
-                subtitle = "使用 WebDAV 或本地存储进行数据备份与恢复",
-                onClick = onBackupClick
+            // Data Management Header
+            Text(
+                text = "数据管理",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 12.dp)
             )
-            HorizontalDivider()
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                SettingsItem(
+                    icon = Icons.Default.Backup,
+                    title = "备份与恢复",
+                    subtitle = "使用 WebDAV 或本地存储进行数据备份与恢复",
+                    onClick = onBackupClick
+                )
+            }
             
             // Theme and Appearance header
             Text(
                 text = "主题设置",
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 12.dp)
+                modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 12.dp)
             )
 
             Card(
@@ -140,7 +161,7 @@ fun SettingsScreen(
                     )
                 }
 
-                HorizontalDivider(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
+                HorizontalDivider(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f), modifier = Modifier.padding(horizontal = 16.dp))
 
                 // Theme preset palettes
                 AnimatedVisibility(
@@ -148,32 +169,33 @@ fun SettingsScreen(
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
-                    LazyRow(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val palettes = listOf(
-                            ThemePaletteConfig("Pink", "樱花粉", PrimaryPink, PrimaryContainerPink, SecondaryContainerPink, TertiaryContainerPink, SecondaryPink),
-                            ThemePaletteConfig("Gulf", "海湾蓝", PrimaryGulf, PrimaryContainerGulf, SecondaryContainerGulf, TertiaryContainerGulf, SecondaryGulf),
-                            ThemePaletteConfig("Field", "原野绿", PrimaryField, PrimaryContainerField, SecondaryContainerField, TertiaryContainerField, SecondaryField),
-                            ThemePaletteConfig("Autumn", "秋黄", PrimaryAutumn, PrimaryContainerAutumn, SecondaryContainerAutumn, TertiaryContainerAutumn, SecondaryAutumn),
-                            ThemePaletteConfig("Neutral", "中性黑", PrimaryNeutral, PrimaryContainerNeutral, SecondaryContainerNeutral, TertiaryContainerNeutral, SecondaryNeutral)
-                        )
-                        items(palettes) { palette ->
-                            ThemeBadge(
-                                config = palette,
-                                isSelected = uiState.themeColor == palette.id,
-                                onClick = { onThemeColorChange(palette.id) }
+                    Column {
+                        LazyRow(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val palettes = listOf(
+                                ThemePaletteConfig("Pink", "樱花粉", PrimaryPink, PrimaryContainerPink, SecondaryContainerPink, TertiaryContainerPink, SecondaryPink),
+                                ThemePaletteConfig("Gulf", "海湾蓝", PrimaryGulf, PrimaryContainerGulf, SecondaryContainerGulf, TertiaryContainerGulf, SecondaryGulf),
+                                ThemePaletteConfig("Field", "原野绿", PrimaryField, PrimaryContainerField, SecondaryContainerField, TertiaryContainerField, SecondaryField),
+                                ThemePaletteConfig("Autumn", "秋黄", PrimaryAutumn, PrimaryContainerAutumn, SecondaryContainerAutumn, TertiaryContainerAutumn, SecondaryAutumn),
+                                ThemePaletteConfig("Neutral", "中性黑", PrimaryNeutral, PrimaryContainerNeutral, SecondaryContainerNeutral, TertiaryContainerNeutral, SecondaryNeutral)
                             )
+                            items(palettes) { palette ->
+                                ThemeBadge(
+                                    config = palette,
+                                    isSelected = uiState.themeColor == palette.id,
+                                    onClick = { onThemeColorChange(palette.id) }
+                                )
+                            }
                         }
+                        HorizontalDivider(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f), modifier = Modifier.padding(horizontal = 16.dp))
                     }
                 }
-
-                HorizontalDivider(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
 
                 // AMOLED Dark Mode Option
                 Row(
@@ -206,21 +228,31 @@ fun SettingsScreen(
             // Advanced options header
             Text(
                 text = "高级与测试",
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp)
+                modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 12.dp)
             )
             
-            SettingsItem(
-                icon = Icons.Default.Science,
-                title = "生成测试数据 (15条)",
-                subtitle = "仅供调试。为当前月份随机生成测试用的收支记录",
-                onClick = {
-                    onGenerateTestData()
-                    Toast.makeText(context, "已成功生成本月测试数据！", Toast.LENGTH_SHORT).show()
-                }
-            )
-            HorizontalDivider()
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                SettingsItem(
+                    icon = Icons.Default.Science,
+                    title = "生成测试数据 (15条)",
+                    subtitle = "仅供调试。为当前月份随机生成测试用的收支记录",
+                    onClick = {
+                        onGenerateTestData()
+                        Toast.makeText(context, "已成功生成本月测试数据！", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
