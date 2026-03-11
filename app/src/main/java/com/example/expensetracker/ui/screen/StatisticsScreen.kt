@@ -3,6 +3,7 @@ package com.example.expensetracker.ui.screen
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import android.content.Intent
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +26,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -32,6 +34,7 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -45,11 +48,22 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-val StatisticsCategoryColors = listOf(
-    Color(0xFF64B5F6), Color(0xFF81C784), Color(0xFFFFB74D),
-    Color(0xFFE57373), Color(0xFFBA68C8), Color(0xFF4DB6AC),
-    Color(0xFFFFD54F), Color(0xFFA1887F), Color(0xFF90A4AE)
-)
+@Composable
+private fun statisticsCategoryColors(): List<Color> {
+    val scheme = MaterialTheme.colorScheme
+    return listOf(
+        scheme.primary,
+        scheme.secondary,
+        scheme.tertiary,
+        scheme.primaryContainer,
+        scheme.secondaryContainer,
+        scheme.tertiaryContainer,
+        scheme.surfaceVariant,
+        scheme.outline,
+        scheme.inversePrimary
+    )
+}
+
 
 enum class StatsPeriod { WEEK, MONTH, YEAR }
 
@@ -103,6 +117,8 @@ fun StatisticsScreen(
     val totalExpense = uiState.totalExpenseCent
     val totalIncome = uiState.totalIncomeCent
     val balance = totalIncome - totalExpense
+    val categoryColors = statisticsCategoryColors()
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -143,7 +159,7 @@ fun StatisticsScreen(
                 }
             }
         },
-        containerColor = Color(0xFFF7F7F7) // Light gray for Expressive look
+        containerColor = MaterialTheme.colorScheme.background // Light gray for Expressive look
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
@@ -188,7 +204,7 @@ fun StatisticsScreen(
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = RoundedCornerShape(24.dp),
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
@@ -199,7 +215,7 @@ fun StatisticsScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text("结余", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                            Text("结余", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                             Text(
                                 formatAmountChart(balance),
                                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
@@ -207,14 +223,14 @@ fun StatisticsScreen(
                             )
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("支出", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                            Text("支出", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                             Text(
                                 formatAmountChart(totalExpense),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = Color(0xFFF44336)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("收入", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
+                            Text("收入", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                             Text(
                                 formatAmountChart(totalIncome),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
@@ -233,10 +249,21 @@ fun StatisticsScreen(
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.End,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(onClick = {
+                            context.startActivity(Intent(context, TrendDetailActivity::class.java))
+                        }) {
+                            Text("横屏查看")
+                        }
+                    }
                     Spacer(modifier = Modifier.height(16.dp))
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         shape = RoundedCornerShape(24.dp),
                         elevation = CardDefaults.cardElevation(2.dp)
                     ) {
@@ -258,21 +285,22 @@ fun StatisticsScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         shape = RoundedCornerShape(24.dp),
                         elevation = CardDefaults.cardElevation(2.dp)
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             DonutChart(
                                 categorySummaries = uiState.categorySummaries,
-                                totalExpenseCent = uiState.totalExpenseCent
+                                totalExpenseCent = uiState.totalExpenseCent,
+                                categoryColors = categoryColors
                             )
                             
                             Column(modifier = Modifier.padding(16.dp)) {
                                 uiState.categorySummaries.take(5).forEachIndexed { index, summary ->
                                     LegendItem(
                                         summary = summary,
-                                        color = StatisticsCategoryColors[index % StatisticsCategoryColors.size],
+                                        color = categoryColors[index % categoryColors.size],
                                         totalExpenseCent = uiState.totalExpenseCent
                                     )
                                 }
@@ -350,6 +378,7 @@ fun LegendItem(
 fun DonutChart(
     categorySummaries: List<CategorySummaryUiModel>,
     totalExpenseCent: Long,
+    categoryColors: List<Color>,
     modifier: Modifier = Modifier
 ) {
     val animationProgress = remember { Animatable(0f) }
@@ -381,7 +410,7 @@ fun DonutChart(
 
             categorySummaries.forEachIndexed { index, summary ->
                 val sweepAngle = (summary.totalExpenseCent.toFloat() / totalExpenseCent.toFloat()) * 360f
-                val color = StatisticsCategoryColors[index % StatisticsCategoryColors.size]
+                val color = categoryColors[index % categoryColors.size]
 
                 drawArc(
                     color = color,
@@ -431,6 +460,8 @@ fun TrendLineChart(
 ) {
     val animationProgress = remember { Animatable(0f) }
     val textMeasurer = rememberTextMeasurer()
+    val axisLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val gridLineColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
 
     LaunchedEffect(dailySummaries) {
         animationProgress.animateTo(
@@ -496,7 +527,7 @@ fun TrendLineChart(
                     
                     val textLayout = textMeasurer.measure(
                         text = dayStr,
-                        style = TextStyle(fontSize = 10.sp, color = Color.Gray, textAlign = TextAlign.Center)
+                        style = TextStyle(fontSize = 10.sp, color = axisLabelColor, textAlign = TextAlign.Center)
                     )
                     drawText(
                         textLayoutResult = textLayout,
@@ -505,17 +536,41 @@ fun TrendLineChart(
                 }
             }
 
+            // Draw Grid & Y-axis labels
+            val gridCount = 3
+            val stepVal = maxVal.toFloat() / gridCount
+            val dashEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 10f), 0f)
+            for (i in 0..gridCount) {
+                val value = stepVal * i
+                val y = canvasHeight - (value / maxVal.toFloat()) * canvasHeight
+                drawLine(
+                    color = gridLineColor,
+                    start = Offset(0f, y),
+                    end = Offset(width, y),
+                    strokeWidth = 1.dp.toPx()
+                )
+                val label = String.format("%.0f", value / 100.0f)
+                val labelLayout = textMeasurer.measure(
+                    text = label,
+                    style = TextStyle(fontSize = 10.sp, color = axisLabelColor, textAlign = TextAlign.End)
+                )
+                drawText(
+                    textLayoutResult = labelLayout,
+                    topLeft = Offset(0f, y - labelLayout.size.height / 2)
+                )
+            }
+
             // Draw Paths
             drawPath(
                 path = expensePath,
                 color = Color(0xFFF44336),
-                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                style = Stroke(width = 3.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
             )
             
             drawPath(
                 path = incomePath,
                 color = Color(0xFF4CAF50),
-                style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
+                style = Stroke(width = 3.5.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 10f), 0f))
             )
             
             // Draw Gradient Fills
@@ -528,7 +583,7 @@ fun TrendLineChart(
             drawPath(
                 path = expenseFillPath,
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFFF44336).copy(alpha = 0.2f), Color.Transparent),
+                    colors = listOf(Color(0xFFF44336).copy(alpha = 0.12f), Color.Transparent),
                     startY = 0f,
                     endY = canvasHeight
                 ),
@@ -544,7 +599,7 @@ fun TrendLineChart(
             drawPath(
                 path = incomeFillPath,
                 brush = Brush.verticalGradient(
-                    colors = listOf(Color(0xFF4CAF50).copy(alpha = 0.2f), Color.Transparent),
+                    colors = listOf(Color(0xFF4CAF50).copy(alpha = 0.12f), Color.Transparent),
                     startY = 0f,
                     endY = canvasHeight
                 ),

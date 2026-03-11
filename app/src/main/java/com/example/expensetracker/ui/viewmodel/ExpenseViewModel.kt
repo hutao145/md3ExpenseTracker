@@ -54,7 +54,8 @@ data class ExpenseUiState(
     val assets: List<AssetEntity> = emptyList(),
     val dynamicColorEnabled: Boolean = true,
     val themeColor: String = "Pink",
-    val amoledDarkModeEnabled: Boolean = false
+    val amoledDarkModeEnabled: Boolean = false,
+    val themeMode: String = "system"
 )
 
 data class DateRangeFilterState(
@@ -108,6 +109,7 @@ class ExpenseViewModel(
     private val dynamicColorEnabledState = MutableStateFlow(sharedPreferences.getBoolean("theme_dynamic_color", true))
     private val themeColorState = MutableStateFlow(sharedPreferences.getString("theme_color_seed", "Pink") ?: "Pink")
     private val amoledDarkModeEnabledState = MutableStateFlow(sharedPreferences.getBoolean("theme_amoled_dark_mode", false))
+    private val themeModeState = MutableStateFlow(sharedPreferences.getString("theme_mode", "system") ?: "system")
 
     init {
         goToCurrentMonth()
@@ -122,16 +124,18 @@ class ExpenseViewModel(
             searchQueryState, 
             dynamicColorEnabledState, 
             themeColorState, 
-            amoledDarkModeEnabledState
-        ) { q, d, t, a -> 
-            data class Config(val q: String, val d: Boolean, val t: String, val a: Boolean)
-            Config(q, d, t, a) 
+            amoledDarkModeEnabledState,
+            themeModeState
+        ) { q, d, t, a, m -> 
+            data class Config(val q: String, val d: Boolean, val t: String, val a: Boolean, val m: String)
+            Config(q, d, t, a, m) 
         }
     ) { expenses, assets, dateRangeFilter, monthlyBudgetCent, config ->
         val searchQuery = config.q
         val dynamicColorEnabled = config.d
         val themeColor = config.t
         val amoledDarkModeEnabled = config.a
+        val themeMode = config.m
         val filteredByDate = expenses.filter { entity ->
             val expenseDate = Instant.ofEpochMilli(entity.createdAtEpochMillis)
                 .atZone(zoneId)
@@ -243,7 +247,8 @@ class ExpenseViewModel(
             assets = assets,
             dynamicColorEnabled = dynamicColorEnabled,
             themeColor = themeColor,
-            amoledDarkModeEnabled = amoledDarkModeEnabled
+            amoledDarkModeEnabled = amoledDarkModeEnabled,
+            themeMode = themeMode
         )
     }
         .stateIn(
@@ -265,6 +270,11 @@ class ExpenseViewModel(
     fun updateAmoledDarkMode(enabled: Boolean) {
         sharedPreferences.edit().putBoolean("theme_amoled_dark_mode", enabled).apply()
         amoledDarkModeEnabledState.value = enabled
+    }
+
+    fun updateThemeMode(mode: String) {
+        sharedPreferences.edit().putString("theme_mode", mode).apply()
+        themeModeState.value = mode
     }
 
     fun addExpense(amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) {
@@ -308,6 +318,13 @@ class ExpenseViewModel(
             ids.forEach { id -> repository.deleteExpense(id) }
         }
     }
+
+    fun updateCategoriesForIds(ids: Set<Long>, category: String) {
+        viewModelScope.launch {
+            repository.updateCategories(ids, category)
+        }
+    }
+
 
     fun addAsset(nameInput: String, amountInput: String, type: Int, dateMillis: Long = System.currentTimeMillis()) {
         val amountCent = parseAmountToCent(amountInput) ?: return

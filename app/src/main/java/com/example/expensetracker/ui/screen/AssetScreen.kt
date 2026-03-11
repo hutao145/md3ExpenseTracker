@@ -38,7 +38,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,7 +66,7 @@ fun AssetScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF7F7F7)) // Very light gray background following expressive M3 look
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -169,7 +168,7 @@ fun AssetSummaryCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(24.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -182,7 +181,7 @@ fun AssetSummaryCard(
             Text(
                 text = "总资产",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -191,12 +190,12 @@ fun AssetSummaryCard(
                     fontWeight = FontWeight.Bold,
                     fontSize = 36.sp
                 ),
-                color = Color(0xFF3B82F6) // Vivid blue
+                color = MaterialTheme.colorScheme.primary
             )
             
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 24.dp),
-                color = Color(0xFFF0F0F0)
+                color = MaterialTheme.colorScheme.outlineVariant
             )
 
             Row(
@@ -207,26 +206,26 @@ fun AssetSummaryCard(
                     Text(
                         text = "负债",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = formatAmount(totalLiabilitiesCent),
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = Color(0xFF4CAF50) // Green per screenshot
+                        color = MaterialTheme.colorScheme.secondary
                     )
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "借出",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = formatAmount(totalLentCent),
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                        color = Color(0xFFF44336) // Red per screenshot
+                        color = MaterialTheme.colorScheme.tertiary
                     )
                 }
             }
@@ -243,7 +242,7 @@ fun AssetItemCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 24.dp, vertical = 4.dp),
-        color = Color.White,
+        color = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(16.dp),
         shadowElevation = 1.dp,
         onClick = onClick
@@ -264,9 +263,9 @@ fun AssetItemCard(
                 text = formatAmount(asset.amountCent),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = when (asset.type) {
-                    1 -> Color(0xFF4CAF50) // negative
-                    2 -> Color(0xFFF44336) // lent
-                    else -> Color(0xFF3B82F6) // normal asset
+                    1 -> MaterialTheme.colorScheme.secondary
+                    2 -> MaterialTheme.colorScheme.tertiary
+                    else -> MaterialTheme.colorScheme.primary
                 }
             )
         }

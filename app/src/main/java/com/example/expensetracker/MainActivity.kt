@@ -64,7 +64,8 @@ class MainActivity : ComponentActivity() {
             ExpenseTrackerTheme(
                 dynamicColor = uiState.dynamicColorEnabled,
                 themeColor = uiState.themeColor,
-                amoledDarkModeEnabled = uiState.amoledDarkModeEnabled
+                amoledDarkModeEnabled = uiState.amoledDarkModeEnabled,
+                themeMode = uiState.themeMode
             ) {
 
                 val addExpenseTriggerValue by addExpenseTrigger.collectAsState()
@@ -137,6 +138,9 @@ class MainActivity : ComponentActivity() {
                                         expenseViewModel.deleteMultipleExpenses(ids)
                                         updateWidget()
                                     },
+                                    onBatchUpdateCategory = { ids, category ->
+                                        expenseViewModel.updateCategoriesForIds(ids, category)
+                                    },
                                     onApplyDateRange = { startDateInput, endDateInput ->
                                         expenseViewModel.applyDateRange(startDateInput, endDateInput)
                                     },
@@ -176,6 +180,7 @@ class MainActivity : ComponentActivity() {
                                     onDynamicColorChange = { expenseViewModel.updateDynamicColor(it) },
                                     onThemeColorChange = { expenseViewModel.updateThemeColor(it) },
                                     onAmoledDarkModeChange = { expenseViewModel.updateAmoledDarkMode(it) },
+                                    onThemeModeChange = { expenseViewModel.updateThemeMode(it) },
                                     onBackClick = { currentScreen = Screen.Home },
                                     onBackupClick = { currentScreen = Screen.Backup },
                                     onGenerateTestData = {

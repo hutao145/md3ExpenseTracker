@@ -154,22 +154,29 @@ fun ExpenseTrackerTheme(
     dynamicColor: Boolean = true,
     themeColor: String = "Pink",
     amoledDarkModeEnabled: Boolean = false,
+    themeMode: String = "system",
     content: @Composable () -> Unit
 ) {
+    val effectiveDarkTheme = when (themeMode) {
+        "light" -> false
+        "dark" -> true
+        else -> darkTheme
+    }
+
     val baseColorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (effectiveDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        themeColor == "Pink" -> if (darkTheme) DarkPinkColorScheme else LightPinkColorScheme
-        themeColor == "Gulf" -> if (darkTheme) DarkGulfColorScheme else LightGulfColorScheme
-        themeColor == "Field" -> if (darkTheme) DarkFieldColorScheme else LightFieldColorScheme
-        themeColor == "Autumn" -> if (darkTheme) DarkAutumnColorScheme else LightAutumnColorScheme
-        themeColor == "Neutral" -> if (darkTheme) DarkNeutralColorScheme else LightNeutralColorScheme
-        else -> if (darkTheme) DarkPinkColorScheme else LightPinkColorScheme
+        themeColor == "Pink" -> if (effectiveDarkTheme) DarkPinkColorScheme else LightPinkColorScheme
+        themeColor == "Gulf" -> if (effectiveDarkTheme) DarkGulfColorScheme else LightGulfColorScheme
+        themeColor == "Field" -> if (effectiveDarkTheme) DarkFieldColorScheme else LightFieldColorScheme
+        themeColor == "Autumn" -> if (effectiveDarkTheme) DarkAutumnColorScheme else LightAutumnColorScheme
+        themeColor == "Neutral" -> if (effectiveDarkTheme) DarkNeutralColorScheme else LightNeutralColorScheme
+        else -> if (effectiveDarkTheme) DarkPinkColorScheme else LightPinkColorScheme
     }
 
-    val colorScheme = if (darkTheme && amoledDarkModeEnabled) {
+    val colorScheme = if (effectiveDarkTheme && amoledDarkModeEnabled) {
         baseColorScheme.copy(
             background = androidx.compose.ui.graphics.Color.Black,
             surface = androidx.compose.ui.graphics.Color.Black,
@@ -183,7 +190,7 @@ fun ExpenseTrackerTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !effectiveDarkTheme
         }
     }
 

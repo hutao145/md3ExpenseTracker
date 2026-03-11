@@ -79,6 +79,13 @@ class ExpenseRepository(
         return deleted
     }
 
+    suspend fun updateCategories(ids: Set<Long>, category: String) {
+        if (ids.isEmpty()) return
+        val normalizedCategory = category.trim().ifEmpty { "其他" }
+        expenseDao.updateCategoryByIds(ids.toList(), normalizedCategory)
+    }
+
+
     fun observeAssets(): Flow<List<AssetEntity>> = assetDao.observeAssets()
 
     suspend fun addAsset(name: String, amountCent: Long, type: Int, dateMillis: Long = System.currentTimeMillis()) {

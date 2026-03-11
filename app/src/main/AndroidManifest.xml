@@ -31,6 +31,13 @@
                 android:resource="@xml/expense_widget_info" />
         </receiver>
 
+    
+        <activity
+            android:name=".ui.screen.TrendDetailActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
+
     </application>
 
 </manifest>

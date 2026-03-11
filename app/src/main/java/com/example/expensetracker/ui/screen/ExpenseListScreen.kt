@@ -62,6 +62,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
@@ -159,6 +164,7 @@ fun ExpenseListScreen(
     onUpdateExpense: (id: Long, amountInput: String, type: Int, category: String, note: String, assetId: Long?) -> Unit,
     onDeleteExpense: (id: Long) -> Unit,
     onDeleteMultipleExpenses: (ids: Set<Long>) -> Unit,
+    onBatchUpdateCategory: (ids: Set<Long>, category: String) -> Unit,
     onApplyDateRange: (startDateInput: String, endDateInput: String) -> Unit,
     onClearDateRange: () -> Unit,
     onSetMonthlyBudget: (amountInput: String) -> Unit,
@@ -178,6 +184,8 @@ fun ExpenseListScreen(
     var searchInput by rememberSaveable { mutableStateOf(searchQuery) }
     var selectedIds by remember { mutableStateOf(emptySet<Long>()) }
     var showBatchDeleteConfirm by remember { mutableStateOf(false) }
+    var showBatchEditCategorySheet by remember { mutableStateOf(false) }
+    var batchEditType by remember { mutableStateOf<Int?>(null) }
     val isSelectionMode = selectedIds.isNotEmpty()
     val haptic = LocalHapticFeedback.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -263,6 +271,30 @@ fun ExpenseListScreen(
                                     color = MaterialTheme.colorScheme.onErrorContainer
                                 )
                             }
+                        }
+                        TextButton(
+                            onClick = {
+                                val selectedItems = uiState.dailySummaries
+                                    .flatMap { it.items }
+                                    .filter { it.id in selectedIds }
+                                val selectedTypes = selectedItems.map { it.type }.toSet()
+                                when {
+                                    selectedTypes.size > 1 -> {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("请选择同类型记录进行批量改分类")
+                                        }
+                                    }
+                                    selectedTypes.size == 1 -> {
+                                        batchEditType = selectedTypes.first()
+                                        showBatchEditCategorySheet = true
+                                    }
+                                }
+                            }
+                        ) {
+                            Text(
+                                text = "编辑分类",
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
                         }
                         TextButton(
                             onClick = { showBatchDeleteConfirm = true }
@@ -513,6 +545,18 @@ fun ExpenseListScreen(
         )
     }
 
+    if (showBatchEditCategorySheet && batchEditType != null) {
+        BatchEditCategorySheet(
+            type = batchEditType ?: 0,
+            onDismissRequest = { showBatchEditCategorySheet = false },
+            onConfirm = { category ->
+                onBatchUpdateCategory(selectedIds, category)
+                selectedIds = emptySet()
+                showBatchEditCategorySheet = false
+            }
+        )
+    }
+
     if (showAddDialog) {
         AddExpenseDialog(
             assets = uiState.assets,
@@ -594,6 +638,106 @@ fun ExpenseListScreen(
                 }
             }
         )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
+@Composable
+private fun BatchEditCategorySheet(
+    type: Int,
+    onDismissRequest: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var categoryInput by rememberSaveable { mutableStateOf("其他") }
+    var customCategoryInput by rememberSaveable { mutableStateOf("") }
+
+    val expenseSuggestions = listOf("餐饮", "交通", "购物", "日用", "娱乐", "住房", "自定义", "其他")
+    val incomeSuggestions = listOf("薪资", "奖金", "理财", "收债", "自定义", "其他")
+    val currentSuggestions = if (type == 0) expenseSuggestions else incomeSuggestions
+
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .navigationBarsPadding()
+                .imePadding(),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Text(
+                text = "批量编辑分类",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Text(
+                text = "选择分类",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                currentSuggestions.chunked(4).forEach { row ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        row.forEach { label ->
+                            FilterChip(
+                                modifier = Modifier.weight(1f),
+                                selected = categoryInput == label,
+                                onClick = { categoryInput = label },
+                                label = { Text(label, maxLines = 1) },
+                                leadingIcon = {
+                                    Icon(getCategoryIcon(label), null, modifier = Modifier.size(14.dp))
+                                }
+                            )
+                        }
+                        repeat(4 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
+                    }
+                }
+
+                AnimatedVisibility(visible = categoryInput == "自定义") {
+                    OutlinedTextField(
+                        value = customCategoryInput,
+                        onValueChange = { customCategoryInput = it },
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                        label = { Text("输入自定义分类") },
+                        singleLine = true
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onDismissRequest) {
+                    Text("取消")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(
+                    onClick = {
+                        val finalCategory = if (categoryInput == "自定义") {
+                            customCategoryInput.trim()
+                        } else {
+                            categoryInput.trim()
+                        }
+                        onConfirm(if (finalCategory.isBlank()) "其他" else finalCategory)
+                    }
+                ) {
+                    Text("确定")
+                }
+            }
+        }
     }
 }
 
