@@ -35,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.expensetracker.data.local.AssetEntity
+import com.example.expensetracker.ui.util.centToYuanString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,9 +48,7 @@ fun EditAssetDialog(
 ) {
     var nameInput by remember { mutableStateOf(asset.name) }
 
-    val initialAmount = java.math.BigDecimal(asset.amountCent)
-        .divide(java.math.BigDecimal(100))
-        .toPlainString()
+    val initialAmount = centToYuanString(asset.amountCent)
     var amountInput by remember { mutableStateOf(initialAmount) }
 
     var selectedType by remember { mutableStateOf(asset.type) }

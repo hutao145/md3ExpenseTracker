@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import com.example.expensetracker.data.local.AssetEntity
 import com.example.expensetracker.ui.component.AddAssetDialog
 import com.example.expensetracker.ui.component.EditAssetDialog
+import com.example.expensetracker.ui.util.formatAmount
 import com.example.expensetracker.ui.viewmodel.ExpenseViewModel
 
 @Composable
@@ -270,9 +271,4 @@ fun AssetItemCard(
             )
         }
     }
-}
-
-private fun formatAmount(cent: Long): String {
-    val bd = java.math.BigDecimal(cent).divide(java.math.BigDecimal(100))
-    return String.format(java.util.Locale.CHINA, "%.2f", bd)
 }

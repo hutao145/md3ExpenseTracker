@@ -31,7 +31,7 @@ import com.example.expensetracker.ui.viewmodel.ExpenseViewModel
 class TrendDetailActivity : ComponentActivity() {
 
     private val database by lazy { ExpenseDatabase.getInstance(applicationContext) }
-    private val repository by lazy { ExpenseRepository(database.expenseDao(), database.assetDao()) }
+    private val repository by lazy { ExpenseRepository(database.expenseDao(), database.assetDao(), database) }
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {

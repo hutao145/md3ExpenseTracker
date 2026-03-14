@@ -33,6 +33,7 @@ import java.time.LocalDateTime
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import com.example.expensetracker.data.local.ExpenseEntity
+import com.example.expensetracker.ui.util.centToYuanString
 
 data class ExpenseUiState(
     val dailySummaries: List<DailyExpenseUiModel> = emptyList(),
@@ -315,7 +316,7 @@ class ExpenseViewModel(
 
     fun deleteMultipleExpenses(ids: Set<Long>) {
         viewModelScope.launch {
-            ids.forEach { id -> repository.deleteExpense(id) }
+            repository.deleteExpenses(ids)
         }
     }
 
@@ -558,10 +559,8 @@ class ExpenseViewModel(
                     ZoneId.systemDefault()
                 ).format(csvFormatter)
 
-                val amount = BigDecimal(entity.amountCent)
-                    .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
-                    .toString()
-                
+                val amount = centToYuanString(entity.amountCent)
+
                 val typeStr = if (entity.type == 1) "收入" else "支出"
 
                 // Escape quotes and commas in note
@@ -574,7 +573,7 @@ class ExpenseViewModel(
             withContext(Dispatchers.IO) {
                 try {
                     context.contentResolver.openOutputStream(uri)?.use { outputStream ->
-                        outputStream.write(sb.toString().toByteArray())
+                        outputStream.write(sb.toString().toByteArray(Charsets.UTF_8))
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -590,9 +589,9 @@ class ExpenseViewModel(
                 try {
                     val expensesToInsert = mutableListOf<ExpenseEntity>()
                     context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                        BufferedReader(InputStreamReader(inputStream)).use { reader ->
-                            // Skip header
-                            reader.readLine()
+                        BufferedReader(InputStreamReader(inputStream, Charsets.UTF_8)).use { reader ->
+                            // Skip header (strip BOM if present)
+                            reader.readLine()?.removePrefix("\uFEFF")
 
                             val csvFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
                             var line = reader.readLine()
@@ -659,7 +658,10 @@ class ExpenseViewModel(
         var inQuotes = false
         for (c in line) {
             when {
-                c == '\"' -> inQuotes = !inQuotes
+                c == '\"' -> {
+                    inQuotes = !inQuotes
+                    sb.append(c)
+                }
                 c == ',' && !inQuotes -> {
                     tokens.add(sb.toString())
                     sb.clear()
@@ -669,8 +671,9 @@ class ExpenseViewModel(
         }
         tokens.add(sb.toString())
         return tokens
-            .map { it.replace("\"\"", "\"") } // Unescape double quotes
-            .map { if (it.startsWith("\"") && it.endsWith("\"")) it.substring(1, it.length - 1) else it } // Remove surrounding quotes
+            .map { it.trim() }
+            .map { if (it.startsWith("\"") && it.endsWith("\"")) it.substring(1, it.length - 1) else it }
+            .map { it.replace("\"\"", "\"") }
     }
 
     private fun parseAmountToCent(amountInput: String): Long? {
@@ -716,7 +719,8 @@ class ExpenseViewModel(
         _webDavState.value = _webDavState.value.copy(username = username)
         sharedPreferences.edit().putString("webdav_username", username).apply()
     }
-    fun updateWebDavPassword(password: String) { 
+    // TODO: Migrate to EncryptedSharedPreferences for secure credential storage
+    fun updateWebDavPassword(password: String) {
         _webDavState.value = _webDavState.value.copy(password = password)
         sharedPreferences.edit().putString("webdav_password", password).apply()
     }
@@ -810,9 +814,7 @@ class ExpenseViewModel(
                             ZoneId.systemDefault()
                         ).format(csvFormatter)
 
-                        val amount = BigDecimal(entity.amountCent)
-                            .divide(BigDecimal(100), 2, RoundingMode.HALF_UP)
-                            .toString()
+                        val amount = centToYuanString(entity.amountCent)
                         
                         val typeStr = if (entity.type == 1) "收入" else "支出"
                         val note = entity.note.replace("\"", "\"\"")
@@ -862,14 +864,62 @@ class ExpenseViewModel(
                     val fullUrl = if (state.url.endsWith("/")) state.url + state.path else "${state.url}/${state.path}"
                     val dirUrl = if (fullUrl.endsWith("/")) fullUrl else "$fullUrl/"
                     val sourceUrl = dirUrl + fileName
-                    
+
                     val downloaded = webDavClient.downloadFile(sourceUrl, state.username, state.password, file)
                     if (downloaded) {
-                        // 借用现有的 import 逻辑
-                        val uri = android.net.Uri.fromFile(file)
-                        importDataFromUri(context, uri)
-                        // Note: file.delete() might be too early if importDataFromUri is async and reads the file later in IO dispatcher
-                        // Considering the existing importDataFromUri logic launches async IO, we shouldn't delete immediately here.
+                        // Parse CSV directly in this IO block to avoid race condition
+                        val expensesToInsert = mutableListOf<ExpenseEntity>()
+                        val csvFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
+                        file.bufferedReader(Charsets.UTF_8).use { reader ->
+                            // Skip header (strip BOM if present)
+                            reader.readLine()?.removePrefix("\uFEFF")
+
+                            var line = reader.readLine()
+                            while (line != null) {
+                                try {
+                                    val parts = parseCsvLine(line)
+                                    if (parts.size >= 4) {
+                                        val hasTypeColumn = parts.size >= 5
+                                        val dateStr = parts[0]
+                                        val type = if (hasTypeColumn && parts[1] == "收入") 1 else 0
+                                        val categoryIdx = if (hasTypeColumn) 2 else 1
+                                        val amountIdx = if (hasTypeColumn) 3 else 2
+                                        val noteIdx = if (hasTypeColumn) 4 else 3
+
+                                        val category = parts[categoryIdx]
+                                        val amountStr = parts[amountIdx]
+                                        val note = parts.getOrNull(noteIdx) ?: ""
+
+                                        val dateTime = LocalDateTime.parse(dateStr, csvFormatter)
+                                        val dateMillis = dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+                                        val amountCent = BigDecimal(amountStr)
+                                            .multiply(BigDecimal(100))
+                                            .setScale(0, RoundingMode.HALF_UP)
+                                            .longValueExact()
+
+                                        expensesToInsert.add(
+                                            ExpenseEntity(
+                                                amountCent = amountCent,
+                                                type = type,
+                                                category = category,
+                                                note = note,
+                                                createdAtEpochMillis = dateMillis
+                                            )
+                                        )
+                                    }
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                                line = reader.readLine()
+                            }
+                        }
+
+                        if (expensesToInsert.isNotEmpty()) {
+                            repository.insertAllExpenses(expensesToInsert)
+                        }
+                        file.delete()
                         true
                     } else {
                         false
@@ -880,10 +930,9 @@ class ExpenseViewModel(
                 }
             }
 
-            // 因为 importDataFromUri 是异步的，这里仅仅表示文件拉取和解析触发成功
             _webDavState.value = _webDavState.value.copy(
                 isRestoring = false,
-                message = if (success) "恢复任务已触发成功" else "从云端恢复失败"
+                message = if (success) "恢复成功" else "从云端恢复失败"
             )
         }
     }

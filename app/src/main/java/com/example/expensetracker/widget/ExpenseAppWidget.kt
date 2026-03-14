@@ -28,6 +28,7 @@ import androidx.glance.text.TextStyle
 import com.example.expensetracker.MainActivity
 import com.example.expensetracker.R
 import com.example.expensetracker.data.local.ExpenseDatabase
+import com.example.expensetracker.ui.util.formatAmount
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -62,8 +63,7 @@ class ExpenseAppWidget : GlanceAppWidget() {
 
     @Composable
     private fun ExpenseWidgetContent(totalExpenseCent: Long) {
-        val amount = totalExpenseCent / 100.0
-        val formattedAmount = String.format(Locale.US, "%.2f", amount)
+        val formattedAmount = formatAmount(totalExpenseCent)
 
         Column(
             modifier = GlanceModifier

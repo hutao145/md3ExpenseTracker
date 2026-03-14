@@ -88,6 +88,8 @@ import com.example.expensetracker.ui.model.DailyExpenseUiModel
 import com.example.expensetracker.ui.model.ExpenseItemUiModel
 import com.example.expensetracker.ui.viewmodel.ExpenseUiState
 import com.example.expensetracker.ui.util.getCategoryIcon
+import com.example.expensetracker.ui.util.formatAmountWithSymbol
+import com.example.expensetracker.ui.util.formatAmountInput
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
@@ -826,13 +828,13 @@ private fun DateRangeSummaryCard(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "总收入：+${formatAmount(totalIncomeCent)}",
+                        text = "总收入：+${formatAmountWithSymbol(totalIncomeCent)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = androidx.compose.ui.graphics.Color(0xFF388E3C)
                     )
                     Text(
-                        text = "总支出：-${formatAmount(totalExpenseCent)}",
+                        text = "总支出：-${formatAmountWithSymbol(totalExpenseCent)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.primary
@@ -1038,7 +1040,7 @@ private fun HomeHeader(
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
                         Text(
-                            text = formatAmount(netBalance),
+                            text = formatAmountWithSymbol(netBalance),
                             style = MaterialTheme.typography.displayMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -1071,7 +1073,7 @@ private fun HomeHeader(
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
                         Text(
-                            text = "+${formatAmount(totalIncomeCent)}",
+                            text = "+${formatAmountWithSymbol(totalIncomeCent)}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = androidx.compose.ui.graphics.Color(0xFF388E3C)
@@ -1084,7 +1086,7 @@ private fun HomeHeader(
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                         )
                         Text(
-                            text = "-${formatAmount(totalExpenseCent)}",
+                            text = "-${formatAmountWithSymbol(totalExpenseCent)}",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -1111,7 +1113,7 @@ private fun HomeHeader(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "预算剩余 ${formatAmount(remaining)}",
+                            text = "预算剩余 ${formatAmountWithSymbol(remaining)}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
@@ -1398,7 +1400,7 @@ private fun CategorySummaryCard(
                                 )
                             }
                             Text(
-                                text = formatAmount(summary.totalExpenseCent),
+                                text = formatAmountWithSymbol(summary.totalExpenseCent),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -1502,7 +1504,7 @@ private fun MonthlyBudgetDialog(
                             if (showAmountError) {
                                 Text(text = "请输入大于 0 的合法金额")
                             } else if (currentBudgetCent != null && currentBudgetCent > 0L) {
-                                Text(text = "当前预算：${formatAmount(currentBudgetCent)}")
+                                Text(text = "当前预算：${formatAmountWithSymbol(currentBudgetCent)}")
                             }
                         }
                     )
@@ -1566,7 +1568,7 @@ private fun DailySummaryCard(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "支出: ${formatAmount(item.totalExpenseCent)} / 收入: ${formatAmount(item.totalIncomeCent)}",
+                text = "支出: ${formatAmountWithSymbol(item.totalExpenseCent)} / 收入: ${formatAmountWithSymbol(item.totalIncomeCent)}",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1704,7 +1706,7 @@ private fun ExpenseItemRow(
         val amountColor = if (item.type == 1) androidx.compose.ui.graphics.Color(0xFF388E3C) else MaterialTheme.colorScheme.onSurface
         val prefix = if (item.type == 1) "+" else "-"
         Text(
-            text = "$prefix ${formatAmount(item.amountCent)}",
+            text = "$prefix ${formatAmountWithSymbol(item.amountCent)}",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = amountColor
@@ -1739,14 +1741,4 @@ private fun formatDateRangeLabel(startDateInput: String, endDateInput: String): 
         endDateInput.isNotBlank() -> "截至 $endDateInput"
         else -> "全部时间"
     }
-}
-
-private fun formatAmount(amountCent: Long): String {
-    val amountYuan = amountCent / 100.0
-    return String.format(Locale.CHINA, "¥%.2f", amountYuan)
-}
-
-private fun formatAmountInput(amountCent: Long): String {
-    val amountYuan = amountCent / 100.0
-    return String.format(Locale.CHINA, "%.2f", amountYuan)
 }

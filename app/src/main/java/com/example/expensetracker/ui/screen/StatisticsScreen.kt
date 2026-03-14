@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.expensetracker.ui.model.CategorySummaryUiModel
 import com.example.expensetracker.ui.model.DailyExpenseUiModel
+import com.example.expensetracker.ui.util.formatAmount
 import com.example.expensetracker.ui.viewmodel.ExpenseUiState
 import kotlin.math.min
 import java.util.Locale
@@ -217,7 +218,7 @@ fun StatisticsScreen(
                         Column {
                             Text("结余", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                formatAmountChart(balance),
+                                formatAmount(balance),
                                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -225,14 +226,14 @@ fun StatisticsScreen(
                         Column(horizontalAlignment = Alignment.End) {
                             Text("支出", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                formatAmountChart(totalExpense),
+                                formatAmount(totalExpense),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = Color(0xFFF44336)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text("收入", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                formatAmountChart(totalIncome),
+                                formatAmount(totalIncome),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = Color(0xFF4CAF50)
                             )
@@ -366,7 +367,7 @@ fun LegendItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = formatAmountChart(summary.totalExpenseCent),
+                text = formatAmount(summary.totalExpenseCent),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -426,7 +427,7 @@ fun DonutChart(
             }
         }
 
-        val amountText = formatAmountChart(totalExpenseCent)
+        val amountText = formatAmount(totalExpenseCent)
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.widthIn(max = 100.dp)
@@ -449,15 +450,6 @@ fun DonutChart(
             )
         }
     }
-}
-
-private fun formatAmountChart(amountCent: Long): String {
-    val amount = amountCent / 100.0
-    val bd = java.math.BigDecimal(amountCent).divide(java.math.BigDecimal(100))
-    val isNegative = amountCent < 0
-    val prefix = if (isNegative) "-" else ""
-    val absBd = bd.abs()
-    return String.format(Locale.CHINA, "%s%.2f", prefix, absBd)
 }
 
 @Composable
