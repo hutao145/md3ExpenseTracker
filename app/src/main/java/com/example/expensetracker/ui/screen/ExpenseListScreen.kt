@@ -1,5 +1,6 @@
 package com.example.expensetracker.ui.screen
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -188,6 +189,10 @@ fun ExpenseListScreen(
     var batchEditType by remember { mutableStateOf<Int?>(null) }
     val isSelectionMode = selectedIds.isNotEmpty()
     val haptic = LocalHapticFeedback.current
+
+    BackHandler(enabled = isSelectionMode) {
+        selectedIds = emptySet()
+    }
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.startDateInput) {

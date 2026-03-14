@@ -426,8 +426,10 @@ fun DonutChart(
             }
         }
 
+        val amountText = formatAmountChart(totalExpenseCent)
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.widthIn(max = 100.dp)
         ) {
             Text(
                 text = "总支出",
@@ -435,10 +437,15 @@ fun DonutChart(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = formatAmountChart(totalExpenseCent),
-                style = MaterialTheme.typography.headlineSmall,
+                text = amountText,
+                fontSize = when {
+                    amountText.length > 9 -> 14.sp
+                    amountText.length > 7 -> 18.sp
+                    else -> 24.sp
+                },
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
             )
         }
     }

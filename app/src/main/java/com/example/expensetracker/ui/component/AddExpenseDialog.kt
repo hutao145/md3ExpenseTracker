@@ -1,5 +1,11 @@
 package com.example.expensetracker.ui.component
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -165,7 +171,11 @@ fun AddExpenseDialog(
                     }
                 }
                 
-                androidx.compose.animation.AnimatedVisibility(visible = categoryInput == "自定义") {
+                AnimatedVisibility(
+                    visible = categoryInput == "自定义",
+                    enter = expandVertically(tween(200)) + fadeIn(tween(200)),
+                    exit = shrinkVertically(tween(150)) + fadeOut(tween(100))
+                ) {
                     OutlinedTextField(
                         value = customCategoryInput,
                         onValueChange = { customCategoryInput = it },
