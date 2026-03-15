@@ -29,6 +29,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -60,16 +63,24 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import android.widget.Toast
+import android.content.SharedPreferences
+import com.example.expensetracker.security.BiometricHelper
+import com.example.expensetracker.security.PinManager
+import com.example.expensetracker.ui.component.SetPinDialog
+import com.example.expensetracker.ui.component.VerifyPinDialog
 import com.example.expensetracker.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     uiState: com.example.expensetracker.ui.viewmodel.ExpenseUiState,
+    sharedPreferences: SharedPreferences,
     onDynamicColorChange: (Boolean) -> Unit,
     onThemeColorChange: (String) -> Unit,
     onAmoledDarkModeChange: (Boolean) -> Unit,
     onThemeModeChange: (String) -> Unit,
+    onAppLockChange: (Boolean) -> Unit,
+    onBiometricUnlockChange: (Boolean) -> Unit,
     onBackClick: () -> Unit,
     onBackupClick: () -> Unit,
     onGenerateTestData: () -> Unit
@@ -125,7 +136,190 @@ fun SettingsScreen(
                     onClick = onBackupClick
                 )
             }
-            
+
+            // Privacy & Security header
+            Text(
+                text = "隐私与安全",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 12.dp)
+            )
+
+            var showSetPinDialog by remember { mutableStateOf(false) }
+            var showVerifyPinForDisable by remember { mutableStateOf(false) }
+            var showVerifyPinForChange by remember { mutableStateOf(false) }
+            var showSetNewPinAfterVerify by remember { mutableStateOf(false) }
+            val biometricAvailable = BiometricHelper.canAuthenticate(context)
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                // App Lock Toggle
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = "应用锁",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "启用后每次打开应用需要验证",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Switch(
+                        checked = uiState.appLockEnabled,
+                        onCheckedChange = { enabled ->
+                            if (enabled) {
+                                showSetPinDialog = true
+                            } else {
+                                showVerifyPinForDisable = true
+                            }
+                        }
+                    )
+                }
+
+                // Change PIN (only when lock enabled)
+                AnimatedVisibility(visible = uiState.appLockEnabled) {
+                    Column {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                        SettingsItem(
+                            icon = Icons.Default.Password,
+                            title = "修改 PIN 密码",
+                            subtitle = "更改应用锁密码",
+                            onClick = { showVerifyPinForChange = true }
+                        )
+                    }
+                }
+
+                // Biometric toggle (only when lock enabled AND device supports)
+                AnimatedVisibility(visible = uiState.appLockEnabled && biometricAvailable) {
+                    Column {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Fingerprint,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(16.dp))
+                                Column {
+                                    Text(
+                                        text = "生物识别解锁",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text(
+                                        text = "使用指纹或面部识别解锁",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Switch(
+                                checked = uiState.biometricUnlockEnabled,
+                                onCheckedChange = { onBiometricUnlockChange(it) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // PIN Dialogs
+            if (showSetPinDialog) {
+                SetPinDialog(
+                    sharedPreferences = sharedPreferences,
+                    onDismissRequest = { showSetPinDialog = false },
+                    onPinSet = {
+                        showSetPinDialog = false
+                        onAppLockChange(true)
+                        Toast.makeText(context, "应用锁已启用", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+
+            if (showVerifyPinForDisable) {
+                VerifyPinDialog(
+                    sharedPreferences = sharedPreferences,
+                    title = "关闭应用锁",
+                    onDismissRequest = { showVerifyPinForDisable = false },
+                    onVerified = {
+                        showVerifyPinForDisable = false
+                        onAppLockChange(false)
+                        onBiometricUnlockChange(false)
+                        PinManager.clearPin(sharedPreferences)
+                        Toast.makeText(context, "应用锁已关闭", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+
+            if (showVerifyPinForChange) {
+                VerifyPinDialog(
+                    sharedPreferences = sharedPreferences,
+                    title = "验证当前密码",
+                    onDismissRequest = { showVerifyPinForChange = false },
+                    onVerified = {
+                        showVerifyPinForChange = false
+                        showSetNewPinAfterVerify = true
+                    }
+                )
+            }
+
+            if (showSetNewPinAfterVerify) {
+                SetPinDialog(
+                    sharedPreferences = sharedPreferences,
+                    onDismissRequest = { showSetNewPinAfterVerify = false },
+                    onPinSet = {
+                        showSetNewPinAfterVerify = false
+                        Toast.makeText(context, "PIN 密码已更新", Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+
             // Theme and Appearance header
             Text(
                 text = "主题设置",

@@ -1,7 +1,7 @@
 package com.example.expensetracker.ui.screen
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
@@ -23,12 +23,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.expensetracker.ExpenseTrackerApplication
 import com.example.expensetracker.data.ExpenseRepository
 import com.example.expensetracker.data.local.ExpenseDatabase
+import com.example.expensetracker.security.BiometricHelper
 import com.example.expensetracker.theme.ExpenseTrackerTheme
 import com.example.expensetracker.ui.viewmodel.ExpenseViewModel
 
-class TrendDetailActivity : ComponentActivity() {
+class TrendDetailActivity : AppCompatActivity() {
 
     private val database by lazy { ExpenseDatabase.getInstance(applicationContext) }
     private val repository by lazy { ExpenseRepository(database.expenseDao(), database.assetDao(), database) }
@@ -44,37 +46,58 @@ class TrendDetailActivity : ComponentActivity() {
             )
             val uiState by expenseViewModel.uiState.collectAsStateWithLifecycle()
 
+            val appLockManager = (application as ExpenseTrackerApplication).appLockManager
+            val isLocked by appLockManager.isLocked.collectAsStateWithLifecycle()
+
             ExpenseTrackerTheme(
                 dynamicColor = uiState.dynamicColorEnabled,
                 themeColor = uiState.themeColor,
                 amoledDarkModeEnabled = uiState.amoledDarkModeEnabled,
                 themeMode = uiState.themeMode
             ) {
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = { Text("收支趋势") },
-                            navigationIcon = {
-                                IconButton(onClick = { finish() }) {
-                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                                }
-                            },
-                            colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.background,
-                                titleContentColor = MaterialTheme.colorScheme.onBackground
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Scaffold(
+                        topBar = {
+                            TopAppBar(
+                                title = { Text("收支趋势") },
+                                navigationIcon = {
+                                    IconButton(onClick = { finish() }) {
+                                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                                    }
+                                },
+                                colors = TopAppBarDefaults.topAppBarColors(
+                                    containerColor = MaterialTheme.colorScheme.background,
+                                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                                )
                             )
-                        )
+                        }
+                    ) { padding ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(padding),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            TrendLineChart(
+                                dailySummaries = uiState.dailySummaries.reversed(),
+                                modifier = Modifier.fillMaxSize().padding(16.dp)
+                            )
+                        }
                     }
-                ) { padding ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        TrendLineChart(
-                            dailySummaries = uiState.dailySummaries.reversed(),
-                            modifier = Modifier.fillMaxSize().padding(16.dp)
+
+                    if (isLocked) {
+                        LockScreen(
+                            sharedPreferences = sharedPreferences,
+                            onUnlocked = { appLockManager.unlock() },
+                            onBiometricClick = {
+                                BiometricHelper.authenticate(
+                                    activity = this@TrendDetailActivity,
+                                    onSuccess = { appLockManager.unlock() },
+                                    onFailure = { }
+                                )
+                            },
+                            biometricEnabled = uiState.biometricUnlockEnabled
+                                && BiometricHelper.canAuthenticate(this@TrendDetailActivity)
                         )
                     }
                 }

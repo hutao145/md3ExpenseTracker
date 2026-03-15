@@ -1,16 +1,20 @@
 package com.example.expensetracker
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.expensetracker.data.ExpenseRepository
 import com.example.expensetracker.data.local.ExpenseDatabase
+import com.example.expensetracker.security.BiometricHelper
 import com.example.expensetracker.theme.ExpenseTrackerTheme
 import com.example.expensetracker.ui.screen.ExpenseListScreen
+import com.example.expensetracker.ui.screen.LockScreen
 import com.example.expensetracker.ui.screen.SettingsScreen
 import com.example.expensetracker.ui.viewmodel.ExpenseViewModel
 import androidx.activity.compose.BackHandler
@@ -43,7 +47,7 @@ enum class Screen {
     Home, Asset, Statistics, Settings, Backup
 }
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
 
     private val database by lazy { ExpenseDatabase.getInstance(applicationContext) }
     private val repository by lazy { ExpenseRepository(database.expenseDao(), database.assetDao(), database) }
@@ -67,6 +71,8 @@ class MainActivity : ComponentActivity() {
                 amoledDarkModeEnabled = uiState.amoledDarkModeEnabled,
                 themeMode = uiState.themeMode
             ) {
+                val appLockManager = (application as ExpenseTrackerApplication).appLockManager
+                val isLocked by appLockManager.isLocked.collectAsStateWithLifecycle()
 
                 val addExpenseTriggerValue by addExpenseTrigger.collectAsState()
                 var currentScreen by remember { mutableStateOf(Screen.Home) }
@@ -81,6 +87,7 @@ class MainActivity : ComponentActivity() {
 
                 val mainScreens = listOf(Screen.Home, Screen.Asset, Screen.Statistics)
 
+                Box(modifier = Modifier.fillMaxSize()) {
                 Scaffold(
                     bottomBar = {
                         if (currentScreen in mainScreens) {
@@ -177,10 +184,13 @@ class MainActivity : ComponentActivity() {
                             Screen.Settings -> {
                                 SettingsScreen(
                                     uiState = uiState,
+                                    sharedPreferences = sharedPreferences,
                                     onDynamicColorChange = { expenseViewModel.updateDynamicColor(it) },
                                     onThemeColorChange = { expenseViewModel.updateThemeColor(it) },
                                     onAmoledDarkModeChange = { expenseViewModel.updateAmoledDarkMode(it) },
                                     onThemeModeChange = { expenseViewModel.updateThemeMode(it) },
+                                    onAppLockChange = { expenseViewModel.updateAppLockEnabled(it) },
+                                    onBiometricUnlockChange = { expenseViewModel.updateBiometricUnlockEnabled(it) },
                                     onBackClick = { currentScreen = Screen.Home },
                                     onBackupClick = { currentScreen = Screen.Backup },
                                     onGenerateTestData = {
@@ -212,6 +222,24 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+
+                // Lock screen overlay
+                if (isLocked) {
+                    LockScreen(
+                        sharedPreferences = sharedPreferences,
+                        onUnlocked = { appLockManager.unlock() },
+                        onBiometricClick = {
+                            BiometricHelper.authenticate(
+                                activity = this@MainActivity,
+                                onSuccess = { appLockManager.unlock() },
+                                onFailure = { }
+                            )
+                        },
+                        biometricEnabled = uiState.biometricUnlockEnabled
+                            && BiometricHelper.canAuthenticate(this@MainActivity)
+                    )
+                }
+                } // Box
             }
         }
     }

@@ -44,31 +44,31 @@ class ExpenseRepository(
     }
 
     suspend fun updateExpense(id: Long, amountCent: Long, type: Int, category: String, note: String, assetId: Long? = null): Boolean {
-        val oldExpense = expenseDao.getExpenseById(id) ?: return false
+        return database.withTransaction {
+            val oldExpense = expenseDao.getExpenseById(id) ?: return@withTransaction false
 
-        val normalizedCategory = category.trim().ifEmpty { "其他" }
-        val updated = expenseDao.updateById(
-            id = id,
-            amountCent = amountCent,
-            type = type,
-            category = normalizedCategory,
-            note = note.trim(),
-            assetId = assetId
-        ) > 0
+            val normalizedCategory = category.trim().ifEmpty { "其他" }
+            val updated = expenseDao.updateById(
+                id = id,
+                amountCent = amountCent,
+                type = type,
+                category = normalizedCategory,
+                note = note.trim(),
+                assetId = assetId
+            ) > 0
 
-        if (updated) {
-            // Revert old effect
-            if (oldExpense.assetId != null) {
-                val revertDiff = if (oldExpense.type == 0) oldExpense.amountCent else -oldExpense.amountCent
-                assetDao.updateAssetBalance(oldExpense.assetId, revertDiff)
+            if (updated) {
+                if (oldExpense.assetId != null) {
+                    val revertDiff = if (oldExpense.type == 0) oldExpense.amountCent else -oldExpense.amountCent
+                    assetDao.updateAssetBalance(oldExpense.assetId, revertDiff)
+                }
+                if (assetId != null) {
+                    val applyDiff = if (type == 0) -amountCent else amountCent
+                    assetDao.updateAssetBalance(assetId, applyDiff)
+                }
             }
-            // Apply new effect
-            if (assetId != null) {
-                val applyDiff = if (type == 0) -amountCent else amountCent
-                assetDao.updateAssetBalance(assetId, applyDiff)
-            }
+            updated
         }
-        return updated
     }
 
     suspend fun deleteExpense(id: Long): Boolean = database.withTransaction {

@@ -56,7 +56,9 @@ data class ExpenseUiState(
     val dynamicColorEnabled: Boolean = true,
     val themeColor: String = "Pink",
     val amoledDarkModeEnabled: Boolean = false,
-    val themeMode: String = "system"
+    val themeMode: String = "system",
+    val appLockEnabled: Boolean = false,
+    val biometricUnlockEnabled: Boolean = false
 )
 
 data class DateRangeFilterState(
@@ -111,6 +113,8 @@ class ExpenseViewModel(
     private val themeColorState = MutableStateFlow(sharedPreferences.getString("theme_color_seed", "Pink") ?: "Pink")
     private val amoledDarkModeEnabledState = MutableStateFlow(sharedPreferences.getBoolean("theme_amoled_dark_mode", false))
     private val themeModeState = MutableStateFlow(sharedPreferences.getString("theme_mode", "system") ?: "system")
+    private val appLockEnabledState = MutableStateFlow(sharedPreferences.getBoolean("app_lock_enabled", false))
+    private val biometricUnlockEnabledState = MutableStateFlow(sharedPreferences.getBoolean("biometric_unlock_enabled", false))
 
     init {
         goToCurrentMonth()
@@ -122,14 +126,21 @@ class ExpenseViewModel(
         dateRangeFilterState,
         monthlyBudgetCentState,
         combine(
-            searchQueryState, 
-            dynamicColorEnabledState, 
-            themeColorState, 
-            amoledDarkModeEnabledState,
-            themeModeState
-        ) { q, d, t, a, m -> 
-            data class Config(val q: String, val d: Boolean, val t: String, val a: Boolean, val m: String)
-            Config(q, d, t, a, m) 
+            searchQueryState,
+            dynamicColorEnabledState,
+            themeColorState,
+            combine(
+                amoledDarkModeEnabledState,
+                themeModeState,
+                appLockEnabledState,
+                biometricUnlockEnabledState
+            ) { a, m, lock, bio ->
+                data class Extra(val a: Boolean, val m: String, val lock: Boolean, val bio: Boolean)
+                Extra(a, m, lock, bio)
+            }
+        ) { q, d, t, extra ->
+            data class Config(val q: String, val d: Boolean, val t: String, val a: Boolean, val m: String, val lock: Boolean, val bio: Boolean)
+            Config(q, d, t, extra.a, extra.m, extra.lock, extra.bio)
         }
     ) { expenses, assets, dateRangeFilter, monthlyBudgetCent, config ->
         val searchQuery = config.q
@@ -137,6 +148,8 @@ class ExpenseViewModel(
         val themeColor = config.t
         val amoledDarkModeEnabled = config.a
         val themeMode = config.m
+        val appLockEnabled = config.lock
+        val biometricUnlockEnabled = config.bio
         val filteredByDate = expenses.filter { entity ->
             val expenseDate = Instant.ofEpochMilli(entity.createdAtEpochMillis)
                 .atZone(zoneId)
@@ -249,7 +262,9 @@ class ExpenseViewModel(
             dynamicColorEnabled = dynamicColorEnabled,
             themeColor = themeColor,
             amoledDarkModeEnabled = amoledDarkModeEnabled,
-            themeMode = themeMode
+            themeMode = themeMode,
+            appLockEnabled = appLockEnabled,
+            biometricUnlockEnabled = biometricUnlockEnabled
         )
     }
         .stateIn(
@@ -276,6 +291,16 @@ class ExpenseViewModel(
     fun updateThemeMode(mode: String) {
         sharedPreferences.edit().putString("theme_mode", mode).apply()
         themeModeState.value = mode
+    }
+
+    fun updateAppLockEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("app_lock_enabled", enabled).apply()
+        appLockEnabledState.value = enabled
+    }
+
+    fun updateBiometricUnlockEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("biometric_unlock_enabled", enabled).apply()
+        biometricUnlockEnabledState.value = enabled
     }
 
     fun addExpense(amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) {

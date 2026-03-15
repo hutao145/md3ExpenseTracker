@@ -19,7 +19,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 
@@ -73,4 +78,13 @@ dependencies {
 
     // OkHttp
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // Biometric authentication
+    implementation("androidx.biometric:biometric:1.1.0")
+
+    // Process lifecycle (foreground/background detection)
+    implementation("androidx.lifecycle:lifecycle-process:2.8.7")
+
+    // AppCompat (FragmentActivity for BiometricPrompt)
+    implementation("androidx.appcompat:appcompat:1.7.0")
 }

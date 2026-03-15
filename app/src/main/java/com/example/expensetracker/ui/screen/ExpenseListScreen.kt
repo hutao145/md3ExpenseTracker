@@ -1343,11 +1343,13 @@ private fun CategorySummaryCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -1370,62 +1372,52 @@ private fun CategorySummaryCard(
                 Text(
                     text = "暂无数据",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp)
                 )
             } else {
-                categorySummaries.forEach { summary ->
-                    val percent = summary.totalExpenseCent.toDouble() / totalExpenseCent.toDouble()
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                        modifier = Modifier
-                            .clickable { onCategoryClick(summary.category) }
-                            .padding(vertical = 4.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                androidx.compose.foundation.lazy.LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(
+                        items = categorySummaries,
+                        key = { it.category }
+                    ) { summary ->
+                        val percent = summary.totalExpenseCent.toDouble() / totalExpenseCent.toDouble()
+                        Surface(
+                            modifier = Modifier.clickable { onCategoryClick(summary.category) },
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.6f)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
                                 Icon(
                                     imageVector = getCategoryIcon(summary.category),
                                     contentDescription = null,
                                     modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = summary.category,
-                                    style = MaterialTheme.typography.bodyMedium
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Text(
+                                    text = formatAmountWithSymbol(summary.totalExpenseCent),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Text(
+                                    text = "${"%.0f".format(percent * 100)}%",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                                 )
                             }
-                            Text(
-                                text = formatAmountWithSymbol(summary.totalExpenseCent),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                             androidx.compose.material3.LinearProgressIndicator(
-                                progress = { percent.toFloat() },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(6.dp)
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .align(Alignment.CenterVertically),
-                                color = MaterialTheme.colorScheme.primary,
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = "${"%.1f".format(percent * 100)}%",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
                         }
                     }
                 }
@@ -1434,6 +1426,7 @@ private fun CategorySummaryCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MonthlyBudgetDialog(
     currentBudgetCent: Long?,
@@ -1450,89 +1443,67 @@ private fun MonthlyBudgetDialog(
 
     val amountValid = isAmountValid(amountInput)
     val showAmountError = amountInput.isNotBlank() && !amountValid
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    var showDialog by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-
-    LaunchedEffect(Unit) {
-        showDialog = true
-    }
-
-    fun dismiss() {
-        showDialog = false
-        scope.launch {
-            delay(300)
-            onDismissRequest()
-        }
-    }
-
-    Dialog(
-        onDismissRequest = { dismiss() },
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState
     ) {
-        AnimatedVisibility(
-            visible = showDialog,
-            enter = scaleIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeIn(),
-            exit = scaleOut(animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeOut()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .navigationBarsPadding()
+                .imePadding(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth(0.92f)
-                    .padding(16.dp),
-                shape = RoundedCornerShape(28.dp),
-                color = AlertDialogDefaults.containerColor,
-                tonalElevation = AlertDialogDefaults.TonalElevation
-            ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Text(text = "设置本月预算", style = MaterialTheme.typography.headlineSmall)
-                    
-                    OutlinedTextField(
-                        value = amountInput,
-                        onValueChange = { amountInput = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text(text = "预算金额（元）") },
-                        singleLine = true,
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
-                        ),
-                        isError = showAmountError,
-                        supportingText = {
-                            if (showAmountError) {
-                                Text(text = "请输入大于 0 的合法金额")
-                            } else if (currentBudgetCent != null && currentBudgetCent > 0L) {
-                                Text(text = "当前预算：${formatAmountWithSymbol(currentBudgetCent)}")
-                            }
-                        }
-                    )
+            Text(
+                text = "设置本月预算",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                         TextButton(onClick = {
-                            onClear()
-                            dismiss()
-                        }) {
-                            Text(text = "清除预算")
-                        }
-                        TextButton(onClick = { dismiss() }) {
-                            Text(text = "取消")
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        TextButton(
-                            enabled = amountValid,
-                            onClick = { 
-                                onConfirm(amountInput.trim()) 
-                                dismiss()
-                            }
-                        ) {
-                            Text(text = "保存")
-                        }
+            OutlinedTextField(
+                value = amountInput,
+                onValueChange = { amountInput = it },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(text = "预算金额（元）") },
+                singleLine = true,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal
+                ),
+                isError = showAmountError,
+                supportingText = {
+                    if (showAmountError) {
+                        Text(text = "请输入大于 0 的合法金额")
+                    } else if (currentBudgetCent != null && currentBudgetCent > 0L) {
+                        Text(text = "当前预算：${formatAmountWithSymbol(currentBudgetCent)}")
                     }
+                }
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = {
+                    onClear()
+                    onDismissRequest()
+                }) {
+                    Text(text = "清除预算")
+                }
+                TextButton(onClick = onDismissRequest) {
+                    Text(text = "取消")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(
+                    enabled = amountValid,
+                    onClick = {
+                        onConfirm(amountInput.trim())
+                        onDismissRequest()
+                    }
+                ) {
+                    Text(text = "保存")
                 }
             }
         }
