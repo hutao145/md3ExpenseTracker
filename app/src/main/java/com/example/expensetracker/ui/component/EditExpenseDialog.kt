@@ -1,11 +1,14 @@
 package com.example.expensetracker.ui.component
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -201,18 +204,38 @@ fun EditExpenseDialog(
                             }
                         }
                         
-                        AnimatedVisibility(
-                            visible = categoryInput == "自定义",
-                            enter = expandVertically(tween(200)) + fadeIn(tween(200)),
-                            exit = shrinkVertically(tween(150)) + fadeOut(tween(100))
-                        ) {
-                            OutlinedTextField(
-                                value = customCategoryInput,
-                                onValueChange = { customCategoryInput = it },
-                                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                                label = { Text("输入自定义分类") },
-                                singleLine = true
-                            )
+                        val md3EnterEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
+                        val md3ExitEasing = CubicBezierEasing(0.3f, 0.0f, 0.8f, 0.15f)
+
+                        AnimatedContent(
+                            targetState = categoryInput == "自定义",
+                            transitionSpec = {
+                                if (targetState) {
+                                    (fadeIn(tween(250, easing = md3EnterEasing)) +
+                                            slideInVertically(tween(300, easing = md3EnterEasing)) { -it / 3 })
+                                        .togetherWith(
+                                            fadeOut(tween(150, easing = md3ExitEasing))
+                                        )
+                                } else {
+                                    fadeIn(tween(200, delayMillis = 50, easing = md3EnterEasing))
+                                        .togetherWith(
+                                            fadeOut(tween(150, easing = md3ExitEasing)) +
+                                                    slideOutVertically(tween(200, easing = md3ExitEasing)) { -it / 3 }
+                                        )
+                                }.using(SizeTransform(clip = false, sizeAnimationSpec = { _, _ -> tween(300, easing = md3EnterEasing) }))
+                            },
+                            label = "customCategoryTransition"
+                        ) { isCustom ->
+                            if (isCustom) {
+                                OutlinedTextField(
+                                    value = customCategoryInput,
+                                    onValueChange = { customCategoryInput = it },
+                                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                                    label = { Text("输入自定义分类") },
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                            }
                         }
                     }
 
