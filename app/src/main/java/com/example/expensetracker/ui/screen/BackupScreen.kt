@@ -19,9 +19,12 @@ import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -42,8 +45,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -273,6 +279,8 @@ fun WebDavBackupTab(viewModel: ExpenseViewModel) {
                 )
             }
         }
+        // 定时备份卡片
+        ScheduledBackupCard(viewModel)
     }
 
     // 恢复列表弹窗
@@ -430,6 +438,114 @@ fun LocalBackupTab(
                     Icon(Icons.Default.Upload, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text("导入数据 (CSV)")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ScheduledBackupCard(viewModel: ExpenseViewModel) {
+    val context = LocalContext.current
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val webDavState by viewModel.webDavState.collectAsState()
+
+    val webDavConfigured = webDavState.url.isNotBlank()
+        && webDavState.username.isNotBlank()
+        && webDavState.password.isNotBlank()
+        && webDavState.path.isNotBlank()
+
+    // Refresh last backup time when this card is shown
+    LaunchedEffect(Unit) { viewModel.refreshLastAutoBackupTime() }
+
+    Card(
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        Icons.Default.Schedule,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text("定时备份", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = if (webDavConfigured) "自动备份到本地 + WebDAV" else "请先配置 WebDAV 以启用云端备份",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Switch(
+                    checked = uiState.autoBackupEnabled,
+                    onCheckedChange = { enabled ->
+                        viewModel.updateAutoBackupEnabled(context, enabled)
+                        val msg = if (enabled) "定时备份已开启" else "定时备份已关闭"
+                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                    }
+                )
+            }
+
+            // Interval slider (animated expand/collapse)
+            AnimatedVisibility(
+                visible = uiState.autoBackupEnabled,
+                enter = expandVertically(tween(300)) + fadeIn(tween(300)),
+                exit = shrinkVertically(tween(250)) + fadeOut(tween(200))
+            ) {
+                Column {
+                    Spacer(Modifier.height(16.dp))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                    Spacer(Modifier.height(12.dp))
+
+                    Text(
+                        text = "备份间隔: ${uiState.autoBackupIntervalHours} 小时",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(Modifier.height(4.dp))
+
+                    var sliderValue by remember(uiState.autoBackupIntervalHours) {
+                        mutableFloatStateOf(uiState.autoBackupIntervalHours.toFloat())
+                    }
+                    Slider(
+                        value = sliderValue,
+                        onValueChange = { sliderValue = it },
+                        onValueChangeFinished = {
+                            viewModel.updateAutoBackupInterval(context, sliderValue.roundToInt())
+                        },
+                        valueRange = 1f..72f,
+                        steps = 70,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("1h", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("72h", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+
+                    // Last backup time
+                    if (uiState.lastAutoBackupTime > 0L) {
+                        Spacer(Modifier.height(8.dp))
+                        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+                        Text(
+                            text = "上次自动备份: ${dateFormat.format(Date(uiState.lastAutoBackupTime))}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }

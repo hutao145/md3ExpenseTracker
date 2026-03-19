@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.expensetracker"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.1.1"
+        versionCode = 2
+        versionName = "1.1.3"
     }
 
     buildTypes {
@@ -87,4 +87,7 @@ dependencies {
 
     // AppCompat (FragmentActivity for BiometricPrompt)
     implementation("androidx.appcompat:appcompat:1.7.0")
+
+    // WorkManager (scheduled backup)
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
 }

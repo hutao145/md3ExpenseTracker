@@ -46,6 +46,7 @@
 
 - 📉 **趋势折线图** — 贝塞尔曲线丝滑绘制 + 渐变填充，1500ms 入场动画
 - 🍩 **分类饼图** — 环形图展示各分类占比，Top 5 图例一目了然
+- 📅 **月历总览** — 日历格式浏览整月收支，支出红色、收入绿色，今天蓝圈高亮
 - 🔄 按周 / 月 / 年灵活切换统计周期
 - 📱 支持横屏查看趋势详情，大屏体验更佳
 
@@ -54,10 +55,12 @@
 - 📂 三种类型：💳 **资产** / 📉 **负债** / 🤝 **借出**
 - 💎 汇总卡片一览：总资产、总负债、总借出
 - ⚡ 记账时关联资产，余额自动更新
+- 🔀 可在设置中开关资产页面，按需显示
 
 ### ☁️ 备份与同步 — 数据安全，高枕无忧
 
 - 🌐 **WebDAV 备份** — 上传 / 下载 / 删除，支持自定义服务器路径（坚果云、NextCloud 等）
+- ⏰ **定时自动备份** — 自定义 1-72 小时间隔，WorkManager 后台调度，本地 + WebDAV 双重保障
 - 📄 **本地 CSV** — UTF-8 BOM 导出（Excel 直接打开不乱码），兼容旧版导入
 - 🔄 **AutoAccounting 同步** — 对接 [AutoAccounting](https://github.com/AutoAccountingOrg/AutoAccounting)，自动从支付宝 / 微信拉取账单，告别手动记账
 
@@ -68,6 +71,12 @@
 - 🎭 **动态取色**（Android 12+ Material You，壁纸变色跟着变）
 - 🌗 **主题模式**：跟随系统 / ☀️ 浅色 / 🌙 深色
 - ⬛ **AMOLED 纯黑模式**（省电护眼，夜猫子福音）
+
+### 🔒 隐私与安全 — 你的账本只有你能看
+
+- 🔢 **PIN 密码锁** — 4 位数字密码，5 次错误自动冷却 30 秒
+- 👆 **生物识别解锁** — 支持指纹和面部识别（需设备支持）
+- 🔐 启用后每次打开应用需验证身份
 
 ### 📱 桌面小组件 — 不打开 App 也能看
 
@@ -89,6 +98,8 @@
 | ⚙️ 代码生成 | KSP | 2.0.21-1.0.28 |
 | ♻️ 生命周期 | AndroidX Lifecycle | 2.8.7 |
 | 🌐 网络 | OkHttp (WebDAV) | 4.12.0 |
+| ⏰ 后台任务 | WorkManager | 2.10.0 |
+| 🔒 生物识别 | AndroidX Biometric | 1.1.0 |
 | 📱 小组件 | Jetpack Glance | 1.1.1 |
 | 🎯 图标 | Material Icons Extended | 1.7.6 |
 
@@ -111,23 +122,33 @@ com.example.expensetracker
 │   │   ├── AutoAccountingService      # AutoAccounting HTTP 同步
 │   │   └── WebDavClient               # WebDAV 客户端
 │   └── ExpenseRepository              # 数据仓库层
+├── ⏰ backup/
+│   ├── BackupScheduler                # WorkManager 定时调度
+│   └── ScheduledBackupWorker          # 后台备份任务
+├── 🔒 security/
+│   ├── PinManager                     # PIN 哈希与验证 (SHA-256)
+│   ├── BiometricHelper                # 生物识别封装
+│   └── AppLockManager                 # 应用锁状态管理
 ├── 🖼️ ui/
 │   ├── 📱 screen/
 │   │   ├── ExpenseListScreen          # 首页：收支列表、筛选、预算
-│   │   ├── StatisticsScreen           # 统计：趋势图、饼图
+│   │   ├── StatisticsScreen           # 统计：趋势图、饼图、月历
 │   │   ├── AssetScreen                # 资产管理
-│   │   ├── SettingsScreen             # 设置：主题、测试数据
-│   │   ├── BackupScreen               # 备份：WebDAV、CSV、同步
+│   │   ├── SettingsScreen             # 设置：主题、安全、资产开关
+│   │   ├── BackupScreen               # 备份：WebDAV、CSV、定时备份
+│   │   ├── LockScreen                 # PIN 锁屏界面
 │   │   └── TrendDetailActivity        # 横屏趋势详情
 │   ├── 🧩 component/
 │   │   ├── AddExpenseDialog           # 新增收支 BottomSheet
 │   │   ├── EditExpenseDialog          # 编辑收支 BottomSheet
 │   │   ├── AddAssetDialog             # 新增资产对话框
-│   │   └── EditAssetDialog            # 编辑资产 BottomSheet
+│   │   ├── EditAssetDialog            # 编辑资产 BottomSheet
+│   │   └── SetPinDialog               # 设置 PIN 对话框
 │   ├── 📊 model/                      # UI 数据模型
 │   ├── 🧠 viewmodel/
 │   │   └── ExpenseViewModel           # 全局 ViewModel
 │   └── 🔧 util/
+│       ├── AmountFormatter            # 金额格式化工具
 │       └── CategoryIconHelper         # 分类图标映射
 ├── 📱 widget/
 │   ├── ExpenseAppWidget               # Glance 小组件

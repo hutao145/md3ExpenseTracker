@@ -48,6 +48,8 @@ import java.util.Locale
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.DayOfWeek
+import java.time.YearMonth
 
 @Composable
 private fun statisticsCategoryColors(): List<Color> {
@@ -326,6 +328,16 @@ fun StatisticsScreen(
                 }
             }
             
+            // Monthly Calendar
+            if (period == StatsPeriod.MONTH) {
+                item {
+                    MonthCalendarCard(
+                        focusDate = focusDate,
+                        dailySummaries = uiState.dailySummaries
+                    )
+                }
+            }
+
             item { Spacer(modifier = Modifier.height(100.dp)) }
         }
     }
@@ -604,6 +616,153 @@ fun TrendLineChart(
                 ),
                 style = Fill
             )
+        }
+    }
+}
+
+@Composable
+fun MonthCalendarCard(
+    focusDate: LocalDate,
+    dailySummaries: List<DailyExpenseUiModel>
+) {
+    val yearMonth = YearMonth.from(focusDate)
+    val daysInMonth = yearMonth.lengthOfMonth()
+    val firstDayOfWeek = yearMonth.atDay(1).dayOfWeek
+    // Monday-based grid offset: Monday=0 .. Sunday=6
+    val startOffset = firstDayOfWeek.value - 1
+    val today = LocalDate.now(ZoneId.systemDefault())
+
+    // Build lookup: day-of-month -> (expenseCent, incomeCent)
+    val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.CHINA)
+    val dailyMap = remember(dailySummaries, yearMonth) {
+        val map = mutableMapOf<Int, Pair<Long, Long>>()
+        dailySummaries.forEach { summary ->
+            try {
+                val date = LocalDate.parse(summary.date, dateFormatter)
+                if (date.year == yearMonth.year && date.monthValue == yearMonth.monthValue) {
+                    map[date.dayOfMonth] = Pair(summary.totalExpenseCent, summary.totalIncomeCent)
+                }
+            } catch (_: Exception) {}
+        }
+        map
+    }
+
+    val weekDayHeaders = listOf("一", "二", "三", "四", "五", "六", "日")
+    val expenseColor = MaterialTheme.colorScheme.error
+    val incomeColor = MaterialTheme.colorScheme.tertiary
+    val weekendColor = MaterialTheme.colorScheme.primary
+    val todayColor = MaterialTheme.colorScheme.primary
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp)
+        ) {
+            // Month title
+            Text(
+                text = "${yearMonth.monthValue}月",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
+            )
+
+            // Weekday headers
+            Row(modifier = Modifier.fillMaxWidth()) {
+                weekDayHeaders.forEachIndexed { index, header ->
+                    val isWeekend = index >= 5
+                    Text(
+                        text = header,
+                        modifier = Modifier.weight(1f),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                        color = if (isWeekend) weekendColor else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Calendar grid rows
+            val totalCells = startOffset + daysInMonth
+            val rows = (totalCells + 6) / 7
+
+            for (row in 0 until rows) {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    for (col in 0..6) {
+                        val cellIndex = row * 7 + col
+                        val dayOfMonth = cellIndex - startOffset + 1
+                        val isCurrentMonth = dayOfMonth in 1..daysInMonth
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(vertical = 2.dp),
+                            contentAlignment = Alignment.TopCenter
+                        ) {
+                            if (isCurrentMonth) {
+                                val isToday = yearMonth.year == today.year
+                                    && yearMonth.monthValue == today.monthValue
+                                    && dayOfMonth == today.dayOfMonth
+                                val isWeekend = col >= 5
+                                val data = dailyMap[dayOfMonth]
+
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(vertical = 2.dp)
+                                ) {
+                                    // Day number
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .then(
+                                                if (isToday) Modifier.background(todayColor, CircleShape)
+                                                else Modifier
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = dayOfMonth.toString(),
+                                            style = MaterialTheme.typography.bodyMedium.copy(
+                                                fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal
+                                            ),
+                                            color = when {
+                                                isToday -> Color.White
+                                                isWeekend -> weekendColor
+                                                else -> MaterialTheme.colorScheme.onSurface
+                                            }
+                                        )
+                                    }
+
+                                    // Expense amount (red)
+                                    if (data != null && data.first > 0) {
+                                        Text(
+                                            text = "-${formatAmount(data.first)}",
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
+                                            color = expenseColor,
+                                            maxLines = 1,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+
+                                    // Income amount (green)
+                                    if (data != null && data.second > 0) {
+                                        Text(
+                                            text = formatAmount(data.second),
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
+                                            color = incomeColor,
+                                            maxLines = 1,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

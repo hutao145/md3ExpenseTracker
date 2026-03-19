@@ -85,7 +85,16 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                val mainScreens = listOf(Screen.Home, Screen.Asset, Screen.Statistics)
+                val mainScreens = if (uiState.assetPageEnabled) {
+                    listOf(Screen.Home, Screen.Asset, Screen.Statistics)
+                } else {
+                    listOf(Screen.Home, Screen.Statistics)
+                }
+
+                // If asset page was disabled while viewing it, go home
+                if (!uiState.assetPageEnabled && currentScreen == Screen.Asset) {
+                    currentScreen = Screen.Home
+                }
 
                 Box(modifier = Modifier.fillMaxSize()) {
                 Scaffold(
@@ -98,12 +107,14 @@ class MainActivity : AppCompatActivity() {
                                     icon = { Icon(Icons.Default.Edit, contentDescription = "记账") },
                                     label = { Text("记账") }
                                 )
-                                NavigationBarItem(
-                                    selected = currentScreen == Screen.Asset,
-                                    onClick = { currentScreen = Screen.Asset },
-                                    icon = { Icon(Icons.Default.AccountBalance, contentDescription = "资产") },
-                                    label = { Text("资产") }
-                                )
+                                if (uiState.assetPageEnabled) {
+                                    NavigationBarItem(
+                                        selected = currentScreen == Screen.Asset,
+                                        onClick = { currentScreen = Screen.Asset },
+                                        icon = { Icon(Icons.Default.AccountBalance, contentDescription = "资产") },
+                                        label = { Text("资产") }
+                                    )
+                                }
                                 NavigationBarItem(
                                     selected = currentScreen == Screen.Statistics,
                                     onClick = { currentScreen = Screen.Statistics },
@@ -191,6 +202,7 @@ class MainActivity : AppCompatActivity() {
                                     onThemeModeChange = { expenseViewModel.updateThemeMode(it) },
                                     onAppLockChange = { expenseViewModel.updateAppLockEnabled(it) },
                                     onBiometricUnlockChange = { expenseViewModel.updateBiometricUnlockEnabled(it) },
+                                    onAssetPageChange = { expenseViewModel.updateAssetPageEnabled(it) },
                                     onBackClick = { currentScreen = Screen.Home },
                                     onBackupClick = { currentScreen = Screen.Backup },
                                     onGenerateTestData = {

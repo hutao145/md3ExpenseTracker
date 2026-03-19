@@ -11,8 +11,7 @@ object BiometricHelper {
     fun canAuthenticate(context: Context): Boolean {
         val bm = BiometricManager.from(context)
         return bm.canAuthenticate(
-            BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                BiometricManager.Authenticators.BIOMETRIC_WEAK
+            BiometricManager.Authenticators.BIOMETRIC_WEAK
         ) == BiometricManager.BIOMETRIC_SUCCESS
     }
 
@@ -26,9 +25,9 @@ object BiometricHelper {
             .setSubtitle("使用生物识别解锁应用")
             .setNegativeButtonText("使用 PIN 密码")
             .setAllowedAuthenticators(
-                BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                    BiometricManager.Authenticators.BIOMETRIC_WEAK
+                BiometricManager.Authenticators.BIOMETRIC_WEAK
             )
+            .setConfirmationRequired(false)
             .build()
 
         val biometricPrompt = BiometricPrompt(

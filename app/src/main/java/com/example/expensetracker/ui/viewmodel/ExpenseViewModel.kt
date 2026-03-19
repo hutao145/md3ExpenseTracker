@@ -58,7 +58,11 @@ data class ExpenseUiState(
     val amoledDarkModeEnabled: Boolean = false,
     val themeMode: String = "system",
     val appLockEnabled: Boolean = false,
-    val biometricUnlockEnabled: Boolean = false
+    val biometricUnlockEnabled: Boolean = false,
+    val autoBackupEnabled: Boolean = false,
+    val autoBackupIntervalHours: Int = 24,
+    val lastAutoBackupTime: Long = 0L,
+    val assetPageEnabled: Boolean = true
 )
 
 data class DateRangeFilterState(
@@ -115,6 +119,10 @@ class ExpenseViewModel(
     private val themeModeState = MutableStateFlow(sharedPreferences.getString("theme_mode", "system") ?: "system")
     private val appLockEnabledState = MutableStateFlow(sharedPreferences.getBoolean("app_lock_enabled", false))
     private val biometricUnlockEnabledState = MutableStateFlow(sharedPreferences.getBoolean("biometric_unlock_enabled", false))
+    private val autoBackupEnabledState = MutableStateFlow(sharedPreferences.getBoolean("auto_backup_enabled", false))
+    private val autoBackupIntervalHoursState = MutableStateFlow(sharedPreferences.getInt("auto_backup_interval_hours", 24))
+    private val lastAutoBackupTimeState = MutableStateFlow(sharedPreferences.getLong("last_auto_backup_time", 0L))
+    private val assetPageEnabledState = MutableStateFlow(sharedPreferences.getBoolean("asset_page_enabled", true))
 
     init {
         goToCurrentMonth()
@@ -135,12 +143,26 @@ class ExpenseViewModel(
                 appLockEnabledState,
                 biometricUnlockEnabledState
             ) { a, m, lock, bio ->
-                data class Extra(val a: Boolean, val m: String, val lock: Boolean, val bio: Boolean)
-                Extra(a, m, lock, bio)
+                data class Extra1(val a: Boolean, val m: String, val lock: Boolean, val bio: Boolean)
+                Extra1(a, m, lock, bio)
+            },
+            combine(
+                autoBackupEnabledState,
+                autoBackupIntervalHoursState,
+                lastAutoBackupTimeState,
+                assetPageEnabledState
+            ) { enabled, interval, lastTime, assetPage ->
+                data class Extra2(val enabled: Boolean, val interval: Int, val lastTime: Long, val assetPage: Boolean)
+                Extra2(enabled, interval, lastTime, assetPage)
             }
-        ) { q, d, t, extra ->
-            data class Config(val q: String, val d: Boolean, val t: String, val a: Boolean, val m: String, val lock: Boolean, val bio: Boolean)
-            Config(q, d, t, extra.a, extra.m, extra.lock, extra.bio)
+        ) { q, d, t, extra1, extra2 ->
+            data class Config(
+                val q: String, val d: Boolean, val t: String,
+                val a: Boolean, val m: String, val lock: Boolean, val bio: Boolean,
+                val autoBackup: Boolean, val autoInterval: Int, val lastAutoTime: Long,
+                val assetPage: Boolean
+            )
+            Config(q, d, t, extra1.a, extra1.m, extra1.lock, extra1.bio, extra2.enabled, extra2.interval, extra2.lastTime, extra2.assetPage)
         }
     ) { expenses, assets, dateRangeFilter, monthlyBudgetCent, config ->
         val searchQuery = config.q
@@ -264,7 +286,11 @@ class ExpenseViewModel(
             amoledDarkModeEnabled = amoledDarkModeEnabled,
             themeMode = themeMode,
             appLockEnabled = appLockEnabled,
-            biometricUnlockEnabled = biometricUnlockEnabled
+            biometricUnlockEnabled = biometricUnlockEnabled,
+            autoBackupEnabled = config.autoBackup,
+            autoBackupIntervalHours = config.autoInterval,
+            lastAutoBackupTime = config.lastAutoTime,
+            assetPageEnabled = config.assetPage
         )
     }
         .stateIn(
@@ -301,6 +327,33 @@ class ExpenseViewModel(
     fun updateBiometricUnlockEnabled(enabled: Boolean) {
         sharedPreferences.edit().putBoolean("biometric_unlock_enabled", enabled).apply()
         biometricUnlockEnabledState.value = enabled
+    }
+
+    fun updateAutoBackupEnabled(context: Context, enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("auto_backup_enabled", enabled).apply()
+        autoBackupEnabledState.value = enabled
+        if (enabled) {
+            com.example.expensetracker.backup.BackupScheduler.schedule(context, autoBackupIntervalHoursState.value)
+        } else {
+            com.example.expensetracker.backup.BackupScheduler.cancel(context)
+        }
+    }
+
+    fun updateAutoBackupInterval(context: Context, hours: Int) {
+        sharedPreferences.edit().putInt("auto_backup_interval_hours", hours).apply()
+        autoBackupIntervalHoursState.value = hours
+        if (autoBackupEnabledState.value) {
+            com.example.expensetracker.backup.BackupScheduler.schedule(context, hours)
+        }
+    }
+
+    fun refreshLastAutoBackupTime() {
+        lastAutoBackupTimeState.value = sharedPreferences.getLong("last_auto_backup_time", 0L)
+    }
+
+    fun updateAssetPageEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("asset_page_enabled", enabled).apply()
+        assetPageEnabledState.value = enabled
     }
 
     fun addExpense(amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) {
