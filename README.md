@@ -10,7 +10,7 @@
 
 ---
 
-🍜 记餐饮 · 🚗 记交通 · 🛍️ 记购物 · 💵 记收入 · 📊 看统计 · ☁️ 云备份
+🍜 记餐饮 · 🚗 记交通 · 🛍️ 记购物 · 💵 记收入 · 📊 看统计 · ☁️ 云备份 · 🤖 AI 分析
 
 </div>
 
@@ -49,6 +49,16 @@
 - 📅 **月历总览** — 日历格式浏览整月收支，支出红色、收入绿色，今天蓝圈高亮
 - 🔄 按周 / 月 / 年灵活切换统计周期
 - 📱 支持横屏查看趋势详情，大屏体验更佳
+
+### 🤖 AI 财务分析 — 智能洞察你的财务状况
+
+- 🧠 接入 OpenAI 兼容 API，一键生成**财务全景透视报告**
+- 📊 **健康评分** — 0-100 综合评分，直观了解财务状态
+- 🔍 **深度分析** — 消费结构、异常风险、行为规律、趋势预测
+- 📋 **行动清单** — AI 给出优先级排序的改善建议
+- 📚 **历史记录** — 分析结果持久化保存，随时回顾对比
+- ⏳ **后台分析** — 选择日期范围后在后台执行，不阻塞操作
+- 📅 支持多种日期预设（近一周/30天/本月/本年）和自定义范围
 
 ### 🏦 资产管理 — 你的所有账户都在这里
 
@@ -97,11 +107,12 @@
 | 💾 本地数据库 | Room | 2.6.1 |
 | ⚙️ 代码生成 | KSP | 2.0.21-1.0.28 |
 | ♻️ 生命周期 | AndroidX Lifecycle | 2.8.7 |
-| 🌐 网络 | OkHttp (WebDAV) | 4.12.0 |
+| 🌐 网络 | OkHttp (WebDAV + AI API) | 4.12.0 |
 | ⏰ 后台任务 | WorkManager | 2.10.0 |
 | 🔒 生物识别 | AndroidX Biometric | 1.1.0 |
 | 📱 小组件 | Jetpack Glance | 1.1.1 |
 | 🎯 图标 | Material Icons Extended | 1.7.6 |
+| 📊 图表渲染 | ECharts (WebView) | 5.x |
 
 ---
 
@@ -114,11 +125,14 @@ com.example.expensetracker
 │   ├── 💾 local/
 │   │   ├── ExpenseEntity              # 收支记录实体
 │   │   ├── AssetEntity                # 资产实体
+│   │   ├── AiAnalysisEntity           # AI 分析记录实体
 │   │   ├── ExpenseDao                 # 收支 DAO
 │   │   ├── AssetDao                   # 资产 DAO
-│   │   ├── ExpenseDatabase            # Room 数据库 (v5, 4 次迁移)
+│   │   ├── AiAnalysisDao             # AI 分析 DAO
+│   │   ├── ExpenseDatabase            # Room 数据库 (v6, 5 次迁移)
 │   │   └── DailyExpenseSummary        # 每日汇总数据类
 │   ├── 🌐 remote/
+│   │   ├── AiApiClient                # AI API 客户端 (OpenAI 兼容)
 │   │   ├── AutoAccountingService      # AutoAccounting HTTP 同步
 │   │   └── WebDavClient               # WebDAV 客户端
 │   └── ExpenseRepository              # 数据仓库层
@@ -134,15 +148,14 @@ com.example.expensetracker
 │   │   ├── ExpenseListScreen          # 首页：收支列表、筛选、预算
 │   │   ├── StatisticsScreen           # 统计：趋势图、饼图、月历
 │   │   ├── AssetScreen                # 资产管理
-│   │   ├── SettingsScreen             # 设置：主题、安全、资产开关
+│   │   ├── SettingsScreen             # 设置：主题、安全、AI 配置
 │   │   ├── BackupScreen               # 备份：WebDAV、CSV、定时备份
 │   │   ├── LockScreen                 # PIN 锁屏界面
-│   │   └── TrendDetailActivity        # 横屏趋势详情
+│   │   ├── TrendDetailActivity        # 横屏趋势详情
+│   │   └── AiAnalysisActivity         # AI 财务分析 (历史记录 + WebView 报告)
 │   ├── 🧩 component/
-│   │   ├── AddExpenseDialog           # 新增收支 BottomSheet
-│   │   ├── EditExpenseDialog          # 编辑收支 BottomSheet
-│   │   ├── AddAssetDialog             # 新增资产对话框
-│   │   ├── EditAssetDialog            # 编辑资产 BottomSheet
+│   │   ├── ExpenseFormSheet           # 收支表单 (新增/编辑统一)
+│   │   ├── AssetFormSheet             # 资产表单 (新增/编辑统一)
 │   │   └── SetPinDialog               # 设置 PIN 对话框
 │   ├── 📊 model/                      # UI 数据模型
 │   ├── 🧠 viewmodel/
@@ -175,6 +188,24 @@ com.example.expensetracker
 # 📦 Release 构建
 ./gradlew assembleRelease
 ```
+
+---
+
+## 🤖 AI 财务分析配置
+
+本应用支持接入任何 **OpenAI 兼容 API** 来生成智能财务分析报告。
+
+**配置步骤：**
+1. 📱 打开设置 → AI 分析配置
+2. 🔗 填写 API 端点（默认 `https://api.openai.com/v1/chat/completions`）
+3. 🔑 填写 API Key
+4. 🤖 选择模型（默认 `gpt-4o-mini`，支持任意兼容模型）
+
+**使用方式：**
+1. 进入 AI 财务分析页面，查看历史分析记录
+2. 点击右下角 ➕ 按钮，选择分析日期范围
+3. 后台自动调用 AI 生成全景透视报告
+4. 分析完成后点击记录查看包含图表的交互式报告
 
 ---
 

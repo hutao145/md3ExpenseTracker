@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.animation.Crossfade
 import android.content.Intent
 import kotlinx.coroutines.flow.MutableStateFlow
+import com.example.expensetracker.ui.screen.AiAnalysisActivity
 import kotlinx.coroutines.flow.update
 import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.launch
@@ -205,6 +206,9 @@ class MainActivity : AppCompatActivity() {
                                     onAssetPageChange = { expenseViewModel.updateAssetPageEnabled(it) },
                                     onBackClick = { currentScreen = Screen.Home },
                                     onBackupClick = { currentScreen = Screen.Backup },
+                                    onAiAnalysisClick = {
+                                        startActivity(Intent(this@MainActivity, AiAnalysisActivity::class.java))
+                                    },
                                     onGenerateTestData = {
                                         expenseViewModel.generateTestData()
                                     }

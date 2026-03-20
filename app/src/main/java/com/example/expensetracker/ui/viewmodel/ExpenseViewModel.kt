@@ -34,6 +34,9 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import com.example.expensetracker.data.local.ExpenseEntity
 import com.example.expensetracker.ui.util.centToYuanString
+import kotlinx.coroutines.flow.first
+import org.json.JSONArray
+import org.json.JSONObject
 
 data class ExpenseUiState(
     val dailySummaries: List<DailyExpenseUiModel> = emptyList(),
@@ -1013,6 +1016,66 @@ class ExpenseViewModel(
                 message = if (success) "恢复成功" else "从云端恢复失败"
             )
         }
+    }
+
+    suspend fun collectAiAnalysisData(startDate: LocalDate, endDate: LocalDate): String {
+        val allExpenses = repository.getAllExpensesSnapshot()
+        val allAssets = repository.observeAssets().first()
+        val budget = monthlyBudgetCentState.value
+
+        val recentExpenses = allExpenses.filter { entity ->
+            val date = Instant.ofEpochMilli(entity.createdAtEpochMillis)
+                .atZone(zoneId).toLocalDate()
+            !date.isBefore(startDate) && !date.isAfter(endDate)
+        }
+
+        val monthlyData = recentExpenses.groupBy { entity ->
+            val date = Instant.ofEpochMilli(entity.createdAtEpochMillis)
+                .atZone(zoneId).toLocalDate()
+            "${date.year}-${date.monthValue.toString().padStart(2, '0')}"
+        }
+
+        val monthsJson = JSONArray()
+        for ((label, expenses) in monthlyData.toSortedMap()) {
+            val monthObj = JSONObject()
+            monthObj.put("label", label)
+            monthObj.put("expense", expenses.filter { it.type == 0 }.sumOf { it.amountCent } / 100.0)
+            monthObj.put("income", expenses.filter { it.type == 1 }.sumOf { it.amountCent } / 100.0)
+
+            val categories = JSONArray()
+            expenses.filter { it.type == 0 }
+                .groupBy { it.category }
+                .forEach { (name, items) ->
+                    categories.put(JSONObject().apply {
+                        put("name", name)
+                        put("amount", items.sumOf { it.amountCent } / 100.0)
+                    })
+                }
+            monthObj.put("categories", categories)
+            monthsJson.put(monthObj)
+        }
+
+        val result = JSONObject()
+        result.put("period", "$startDate ~ $endDate")
+        result.put("months", monthsJson)
+        result.put("budget", if (budget != null) budget / 100.0 else JSONObject.NULL)
+
+        val assetsJson = JSONArray()
+        allAssets.forEach { asset ->
+            assetsJson.put(JSONObject().apply {
+                put("name", asset.name)
+                put("amount", asset.amountCent / 100.0)
+                put("type", when (asset.type) {
+                    0 -> "普通"
+                    1 -> "信用卡"
+                    2 -> "借出"
+                    else -> "其他"
+                })
+            })
+        }
+        result.put("assets", assetsJson)
+
+        return result.toString()
     }
 
     companion object {

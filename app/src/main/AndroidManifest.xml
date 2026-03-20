@@ -41,6 +41,10 @@
             android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|keyboardHidden" />
 
+        <activity
+            android:name=".ui.screen.AiAnalysisActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

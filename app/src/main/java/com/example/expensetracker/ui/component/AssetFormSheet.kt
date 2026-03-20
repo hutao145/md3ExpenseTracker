@@ -2,10 +2,10 @@ package com.example.expensetracker.ui.component
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,7 +16,9 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
@@ -37,24 +39,31 @@ import androidx.compose.ui.unit.dp
 import com.example.expensetracker.data.local.AssetEntity
 import com.example.expensetracker.ui.util.centToYuanString
 
+private val assetTypes = listOf("资产", "负债", "借出")
+
+/**
+ * Unified asset form for both adding and editing.
+ * - Add mode: editingAsset = null
+ * - Edit mode: editingAsset != null, shows delete button
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditAssetDialog(
-    asset: AssetEntity,
+fun AssetFormSheet(
     isAmountValid: (String) -> Boolean,
     onDismissRequest: () -> Unit,
-    onConfirm: (id: Long, name: String, amount: String, type: Int) -> Unit,
-    onDelete: (id: Long) -> Unit
+    onConfirm: (id: Long?, name: String, amount: String, type: Int) -> Unit,
+    editingAsset: AssetEntity? = null,
+    onDelete: ((id: Long) -> Unit)? = null
 ) {
-    var nameInput by remember { mutableStateOf(asset.name) }
+    val isEditMode = editingAsset != null
 
-    val initialAmount = centToYuanString(asset.amountCent)
-    var amountInput by remember { mutableStateOf(initialAmount) }
-
-    var selectedType by remember { mutableStateOf(asset.type) }
+    var nameInput by remember { mutableStateOf(editingAsset?.name ?: "") }
+    var amountInput by remember {
+        mutableStateOf(if (isEditMode) centToYuanString(editingAsset!!.amountCent) else "")
+    }
+    var selectedType by remember { mutableStateOf(editingAsset?.type ?: 0) }
     var isDeleteConfirming by remember { mutableStateOf(false) }
 
-    val assetTypes = listOf("资产", "负债", "借出")
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
@@ -74,7 +83,7 @@ fun EditAssetDialog(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "编辑资产",
+                text = if (isEditMode) "编辑资产" else "添加资产",
                 fontWeight = FontWeight.SemiBold
             )
 
@@ -108,57 +117,70 @@ fun EditAssetDialog(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            AnimatedContent(
-                targetState = isDeleteConfirming,
-                transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(160)) },
-                label = "DeleteConfirmTransition"
-            ) { confirming ->
-                if (confirming) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            text = "确定删除该资产？此操作不可撤销。"
-                        )
+            val canSubmit = nameInput.isNotBlank() && isAmountValid(amountInput)
+
+            if (isEditMode) {
+                AnimatedContent(
+                    targetState = isDeleteConfirming,
+                    transitionSpec = { fadeIn(tween(160)) togetherWith fadeOut(tween(160)) },
+                    label = "DeleteConfirmTransition"
+                ) { confirming ->
+                    if (confirming) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("确定删除该资产？此操作不可撤销。")
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                TextButton(onClick = { isDeleteConfirming = false }) {
+                                    Text("取消")
+                                }
+                                Spacer(modifier = Modifier.width(8.dp))
+                                TextButton(
+                                    onClick = { onDelete?.invoke(editingAsset!!.id) },
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.error
+                                    )
+                                ) {
+                                    Text("确认删除")
+                                }
+                            }
+                        }
+                    } else {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.End
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             TextButton(
-                                onClick = { isDeleteConfirming = false }
-                            ) {
-                                Text("取消")
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                            TextButton(
-                                onClick = { onDelete(asset.id) },
-                                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
-                                    contentColor = androidx.compose.material3.MaterialTheme.colorScheme.error
+                                onClick = { isDeleteConfirming = true },
+                                colors = ButtonDefaults.textButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.error
                                 )
                             ) {
-                                Text("确认删除")
+                                Text("删除")
+                            }
+                            TextButton(
+                                onClick = { onConfirm(editingAsset!!.id, nameInput, amountInput, selectedType) },
+                                enabled = canSubmit
+                            ) {
+                                Text("保存")
                             }
                         }
                     }
-                } else {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                }
+            } else {
+                // Add mode buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onDismissRequest) { Text("取消") }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(
+                        onClick = { onConfirm(null, nameInput, amountInput, selectedType) },
+                        enabled = canSubmit
                     ) {
-                        TextButton(
-                            onClick = { isDeleteConfirming = true },
-                            colors = androidx.compose.material3.ButtonDefaults.textButtonColors(
-                                contentColor = androidx.compose.material3.MaterialTheme.colorScheme.error
-                            )
-                        ) {
-                            Text("删除")
-                        }
-                        TextButton(
-                            onClick = {
-                                onConfirm(asset.id, nameInput, amountInput, selectedType)
-                            },
-                            enabled = nameInput.isNotBlank() && isAmountValid(amountInput)
-                        ) {
-                            Text("保存")
-                        }
+                        Text("确定")
                     }
                 }
             }

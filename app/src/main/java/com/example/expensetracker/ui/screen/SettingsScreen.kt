@@ -34,6 +34,8 @@ import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.Psychology
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -70,6 +72,8 @@ import com.example.expensetracker.security.PinManager
 import com.example.expensetracker.ui.component.SetPinDialog
 import com.example.expensetracker.ui.component.VerifyPinDialog
 import com.example.expensetracker.theme.*
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,6 +89,7 @@ fun SettingsScreen(
     onAssetPageChange: (Boolean) -> Unit,
     onBackClick: () -> Unit,
     onBackupClick: () -> Unit,
+    onAiAnalysisClick: () -> Unit,
     onGenerateTestData: () -> Unit
 ) {
     val context = LocalContext.current
@@ -180,6 +185,123 @@ fun SettingsScreen(
                         checked = uiState.assetPageEnabled,
                         onCheckedChange = { onAssetPageChange(it) }
                     )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // AI Analysis Card
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                SettingsItem(
+                    icon = Icons.Default.Psychology,
+                    title = "AI 财务分析",
+                    subtitle = "使用 AI 分析收支数据并生成可视化报告",
+                    onClick = onAiAnalysisClick
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                var showAiConfig by remember { mutableStateOf(false) }
+
+                SettingsItem(
+                    icon = Icons.Default.Settings,
+                    title = "AI API 配置",
+                    subtitle = if (showAiConfig) "收起配置项" else "配置 API 接口地址、密钥和模型",
+                    onClick = { showAiConfig = !showAiConfig }
+                )
+
+                AnimatedVisibility(
+                    visible = showAiConfig,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically()
+                ) {
+                    var aiEndpoint by remember {
+                        mutableStateOf(
+                            sharedPreferences.getString(
+                                "ai_api_endpoint",
+                                "https://api.openai.com/v1/chat/completions"
+                            ) ?: "https://api.openai.com/v1/chat/completions"
+                        )
+                    }
+                    var aiApiKey by remember {
+                        mutableStateOf(
+                            sharedPreferences.getString("ai_api_key", "") ?: ""
+                        )
+                    }
+                    var aiModel by remember {
+                        mutableStateOf(
+                            sharedPreferences.getString("ai_api_model", "gpt-4o-mini")
+                                ?: "gpt-4o-mini"
+                        )
+                    }
+                    var showApiKey by remember { mutableStateOf(false) }
+
+                    Column(
+                        modifier = Modifier.padding(
+                            start = 16.dp,
+                            end = 16.dp,
+                            bottom = 16.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = aiEndpoint,
+                            onValueChange = {
+                                aiEndpoint = it
+                                sharedPreferences.edit()
+                                    .putString("ai_api_endpoint", it).apply()
+                            },
+                            label = { Text("API Endpoint") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = aiApiKey,
+                            onValueChange = {
+                                aiApiKey = it
+                                sharedPreferences.edit()
+                                    .putString("ai_api_key", it).apply()
+                            },
+                            label = { Text("API Key") },
+                            singleLine = true,
+                            visualTransformation = if (showApiKey) VisualTransformation.None
+                                else PasswordVisualTransformation(),
+                            trailingIcon = {
+                                IconButton(onClick = { showApiKey = !showApiKey }) {
+                                    Icon(
+                                        imageVector = if (showApiKey) Icons.Default.Lock
+                                            else Icons.Default.Lock,
+                                        contentDescription = if (showApiKey) "隐藏" else "显示"
+                                    )
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        OutlinedTextField(
+                            value = aiModel,
+                            onValueChange = {
+                                aiModel = it
+                                sharedPreferences.edit()
+                                    .putString("ai_api_model", it).apply()
+                            },
+                            label = { Text("模型名称") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
                 }
             }
 

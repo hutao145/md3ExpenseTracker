@@ -9,14 +9,15 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [ExpenseEntity::class, AssetEntity::class],
-    version = 5,
+    entities = [ExpenseEntity::class, AssetEntity::class, AiAnalysisEntity::class],
+    version = 6,
     exportSchema = false
 )
 abstract class ExpenseDatabase : RoomDatabase() {
 
     abstract fun expenseDao(): ExpenseDao
     abstract fun assetDao(): AssetDao
+    abstract fun aiAnalysisDao(): AiAnalysisDao
 
     companion object {
         @Volatile
@@ -29,7 +30,7 @@ abstract class ExpenseDatabase : RoomDatabase() {
                     ExpenseDatabase::class.java,
                     "expense_tracker.db"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .build()
                     .also { INSTANCE = it }
             }
@@ -59,6 +60,21 @@ abstract class ExpenseDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL(
                     "ALTER TABLE expenses ADD COLUMN assetId INTEGER DEFAULT NULL"
+                )
+            }
+        }
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL(
+                    """CREATE TABLE IF NOT EXISTS `ai_analyses` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `startDate` TEXT NOT NULL,
+                        `endDate` TEXT NOT NULL,
+                        `rawDataJson` TEXT NOT NULL,
+                        `aiResponseJson` TEXT NOT NULL,
+                        `status` INTEGER NOT NULL DEFAULT 0,
+                        `createdAtEpochMillis` INTEGER NOT NULL
+                    )"""
                 )
             }
         }

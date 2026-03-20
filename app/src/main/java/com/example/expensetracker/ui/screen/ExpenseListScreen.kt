@@ -81,8 +81,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.expensetracker.ui.component.AddExpenseDialog
-import com.example.expensetracker.ui.component.EditExpenseDialog
+import com.example.expensetracker.ui.component.ExpenseFormSheet
 import com.example.expensetracker.ui.model.CategorySummaryUiModel
 import com.example.expensetracker.ui.model.DailyExpenseUiModel
 import com.example.expensetracker.ui.model.ExpenseItemUiModel
@@ -565,11 +564,11 @@ fun ExpenseListScreen(
     }
 
     if (showAddDialog) {
-        AddExpenseDialog(
+        ExpenseFormSheet(
             assets = uiState.assets,
             isAmountValid = isAmountValid,
             onDismissRequest = { showAddDialog = false },
-            onConfirm = { amountInput, type, category, note, assetId, dateMillis ->
+            onAdd = { amountInput, type, category, note, assetId, dateMillis ->
                 onAddExpense(amountInput, type, category, note, assetId, dateMillis)
                 showAddDialog = false
             }
@@ -604,19 +603,19 @@ fun ExpenseListScreen(
     }
 
     editingItem?.let { target ->
-        EditExpenseDialog(
+        ExpenseFormSheet(
             assets = uiState.assets,
-            expenseId = target.id,
-            initialAmountInput = formatAmountInput(target.amountCent),
+            isAmountValid = isAmountValid,
+            onDismissRequest = { editingItem = null },
+            editId = target.id,
+            initialAmount = formatAmountInput(target.amountCent),
             initialType = target.type,
             initialCategory = target.category,
             initialNote = target.note,
             initialAssetId = target.assetId,
-            isAmountValid = isAmountValid,
-            onDismissRequest = { editingItem = null },
-            onConfirm = { id, amountInput, type, category, note, assetId ->
-                 onUpdateExpense(id, amountInput, type, category, note, assetId)
-                 editingItem = null
+            onUpdate = { id, amountInput, type, category, note, assetId ->
+                onUpdateExpense(id, amountInput, type, category, note, assetId)
+                editingItem = null
             }
         )
     }

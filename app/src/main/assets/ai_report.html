@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>AI 财务分析</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<style>
+:root {
+    --bg: #f3f3f3;
+    --card-bg: #ffffff;
+    --text: #1c1b1f;
+    --text-secondary: #5e5e5e;
+    --text-tertiary: #8e8e8e;
+    --border: #e8e8e8;
+    --divider: #f0f0f0;
+    --accent: #4a7c59;
+    --accent-light: #e8f5e9;
+    --expense: #c62828;
+    --expense-bg: #ffebee;
+    --income: #2e7d32;
+    --income-bg: #e8f5e9;
+    --warn: #e65100;
+    --warn-bg: #fff3e0;
+    --info: #1565c0;
+    --info-bg: #e3f2fd;
+    --score-excellent: #2e7d32;
+    --score-good: #558b2f;
+    --score-fair: #f9a825;
+    --score-poor: #e65100;
+    --score-bad: #c62828;
+    --tag-bg: #e8f5e9;
+    --tag-text: #2e7d32;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.dark {
+    --bg: #121212;
+    --card-bg: #1e1e1e;
+    --text: #e0e0e0;
+    --text-secondary: #aaaaaa;
+    --text-tertiary: #777777;
+    --border: #333333;
+    --divider: #2a2a2a;
+    --accent: #81c784;
+    --accent-light: #1b3a1e;
+    --expense: #ef9a9a;
+    --expense-bg: #3e1a1a;
+    --income: #81c784;
+    --income-bg: #1b3a1e;
+    --warn: #ffb74d;
+    --warn-bg: #3e2a10;
+    --info: #64b5f6;
+    --info-bg: #1a2a3e;
+    --score-excellent: #81c784;
+    --score-good: #aed581;
+    --score-fair: #fff176;
+    --score-poor: #ffb74d;
+    --score-bad: #ef9a9a;
+    --tag-bg: #1b3a1e;
+    --tag-text: #81c784;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, "Noto Sans SC", "Helvetica Neue", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 12px;
+    -webkit-text-size-adjust: 100%;
+    line-height: 1.6;
+}
+.card {
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+}
+.card-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.card-title .icon { font-size: 16px; }
+
+/* Header */
+.report-header { text-align: center; padding-bottom: 8px; }
+.report-header .tag-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+}
+.tag-green { background: var(--tag-bg); color: var(--tag-text); }
+.tag-blue { background: var(--info-bg); color: var(--info); }
+.report-header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+.report-header .subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* Loading / Error */
+.loading { text-align: center; padding: 80px 20px; color: var(--text-secondary); }
+.spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 20px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading p { font-size: 14px; line-height: 1.6; }
+.error { text-align: center; padding: 60px 20px; color: var(--expense); }
+.error-icon { font-size: 48px; margin-bottom: 16px; }
+
+/* Score */
+.score-section { text-align: center; padding: 8px 0 4px; }
+.score-big {
+    font-size: 72px;
+    font-weight: 800;
+    line-height: 1;
+    margin: 8px 0;
+}
+.score-label {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 3px 14px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 8px;
+}
+.score-bar-container {
+    height: 6px;
+    background: var(--divider);
+    border-radius: 3px;
+    margin: 10px 20px 4px;
+    overflow: hidden;
+}
+.score-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s ease;
+}
+.score-ticks {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    font-size: 10px;
+    color: var(--text-tertiary);
+}
+
+/* Metrics */
+.metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.metric-box {
+    padding: 14px;
+    border-radius: 12px;
+    background: var(--bg);
+}
+.metric-box.full { grid-column: 1 / -1; }
+.metric-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+.metric-value { font-size: 22px; font-weight: 700; }
+.metric-value.expense-color { color: var(--expense); }
+.metric-value.income-color { color: var(--income); }
+.metric-value.accent-color { color: var(--accent); }
+.metric-sub { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+/* Chart */
+.chart-container { width: 100%; height: 260px; }
+
+/* Text blocks */
+.text-block { font-size: 13px; line-height: 1.8; color: var(--text-secondary); }
+.text-block p { margin-bottom: 8px; }
+.text-block p:last-child { margin-bottom: 0; }
+
+/* Section with icon */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.section-icon {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+.section-icon.green { background: var(--accent-light); }
+.section-icon.orange { background: var(--warn-bg); }
+.section-icon.blue { background: var(--info-bg); }
+.section-icon.red { background: var(--expense-bg); }
+.section-title { font-size: 15px; font-weight: 600; }
+
+/* Risk / Alert items */
+.alert-box {
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+.alert-box:last-child { margin-bottom: 0; }
+.alert-box.warn { background: var(--warn-bg); color: var(--warn); }
+.alert-box.info { background: var(--info-bg); color: var(--info); }
+.alert-box.danger { background: var(--expense-bg); color: var(--expense); }
+.alert-box.success { background: var(--income-bg); color: var(--income); }
+.alert-box .alert-title { font-weight: 600; margin-bottom: 2px; }
+
+/* Category analysis */
+.cat-item { padding: 10px 0; border-bottom: 1px solid var(--divider); }
+.cat-item:last-child { border-bottom: none; }
+.cat-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.cat-name { font-size: 14px; font-weight: 600; }
+.cat-amount { font-size: 14px; font-weight: 600; color: var(--expense); }
+.cat-pct { font-size: 11px; color: var(--text-tertiary); }
+.cat-bar-bg { height: 4px; background: var(--divider); border-radius: 2px; margin: 6px 0; }
+.cat-bar { height: 100%; border-radius: 2px; background: var(--accent); }
+.cat-comment { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+/* Action list */
+.action-item {
+    display: flex;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--divider);
+    align-items: flex-start;
+}
+.action-item:last-child { border-bottom: none; }
+.action-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+.action-content { flex: 1; }
+.action-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.action-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.action-priority {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-top: 4px;
+}
+.priority-high { background: var(--expense-bg); color: var(--expense); }
+.priority-medium { background: var(--warn-bg); color: var(--warn); }
+.priority-low { background: var(--info-bg); color: var(--info); }
+
+/* Grade badge */
+.grade-container { text-align: center; margin: 12px 0; }
+.grade-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+/* Prediction */
+.prediction-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.prediction-box {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    background: var(--bg);
+}
+.prediction-label { font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px; }
+.prediction-value { font-size: 20px; font-weight: 700; }
+.trend-up { color: var(--expense); }
+.trend-down { color: var(--income); }
+.trend-stable { color: var(--text-secondary); }
+
+/* Footer */
+.report-footer {
+    text-align: center;
+    padding: 16px 0 24px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+}
+.report-footer .line { margin-bottom: 2px; }
+</style>
+</head>
+<body>
+
+<div id="loading" class="loading">
+    <div class="spinner"></div>
+    <p>正在分析财务数据...</p>
+    <p style="font-size:12px;margin-top:8px;color:var(--text-secondary)">AI 分析可能需要几秒钟，请耐心等待</p>
+</div>
+
+<div id="content" style="display:none"></div>
+<div id="error" class="error" style="display:none"></div>
+
+<script>
+var isDarkMode = false;
+var chartInstances = [];
+
+function decodeBase64(b64) {
+    var binary = atob(b64);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new TextDecoder('utf-8').decode(bytes);
+}
+
+function setDarkMode(dark) {
+    isDarkMode = !!dark;
+    document.body.classList.toggle('dark', isDarkMode);
+}
+
+function resetToLoading() {
+    chartInstances.forEach(function(c) { c.dispose(); });
+    chartInstances = [];
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('content').style.display = 'none';
+    document.getElementById('content').innerHTML = '';
+    document.getElementById('error').style.display = 'none';
+}
+
+function showError(msg) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'none';
+    var el = document.getElementById('error');
+    el.style.display = 'block';
+    el.innerHTML = '<div class="error-icon">!</div><p>' + esc(msg) + '</p>';
+}
+
+function esc(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function getScoreColor(score) {
+    if (score >= 80) return 'var(--score-excellent)';
+    if (score >= 60) return 'var(--score-good)';
+    if (score >= 40) return 'var(--score-fair)';
+    if (score >= 20) return 'var(--score-poor)';
+    return 'var(--score-bad)';
+}
+
+function getScoreGrade(score) {
+    if (score >= 90) return { label: '优秀', cls: 'success' };
+    if (score >= 75) return { label: '良好', cls: 'success' };
+    if (score >= 60) return { label: '一般', cls: 'warn' };
+    if (score >= 40) return { label: '偏低', cls: 'warn' };
+    return { label: '需改善', cls: 'danger' };
+}
+
+function fmtMoney(v) {
+    var n = Number(v);
+    if (isNaN(n)) return '0.00';
+    return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function renderReport(aiResponseText, rawDataJson) {
+    try {
+        var text = typeof aiResponseText === 'string' ? aiResponseText : '';
+        var rawData = null;
+        try {
+            rawData = typeof rawDataJson === 'string' ? JSON.parse(rawDataJson) : rawDataJson;
+        } catch(e) {}
+
+        // Extract JSON from AI response
+        var jsonMatch = text.match(/```json\s*([\s\S]*?)```/);
+        if (jsonMatch) text = jsonMatch[1];
+        var jsonStart = text.indexOf('{');
+        var jsonEnd = text.lastIndexOf('}');
+        if (jsonStart >= 0 && jsonEnd > jsonStart) {
+            text = text.substring(jsonStart, jsonEnd + 1);
+        }
+
+        var d = JSON.parse(text);
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').style.display = 'none';
+        var content = document.getElementById('content');
+        content.style.display = 'block';
+
+        var html = '';
+        var period = (rawData && rawData.period) ? rawData.period : '';
+        var now = new Date();
+        var genTime = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+
+        // === HEADER ===
+        html += '<div class="card report-header">';
+        html += '<div class="tag-row">';
+        html += '<span class="tag tag-green">' + esc(period) + '</span>';
+        html += '<span class="tag tag-blue">AI 智能分析</span>';
+        html += '</div>';
+        html += '<h1>财务全景透视报告</h1>';
+        if (d.summary) {
+            html += '<div class="subtitle">' + esc(d.summary) + '</div>';
+        }
+        html += '</div>';
+
+        // === HEALTH SCORE ===
+        var score = d.healthScore != null ? Math.round(Number(d.healthScore)) : null;
+        if (score != null) {
+            var sColor = getScoreColor(score);
+            var sGrade = getScoreGrade(score);
+            html += '<div class="card">';
+            html += '<div class="score-section">';
+            html += '<div style="font-size:13px;color:var(--text-secondary);">财务健康评分</div>';
+            html += '<div class="score-big" style="color:' + sColor + '">' + score + '</div>';
+            html += '<div class="score-label alert-box ' + sGrade.cls + '" style="display:inline-block;padding:3px 16px;margin:0">' + sGrade.label + '</div>';
+            html += '<div class="score-bar-container"><div class="score-bar" style="width:' + score + '%;background:' + sColor + '"></div></div>';
+            html += '<div class="score-ticks"><span>0</span><span>20</span><span>40</span><span>60</span><span>80</span><span>100</span></div>';
+            html += '</div>';
+            html += '</div>';
+        }
+
+        // === CORE METRICS (from rawData) ===
+        if (rawData && rawData.months && rawData.months.length > 0) {
+            var totalIncome = 0, totalExpense = 0;
+            rawData.months.forEach(function(m) {
+                totalIncome += m.income || 0;
+                totalExpense += m.expense || 0;
+            });
+            var netSavings = totalIncome - totalExpense;
+            var savingsRate = totalIncome > 0 ? ((netSavings / totalIncome) * 100) : 0;
+            var budgetVal = rawData.budget;
+
+            html += '<div class="card">';
+            html += '<div class="card-title">核心财务指标</div>';
+            html += '<div class="metrics-grid">';
+
+            html += '<div class="metric-box"><div class="metric-label">总收入</div>';
+            html += '<div class="metric-value income-color">&yen;' + fmtMoney(totalIncome) + '</div></div>';
+
+            html += '<div class="metric-box"><div class="metric-label">总支出</div>';
+            html += '<div class="metric-value expense-color">&yen;' + fmtMoney(totalExpense) + '</div></div>';
+
+            html += '<div class="metric-box"><div class="metric-label">净结余</div>';
+            html += '<div class="metric-value" style="color:' + (netSavings >= 0 ? 'var(--income)' : 'var(--expense)') + '">&yen;' + fmtMoney(Math.abs(netSavings)) + '</div>';
+            if (netSavings < 0) html += '<div class="metric-sub">入不敷出</div>';
+            html += '</div>';
+
+            html += '<div class="metric-box"><div class="metric-label">储蓄率</div>';
+            html += '<div class="metric-value accent-color">' + savingsRate.toFixed(1) + '%</div></div>';
+
+            if (budgetVal && budgetVal > 0) {
+                var budgetUsage = (totalExpense / budgetVal * 100);
+                html += '<div class="metric-box full"><div class="metric-label">预算执行</div>';
+                html += '<div style="display:flex;align-items:baseline;gap:8px">';
+                html += '<div class="metric-value" style="color:' + (budgetUsage > 100 ? 'var(--expense)' : 'var(--accent)') + '">' + budgetUsage.toFixed(1) + '%</div>';
+                html += '<div class="metric-sub">&yen;' + fmtMoney(totalExpense) + ' / &yen;' + fmtMoney(budgetVal) + '</div>';
+                html += '</div></div>';
+            }
+
+            html += '</div></div>';
+        }
+
+        // === CATEGORY STRUCTURE (Pie Chart + Table) ===
+        var allCats = {};
+        if (rawData && rawData.months) {
+            rawData.months.forEach(function(m) {
+                if (m.categories) {
+                    m.categories.forEach(function(c) {
+                        allCats[c.name] = (allCats[c.name] || 0) + c.amount;
+                    });
+                }
+            });
+        }
+        var catList = Object.keys(allCats).map(function(k) { return { name: k, amount: allCats[k] }; });
+        catList.sort(function(a, b) { return b.amount - a.amount; });
+        var catTotal = catList.reduce(function(s, c) { return s + c.amount; }, 0);
+
+        if (catList.length > 0) {
+            html += '<div class="card">';
+            html += '<div class="card-title">消费结构分析</div>';
+            html += '<div id="pieChart" class="chart-container"></div>';
+
+            // Category detail with bars
+            catList.forEach(function(c) {
+                var pct = catTotal > 0 ? (c.amount / catTotal * 100) : 0;
+                html += '<div class="cat-item">';
+                html += '<div class="cat-row"><span class="cat-name">' + esc(c.name) + '</span>';
+                html += '<span><span class="cat-amount">&yen;' + fmtMoney(c.amount) + '</span> <span class="cat-pct">' + pct.toFixed(1) + '%</span></span></div>';
+                html += '<div class="cat-bar-bg"><div class="cat-bar" style="width:' + pct + '%"></div></div>';
+
+                // Find AI comment for this category
+                if (d.categoryAnalysis) {
+                    var found = d.categoryAnalysis.find(function(ca) { return ca.name === c.name; });
+                    if (found && found.comment) {
+                        html += '<div class="cat-comment">' + esc(found.comment) + '</div>';
+                    }
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        // === STRUCTURE HEALTH ===
+        if (d.structureHealth) {
+            html += '<div class="card">';
+            html += '<div class="section-header"><div class="section-icon green">S</div><div class="section-title">结构健康度</div></div>';
+            html += '<div class="text-block">';
+            if (Array.isArray(d.structureHealth)) {
+                d.structureHealth.forEach(function(s) { html += '<p>' + esc(s) + '</p>'; });
+            } else {
+                html += '<p>' + esc(String(d.structureHealth)) + '</p>';
+            }
+            html += '</div></div>';
+        }
+
+        // === TREND CHART ===
+        if (rawData && rawData.months && rawData.months.length > 1) {
+            html += '<div class="card">';
+            html += '<div class="card-title">收支趋势</div>';
+            html += '<div id="trendChart" class="chart-container"></div>';
+            html += '</div>';
+        }
+
+        // === ANOMALY RISKS ===
+        if (d.anomalies && d.anomalies.length > 0) {
+            html += '<div class="card">';
+            html += '<div class="section-header"><div class="section-icon orange">!</div><div class="section-title">异常风险</div></div>';
+            d.anomalies.forEach(function(a) {
+                var lvl = (a.level || 'warn').toLowerCase();
+                var cls = lvl === 'high' || lvl === 'danger' ? 'danger' : (lvl === 'info' ? 'info' : 'warn');
+                html += '<div class="alert-box ' + cls + '">';
+                if (a.title) html += '<div class="alert-title">' + esc(a.title) + '</div>';
+                html += esc(a.detail || a.description || '');
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        // === BEHAVIOR PATTERNS ===
+        if (d.behaviorPatterns && d.behaviorPatterns.length > 0) {
+            html += '<div class="card">';
+            html += '<div class="section-header"><div class="section-icon blue">P</div><div class="section-title">消费偏好与行为规律</div></div>';
+            html += '<div class="text-block">';
+            d.behaviorPatterns.forEach(function(b) {
+                html += '<p>' + esc(b) + '</p>';
+            });
+            html += '</div></div>';
+        }
+
+        // === INSIGHTS ===
+        if (d.insights && d.insights.length > 0) {
+            html += '<div class="card">';
+            html += '<div class="section-header"><div class="section-icon green">I</div><div class="section-title">财务洞察</div></div>';
+            html += '<div class="text-block">';
+            d.insights.forEach(function(item) {
+                html += '<p>' + esc(item) + '</p>';
+            });
+            html += '</div></div>';
+        }
+
+        // === PREDICTIONS ===
+        if (d.predictions) {
+            html += '<div class="card">';
+            html += '<div class="card-title">趋势预测</div>';
+            html += '<div class="prediction-row">';
+            if (d.predictions.nextMonthExpense != null) {
+                html += '<div class="prediction-box"><div class="prediction-label">预计下月支出</div>';
+                html += '<div class="prediction-value expense-color">&yen;' + fmtMoney(d.predictions.nextMonthExpense) + '</div></div>';
+            }
+            if (d.predictions.nextMonthIncome != null) {
+                html += '<div class="prediction-box"><div class="prediction-label">预计下月收入</div>';
+                html += '<div class="prediction-value income-color">&yen;' + fmtMoney(d.predictions.nextMonthIncome) + '</div></div>';
+            }
+            html += '</div>';
+            if (d.predictions.trend) {
+                var trendMap = { up: '上升趋势', down: '下降趋势', stable: '基本平稳' };
+                var trendCls = 'trend-' + d.predictions.trend;
+                html += '<div style="text-align:center;margin-top:4px">';
+                html += '<span class="' + trendCls + '" style="font-size:14px;font-weight:600">' + (trendMap[d.predictions.trend] || esc(d.predictions.trend)) + '</span>';
+                html += '</div>';
+            }
+            if (d.predictions.detail) {
+                html += '<div class="text-block" style="margin-top:8px"><p>' + esc(d.predictions.detail) + '</p></div>';
+            }
+            html += '</div>';
+        }
+
+        // === CONCLUSION & GRADE ===
+        if (d.conclusion) {
+            html += '<div class="card">';
+            html += '<div class="section-header"><div class="section-icon green">C</div><div class="section-title">综合结论与健康等级</div></div>';
+            if (d.conclusion.grade) {
+                var gColor = getScoreColor(score || 60);
+                html += '<div class="grade-container">';
+                html += '<div class="grade-badge" style="background:var(--accent-light);color:' + gColor + '">';
+                html += '健康等级: ' + esc(d.conclusion.grade);
+                html += '</div></div>';
+            }
+            html += '<div class="text-block">';
+            if (Array.isArray(d.conclusion.points)) {
+                d.conclusion.points.forEach(function(p) { html += '<p>' + esc(p) + '</p>'; });
+            } else if (d.conclusion.text) {
+                html += '<p>' + esc(d.conclusion.text) + '</p>';
+            }
+            html += '</div></div>';
+        }
+
+        // === ACTION PLAN ===
+        if (d.actionPlan && d.actionPlan.length > 0) {
+            html += '<div class="card">';
+            html += '<div class="section-header"><div class="section-icon green">A</div><div class="section-title">行动清单</div></div>';
+            d.actionPlan.forEach(function(a, i) {
+                var pCls = (a.priority || '').toLowerCase() === 'high' ? 'priority-high' :
+                           (a.priority || '').toLowerCase() === 'medium' ? 'priority-medium' : 'priority-low';
+                var pLabel = (a.priority || '').toLowerCase() === 'high' ? '高优先级' :
+                             (a.priority || '').toLowerCase() === 'medium' ? '中优先级' : '低优先级';
+                html += '<div class="action-item">';
+                html += '<div class="action-num">' + (i + 1) + '</div>';
+                html += '<div class="action-content">';
+                html += '<div class="action-title">' + esc(a.title || a.action || '') + '</div>';
+                if (a.detail || a.description) {
+                    html += '<div class="action-desc">' + esc(a.detail || a.description) + '</div>';
+                }
+                if (a.priority) {
+                    html += '<span class="action-priority ' + pCls + '">' + pLabel + '</span>';
+                }
+                html += '</div></div>';
+            });
+            html += '</div>';
+        }
+
+        // === SUGGESTIONS (fallback for simpler responses) ===
+        if (d.suggestions && d.suggestions.length > 0 && !(d.actionPlan && d.actionPlan.length > 0)) {
+            html += '<div class="card">';
+            html += '<div class="card-title">理财建议</div>';
+            d.suggestions.forEach(function(item, i) {
+                html += '<div class="action-item">';
+                html += '<div class="action-num">' + (i + 1) + '</div>';
+                html += '<div class="action-content"><div class="action-title">' + esc(item) + '</div></div>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        // === FOOTER ===
+        html += '<div class="report-footer">';
+        html += '<div class="line">本报告由 AI 智能生成，仅供参考</div>';
+        html += '<div class="line">生成时间: ' + genTime + '</div>';
+        html += '</div>';
+
+        content.innerHTML = html;
+
+        // Render charts
+        setTimeout(function() {
+            if (catList.length > 0) renderPieChart(catList);
+            if (rawData && rawData.months && rawData.months.length > 1) renderTrendChart(rawData.months);
+        }, 100);
+
+    } catch (e) {
+        showError('解析 AI 响应失败: ' + e.message);
+    }
+}
+
+function renderTrendChart(months) {
+    var dom = document.getElementById('trendChart');
+    if (!dom) return;
+    var chart = echarts.init(dom, isDarkMode ? 'dark' : null);
+    chartInstances.push(chart);
+
+    chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['支出', '收入'], bottom: 0, textStyle: { fontSize: 11 } },
+        grid: { left: '3%', right: '4%', bottom: '15%', top: '8%', containLabel: true },
+        xAxis: {
+            type: 'category',
+            data: months.map(function(m) { return m.label; }),
+            axisLabel: { fontSize: 10 }
+        },
+        yAxis: { type: 'value', axisLabel: { fontSize: 10 } },
+        series: [
+            {
+                name: '支出',
+                type: 'line',
+                smooth: true,
+                symbol: 'circle',
+                symbolSize: 6,
+                data: months.map(function(m) { return m.expense; }),
+                itemStyle: { color: isDarkMode ? '#ef9a9a' : '#c62828' },
+                areaStyle: { color: isDarkMode ? 'rgba(239,154,154,0.08)' : 'rgba(198,40,40,0.06)' }
+            },
+            {
+                name: '收入',
+                type: 'line',
+                smooth: true,
+                symbol: 'circle',
+                symbolSize: 6,
+                data: months.map(function(m) { return m.income; }),
+                itemStyle: { color: isDarkMode ? '#81c784' : '#2e7d32' },
+                areaStyle: { color: isDarkMode ? 'rgba(129,199,132,0.08)' : 'rgba(46,125,50,0.06)' }
+            }
+        ]
+    });
+}
+
+function renderPieChart(catList) {
+    var dom = document.getElementById('pieChart');
+    if (!dom) return;
+    var chart = echarts.init(dom, isDarkMode ? 'dark' : null);
+    chartInstances.push(chart);
+
+    chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'item', formatter: '{b}: \u00a5{c} ({d}%)' },
+        series: [{
+            type: 'pie',
+            radius: ['38%', '68%'],
+            center: ['50%', '50%'],
+            avoidLabelOverlap: true,
+            itemStyle: {
+                borderRadius: 6,
+                borderColor: isDarkMode ? '#1e1e1e' : '#ffffff',
+                borderWidth: 2
+            },
+            label: { fontSize: 11, formatter: '{b}\n{d}%' },
+            data: catList.map(function(c) {
+                return { name: c.name, value: c.amount };
+            })
+        }]
+    });
+}
+</script>
+</body>
+</html>

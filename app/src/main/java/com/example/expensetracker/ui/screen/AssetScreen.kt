@@ -42,8 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.expensetracker.data.local.AssetEntity
-import com.example.expensetracker.ui.component.AddAssetDialog
-import com.example.expensetracker.ui.component.EditAssetDialog
+import com.example.expensetracker.ui.component.AssetFormSheet
 import com.example.expensetracker.ui.util.formatAmount
 import com.example.expensetracker.ui.viewmodel.ExpenseViewModel
 
@@ -132,10 +131,10 @@ fun AssetScreen(
     }
 
     if (showAddDialog) {
-        AddAssetDialog(
+        AssetFormSheet(
             isAmountValid = viewModel::isAmountValid,
             onDismissRequest = { showAddDialog = false },
-            onConfirm = { name, amount, type ->
+            onConfirm = { _, name, amount, type ->
                 viewModel.addAsset(name, amount, type)
                 showAddDialog = false
             }
@@ -143,12 +142,12 @@ fun AssetScreen(
     }
 
     editingAsset?.let { asset ->
-        EditAssetDialog(
-            asset = asset,
+        AssetFormSheet(
+            editingAsset = asset,
             isAmountValid = viewModel::isAmountValid,
             onDismissRequest = { editingAsset = null },
             onConfirm = { id, name, amount, type ->
-                viewModel.updateAsset(id, name, amount, type)
+                viewModel.updateAsset(id!!, name, amount, type)
                 editingAsset = null
             },
             onDelete = { id ->
