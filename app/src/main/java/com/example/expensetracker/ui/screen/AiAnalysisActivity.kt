@@ -403,9 +403,9 @@ class AiAnalysisActivity : AppCompatActivity() {
     private fun startBackgroundAnalysis(
         existingId: Long?, startDate: LocalDate, endDate: LocalDate
     ) {
-        val endpoint = prefs.getString(
-            "ai_api_endpoint", "https://api.openai.com/v1/chat/completions"
-        ) ?: "https://api.openai.com/v1/chat/completions"
+        val endpoint = AiApiClient.buildBaseUrl(
+            prefs.getString("ai_api_endpoint", "https://api.openai.com") ?: "https://api.openai.com"
+        )
         val apiKey = prefs.getString("ai_api_key", "") ?: ""
         val model = prefs.getString("ai_api_model", "gpt-4o-mini") ?: "gpt-4o-mini"
 

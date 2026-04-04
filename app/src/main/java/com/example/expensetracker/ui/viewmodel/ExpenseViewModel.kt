@@ -33,6 +33,7 @@ import java.time.LocalDateTime
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import com.example.expensetracker.data.local.ExpenseEntity
+import com.example.expensetracker.data.remote.AiApiClient
 import com.example.expensetracker.ui.util.centToYuanString
 import kotlinx.coroutines.flow.first
 import org.json.JSONArray
@@ -91,10 +92,23 @@ data class WebDavState(
     val message: String? = null
 )
 
+data class AiConfigState(
+    val baseUrl: String = "https://api.openai.com",
+    val apiKey: String = "",
+    val model: String = "gpt-4o-mini",
+    val availableModels: List<String> = emptyList(),
+    val isFetchingModels: Boolean = false,
+    val isTestingAiConnection: Boolean = false,
+    val aiTestMessage: String? = null,
+    val isAiTestError: Boolean = false
+)
+
 class ExpenseViewModel(
     private val repository: ExpenseRepository,
     private val sharedPreferences: SharedPreferences
 ) : ViewModel() {
+
+    private val defaultAiBaseUrl = "https://api.openai.com"
 
     private val _webDavState = MutableStateFlow(
         WebDavState(
@@ -106,6 +120,46 @@ class ExpenseViewModel(
     )
     val webDavState: StateFlow<WebDavState> = _webDavState.asStateFlow()
     private val webDavClient = com.example.expensetracker.data.remote.WebDavClient()
+
+    private val aiBaseUrlState = MutableStateFlow(loadAiBaseUrl())
+    private val aiApiKeyState = MutableStateFlow(sharedPreferences.getString("ai_api_key", "") ?: "")
+    private val aiModelState = MutableStateFlow(sharedPreferences.getString("ai_api_model", "gpt-4o-mini") ?: "gpt-4o-mini")
+    private val aiAvailableModelsState = MutableStateFlow<List<String>>(emptyList())
+    private val aiFetchingModelsState = MutableStateFlow(false)
+    private val aiTestingConnectionState = MutableStateFlow(false)
+    private val aiTestMessageState = MutableStateFlow<String?>(null)
+    private val aiTestErrorState = MutableStateFlow(false)
+
+    val aiConfigState: StateFlow<AiConfigState> = combine(
+        combine(aiBaseUrlState, aiApiKeyState, aiModelState) { baseUrl, apiKey, model ->
+            Triple(baseUrl, apiKey, model)
+        },
+        combine(aiAvailableModelsState, aiFetchingModelsState, aiTestingConnectionState) { availableModels, isFetchingModels, isTestingAiConnection ->
+            Triple(availableModels, isFetchingModels, isTestingAiConnection)
+        },
+        combine(aiTestMessageState, aiTestErrorState) { aiTestMessage, isAiTestError ->
+            Pair(aiTestMessage, isAiTestError)
+        }
+    ) { baseConfig, loadingConfig, messageConfig ->
+        AiConfigState(
+            baseUrl = baseConfig.first,
+            apiKey = baseConfig.second,
+            model = baseConfig.third,
+            availableModels = loadingConfig.first,
+            isFetchingModels = loadingConfig.second,
+            isTestingAiConnection = loadingConfig.third,
+            aiTestMessage = messageConfig.first,
+            isAiTestError = messageConfig.second
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = AiConfigState(
+            baseUrl = aiBaseUrlState.value,
+            apiKey = aiApiKeyState.value,
+            model = aiModelState.value
+        )
+    )
 
     private val zoneId: ZoneId = ZoneId.systemDefault()
     private val dateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.CHINA)
@@ -305,6 +359,107 @@ class ExpenseViewModel(
     fun updateDynamicColor(enabled: Boolean) {
         sharedPreferences.edit().putBoolean("theme_dynamic_color", enabled).apply()
         dynamicColorEnabledState.value = enabled
+    }
+
+    fun updateAiBaseUrl(value: String) {
+        val normalized = value.trim().let {
+            when {
+                it.isBlank() -> ""
+                else -> normalizeAiBaseUrl(it)
+            }
+        }
+        sharedPreferences.edit().putString("ai_api_endpoint", normalized).apply()
+        aiBaseUrlState.value = normalized
+        clearAiTestMessage()
+    }
+
+    fun updateAiApiKey(value: String) {
+        sharedPreferences.edit().putString("ai_api_key", value).apply()
+        aiApiKeyState.value = value
+        clearAiTestMessage()
+    }
+
+    fun updateAiModel(value: String) {
+        sharedPreferences.edit().putString("ai_api_model", value).apply()
+        aiModelState.value = value
+        clearAiTestMessage()
+    }
+
+    fun fetchAiModels() {
+        val baseUrl = aiBaseUrlState.value
+        val apiKey = aiApiKeyState.value.trim()
+
+        if (baseUrl.isBlank()) {
+            setAiTestMessage("请先填写 API 域名 / 基础地址", true)
+            return
+        }
+        if (apiKey.isBlank()) {
+            setAiTestMessage("请先填写 API Key", true)
+            return
+        }
+
+        viewModelScope.launch {
+            aiFetchingModelsState.value = true
+            clearAiTestMessage()
+
+            val result = withContext(Dispatchers.IO) {
+                AiApiClient.fetchModels(baseUrl = baseUrl, apiKey = apiKey)
+            }
+
+            result.onSuccess { models ->
+                aiAvailableModelsState.value = models
+                if (aiModelState.value.isBlank() && models.isNotEmpty()) {
+                    updateAiModel(models.first())
+                }
+                setAiTestMessage("已拉取 ${models.size} 个模型", false)
+            }.onFailure { error ->
+                setAiTestMessage("模型拉取失败：${error.message ?: "未知错误"}", true)
+            }
+
+            aiFetchingModelsState.value = false
+        }
+    }
+
+    fun testAiConnection() {
+        val baseUrl = aiBaseUrlState.value
+        val apiKey = aiApiKeyState.value.trim()
+        val model = aiModelState.value.trim()
+
+        if (baseUrl.isBlank()) {
+            setAiTestMessage("请先填写 API 域名 / 基础地址", true)
+            return
+        }
+        if (apiKey.isBlank()) {
+            setAiTestMessage("请先填写 API Key", true)
+            return
+        }
+        if (model.isBlank()) {
+            setAiTestMessage("请先填写或选择模型名称", true)
+            return
+        }
+
+        viewModelScope.launch {
+            aiTestingConnectionState.value = true
+            clearAiTestMessage()
+
+            val result = withContext(Dispatchers.IO) {
+                AiApiClient.testConnection(baseUrl = baseUrl, apiKey = apiKey, model = model)
+            }
+
+            result.onSuccess { reply ->
+                val preview = reply.replace("\n", " ").trim().ifEmpty { "收到成功响应" }.take(120)
+                setAiTestMessage("测试成功：$preview", false)
+            }.onFailure { error ->
+                setAiTestMessage("测试失败：${error.message ?: "未知错误"}", true)
+            }
+
+            aiTestingConnectionState.value = false
+        }
+    }
+
+    fun clearAiTestMessage() {
+        aiTestMessageState.value = null
+        aiTestErrorState.value = false
     }
 
     fun updateThemeColor(color: String) {
@@ -1143,5 +1298,32 @@ class ExpenseViewModel(
                 )
             }
         }
+    }
+
+    private fun loadAiBaseUrl(): String {
+        val storedValue = sharedPreferences.getString("ai_api_endpoint", defaultAiBaseUrl).orEmpty()
+        val normalized = if (storedValue.isBlank()) {
+            defaultAiBaseUrl
+        } else {
+            normalizeAiBaseUrl(storedValue)
+        }
+
+        if (normalized != storedValue) {
+            sharedPreferences.edit().putString("ai_api_endpoint", normalized).apply()
+        }
+        return normalized
+    }
+
+    private fun normalizeAiBaseUrl(value: String): String {
+        return try {
+            AiApiClient.buildBaseUrl(value)
+        } catch (_: IllegalArgumentException) {
+            value.trim()
+        }
+    }
+
+    private fun setAiTestMessage(message: String, isError: Boolean) {
+        aiTestMessageState.value = message
+        aiTestErrorState.value = isError
     }
 }

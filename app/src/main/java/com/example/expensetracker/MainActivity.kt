@@ -65,6 +65,7 @@ class MainActivity : AppCompatActivity() {
                 factory = ExpenseViewModel.factory(repository, sharedPreferences)
             )
             val uiState by expenseViewModel.uiState.collectAsStateWithLifecycle()
+            val aiConfigState by expenseViewModel.aiConfigState.collectAsStateWithLifecycle()
 
             ExpenseTrackerTheme(
                 dynamicColor = uiState.dynamicColorEnabled,
@@ -196,6 +197,7 @@ class MainActivity : AppCompatActivity() {
                             Screen.Settings -> {
                                 SettingsScreen(
                                     uiState = uiState,
+                                    aiConfigState = aiConfigState,
                                     sharedPreferences = sharedPreferences,
                                     onDynamicColorChange = { expenseViewModel.updateDynamicColor(it) },
                                     onThemeColorChange = { expenseViewModel.updateThemeColor(it) },
@@ -209,6 +211,12 @@ class MainActivity : AppCompatActivity() {
                                     onAiAnalysisClick = {
                                         startActivity(Intent(this@MainActivity, AiAnalysisActivity::class.java))
                                     },
+                                    onAiBaseUrlChange = expenseViewModel::updateAiBaseUrl,
+                                    onAiApiKeyChange = expenseViewModel::updateAiApiKey,
+                                    onAiModelChange = expenseViewModel::updateAiModel,
+                                    onFetchAiModels = expenseViewModel::fetchAiModels,
+                                    onTestAiConnection = expenseViewModel::testAiConnection,
+                                    onClearAiTestMessage = expenseViewModel::clearAiTestMessage,
                                     onGenerateTestData = {
                                         expenseViewModel.generateTestData()
                                     }

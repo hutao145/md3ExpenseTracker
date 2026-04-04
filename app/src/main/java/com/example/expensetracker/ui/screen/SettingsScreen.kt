@@ -1,4 +1,4 @@
-package com.example.expensetracker.ui.screen
+﻿package com.example.expensetracker.ui.screen
 
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -43,12 +43,16 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -72,6 +76,7 @@ import com.example.expensetracker.security.PinManager
 import com.example.expensetracker.ui.component.SetPinDialog
 import com.example.expensetracker.ui.component.VerifyPinDialog
 import com.example.expensetracker.theme.*
+import com.example.expensetracker.ui.viewmodel.AiConfigState
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 
@@ -79,6 +84,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 @Composable
 fun SettingsScreen(
     uiState: com.example.expensetracker.ui.viewmodel.ExpenseUiState,
+    aiConfigState: AiConfigState,
     sharedPreferences: SharedPreferences,
     onDynamicColorChange: (Boolean) -> Unit,
     onThemeColorChange: (String) -> Unit,
@@ -90,6 +96,12 @@ fun SettingsScreen(
     onBackClick: () -> Unit,
     onBackupClick: () -> Unit,
     onAiAnalysisClick: () -> Unit,
+    onAiBaseUrlChange: (String) -> Unit,
+    onAiApiKeyChange: (String) -> Unit,
+    onAiModelChange: (String) -> Unit,
+    onFetchAiModels: () -> Unit,
+    onTestAiConnection: () -> Unit,
+    onClearAiTestMessage: () -> Unit,
     onGenerateTestData: () -> Unit
 ) {
     val context = LocalContext.current
@@ -97,12 +109,12 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("设置") },
+                title = { Text("璁剧疆") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回"
+                            contentDescription = "杩斿洖"
                         )
                     }
                 },
@@ -121,7 +133,7 @@ fun SettingsScreen(
         ) {
             // Data Management Header
             Text(
-                text = "数据管理",
+                text = "鏁版嵁绠＄悊",
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 12.dp)
@@ -139,7 +151,7 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Default.Backup,
                     title = "备份与恢复",
-                    subtitle = "使用 WebDAV 或本地存储进行数据备份与恢复",
+                    subtitle = "浣跨敤 WebDAV 鎴栨湰鍦板瓨鍌ㄨ繘琛屾暟鎹浠戒笌鎭㈠",
                     onClick = onBackupClick
                 )
 
@@ -169,13 +181,13 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = "资产页面",
+                                text = "璧勪骇椤甸潰",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "在主界面显示资产管理页面",
+                                text = "鍦ㄤ富鐣岄潰鏄剧ず璧勪骇绠＄悊椤甸潰",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -202,8 +214,8 @@ fun SettingsScreen(
             ) {
                 SettingsItem(
                     icon = Icons.Default.Psychology,
-                    title = "AI 财务分析",
-                    subtitle = "使用 AI 分析收支数据并生成可视化报告",
+                    title = "AI 璐㈠姟鍒嗘瀽",
+                    subtitle = "浣跨敤 AI 鍒嗘瀽鏀舵敮鏁版嵁骞剁敓鎴愬彲瑙嗗寲鎶ュ憡",
                     onClick = onAiAnalysisClick
                 )
 
@@ -211,41 +223,14 @@ fun SettingsScreen(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
-
                 var showAiConfig by remember { mutableStateOf(false) }
-
-                SettingsItem(
-                    icon = Icons.Default.Settings,
-                    title = "AI API 配置",
-                    subtitle = if (showAiConfig) "收起配置项" else "配置 API 接口地址、密钥和模型",
-                    onClick = { showAiConfig = !showAiConfig }
-                )
-
                 AnimatedVisibility(
                     visible = showAiConfig,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
-                    var aiEndpoint by remember {
-                        mutableStateOf(
-                            sharedPreferences.getString(
-                                "ai_api_endpoint",
-                                "https://api.openai.com/v1/chat/completions"
-                            ) ?: "https://api.openai.com/v1/chat/completions"
-                        )
-                    }
-                    var aiApiKey by remember {
-                        mutableStateOf(
-                            sharedPreferences.getString("ai_api_key", "") ?: ""
-                        )
-                    }
-                    var aiModel by remember {
-                        mutableStateOf(
-                            sharedPreferences.getString("ai_api_model", "gpt-4o-mini")
-                                ?: "gpt-4o-mini"
-                        )
-                    }
                     var showApiKey by remember { mutableStateOf(false) }
+                    var modelsExpanded by remember { mutableStateOf(false) }
 
                     Column(
                         modifier = Modifier.padding(
@@ -256,24 +241,19 @@ fun SettingsScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         OutlinedTextField(
-                            value = aiEndpoint,
-                            onValueChange = {
-                                aiEndpoint = it
-                                sharedPreferences.edit()
-                                    .putString("ai_api_endpoint", it).apply()
+                            value = aiConfigState.baseUrl,
+                            onValueChange = { onAiBaseUrlChange(it) },
+                            label = { Text("API 域名 / 基础地址") },
+                            supportingText = {
+                                Text("只需填写域名，系统会自动补全 /v1/chat/completions 和 /v1/models")
                             },
-                            label = { Text("API Endpoint") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
 
                         OutlinedTextField(
-                            value = aiApiKey,
-                            onValueChange = {
-                                aiApiKey = it
-                                sharedPreferences.edit()
-                                    .putString("ai_api_key", it).apply()
-                            },
+                            value = aiConfigState.apiKey,
+                            onValueChange = { onAiApiKeyChange(it) },
                             label = { Text("API Key") },
                             singleLine = true,
                             visualTransformation = if (showApiKey) VisualTransformation.None
@@ -281,8 +261,7 @@ fun SettingsScreen(
                             trailingIcon = {
                                 IconButton(onClick = { showApiKey = !showApiKey }) {
                                     Icon(
-                                        imageVector = if (showApiKey) Icons.Default.Lock
-                                            else Icons.Default.Lock,
+                                        imageVector = Icons.Default.Lock,
                                         contentDescription = if (showApiKey) "隐藏" else "显示"
                                     )
                                 }
@@ -290,17 +269,107 @@ fun SettingsScreen(
                             modifier = Modifier.fillMaxWidth()
                         )
 
-                        OutlinedTextField(
-                            value = aiModel,
-                            onValueChange = {
-                                aiModel = it
-                                sharedPreferences.edit()
-                                    .putString("ai_api_model", it).apply()
-                            },
-                            label = { Text("模型名称") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            OutlinedTextField(
+                                value = aiConfigState.model,
+                                onValueChange = {
+                                    onAiModelChange(it)
+                                    onClearAiTestMessage()
+                                    modelsExpanded = false
+                                },
+                                label = { Text("模型名称") },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                                trailingIcon = {
+                                    IconButton(
+                                        onClick = {
+                                            if (aiConfigState.availableModels.isNotEmpty()) {
+                                                modelsExpanded = !modelsExpanded
+                                            }
+                                        }
+                                    ) {
+                                        Text(if (modelsExpanded && aiConfigState.availableModels.isNotEmpty()) "▲" else "▼")
+                                    }
+                                }
+                            )
+
+                            DropdownMenu(
+                                expanded = modelsExpanded && aiConfigState.availableModels.isNotEmpty(),
+                                onDismissRequest = { modelsExpanded = false }
+                            ) {
+                                aiConfigState.availableModels.forEach { model ->
+                                    DropdownMenuItem(
+                                        text = { Text(model) },
+                                        onClick = {
+                                            onAiModelChange(model)
+                                            onClearAiTestMessage()
+                                            modelsExpanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = {
+                                    modelsExpanded = false
+                                    onFetchAiModels()
+                                },
+                                enabled = !aiConfigState.isFetchingModels,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                if (aiConfigState.isFetchingModels) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Text("拉取模型")
+                                }
+                            }
+
+                            Button(
+                                onClick = {
+                                    modelsExpanded = false
+                                    onTestAiConnection()
+                                },
+                                enabled = !aiConfigState.isTestingAiConnection,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                if (aiConfigState.isTestingAiConnection) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Text("测试连通性")
+                                }
+                            }
+                        }
+
+                        if (aiConfigState.availableModels.isNotEmpty()) {
+                            Text(
+                                text = "已加载 ${aiConfigState.availableModels.size} 个模型，可下拉选择，也可手动输入",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+
+                        aiConfigState.aiTestMessage?.let { message ->
+                            Text(
+                                text = message,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (aiConfigState.isAiTestError) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -355,7 +424,7 @@ fun SettingsScreen(
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "启用后每次打开应用需要验证",
+                                text = "启用后每次打开应用都需要验证",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -382,8 +451,8 @@ fun SettingsScreen(
                         )
                         SettingsItem(
                             icon = Icons.Default.Password,
-                            title = "修改 PIN 密码",
-                            subtitle = "更改应用锁密码",
+                            title = "淇敼 PIN 瀵嗙爜",
+                            subtitle = "修改应用锁 PIN 密码",
                             onClick = { showVerifyPinForChange = true }
                         )
                     }
@@ -416,13 +485,13 @@ fun SettingsScreen(
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
                                     Text(
-                                        text = "生物识别解锁",
+                                        text = "鐢熺墿璇嗗埆瑙ｉ攣",
                                         style = MaterialTheme.typography.titleMedium,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = "使用指纹或面部识别解锁",
+                                        text = "使用指纹或面容识别解锁",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -445,7 +514,7 @@ fun SettingsScreen(
                     onPinSet = {
                         showSetPinDialog = false
                         onAppLockChange(true)
-                        Toast.makeText(context, "应用锁已启用", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "搴旂敤閿佸凡鍚敤", Toast.LENGTH_SHORT).show()
                     }
                 )
             }
@@ -460,7 +529,7 @@ fun SettingsScreen(
                         onAppLockChange(false)
                         onBiometricUnlockChange(false)
                         PinManager.clearPin(sharedPreferences)
-                        Toast.makeText(context, "应用锁已关闭", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "搴旂敤閿佸凡鍏抽棴", Toast.LENGTH_SHORT).show()
                     }
                 )
             }
@@ -468,7 +537,7 @@ fun SettingsScreen(
             if (showVerifyPinForChange) {
                 VerifyPinDialog(
                     sharedPreferences = sharedPreferences,
-                    title = "验证当前密码",
+                    title = "楠岃瘉褰撳墠瀵嗙爜",
                     onDismissRequest = { showVerifyPinForChange = false },
                     onVerified = {
                         showVerifyPinForChange = false
@@ -490,7 +559,7 @@ fun SettingsScreen(
 
             // Theme and Appearance header
             Text(
-                text = "主题设置",
+                text = "涓婚璁剧疆",
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 12.dp)
@@ -515,13 +584,13 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "动态颜色",
+                            text = "动态配色",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "是否使用动态颜色",
+                            text = "是否使用动态配色",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -553,8 +622,8 @@ fun SettingsScreen(
                                 ThemePaletteConfig("Pink", "樱花粉", PrimaryPink, PrimaryContainerPink, SecondaryContainerPink, TertiaryContainerPink, SecondaryPink),
                                 ThemePaletteConfig("Gulf", "海湾蓝", PrimaryGulf, PrimaryContainerGulf, SecondaryContainerGulf, TertiaryContainerGulf, SecondaryGulf),
                                 ThemePaletteConfig("Field", "原野绿", PrimaryField, PrimaryContainerField, SecondaryContainerField, TertiaryContainerField, SecondaryField),
-                                ThemePaletteConfig("Autumn", "秋黄", PrimaryAutumn, PrimaryContainerAutumn, SecondaryContainerAutumn, TertiaryContainerAutumn, SecondaryAutumn),
-                                ThemePaletteConfig("Neutral", "中性黑", PrimaryNeutral, PrimaryContainerNeutral, SecondaryContainerNeutral, TertiaryContainerNeutral, SecondaryNeutral)
+                                ThemePaletteConfig("Autumn", "绉嬮粍", PrimaryAutumn, PrimaryContainerAutumn, SecondaryContainerAutumn, TertiaryContainerAutumn, SecondaryAutumn),
+                                ThemePaletteConfig("Neutral", "涓€ч粦", PrimaryNeutral, PrimaryContainerNeutral, SecondaryContainerNeutral, TertiaryContainerNeutral, SecondaryNeutral)
                             )
                             items(palettes) { palette ->
                                 ThemeBadge(
@@ -579,13 +648,13 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "主题模式",
+                            text = "涓婚妯″紡",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "系统 / 浅色 / 深色",
+                            text = "绯荤粺 / 娴呰壊 / 娣辫壊",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -593,11 +662,11 @@ fun SettingsScreen(
 
                     var expanded by remember { mutableStateOf(false) }
                     val options = listOf(
-                        "system" to "系统",
-                        "light" to "浅色",
-                        "dark" to "深色"
+                        "system" to "绯荤粺",
+                        "light" to "娴呰壊",
+                        "dark" to "娣辫壊"
                     )
-                    val selectedLabel = options.firstOrNull { it.first == uiState.themeMode }?.second ?: "系统"
+                    val selectedLabel = options.firstOrNull { it.first == uiState.themeMode }?.second ?: "绯荤粺"
 
 
                     ExposedDropdownMenuBox(
@@ -643,13 +712,13 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "AMOLED 暗色模式",
+                            text = "AMOLED 鏆楄壊妯″紡",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "在暗色主题中使用纯黑背景，适合 AMOLED 屏幕",
+                            text = "鍦ㄦ殫鑹蹭富棰樹腑浣跨敤绾粦鑳屾櫙锛岄€傚悎 AMOLED 灞忓箷",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -680,11 +749,11 @@ fun SettingsScreen(
             ) {
                 SettingsItem(
                     icon = Icons.Default.Science,
-                    title = "生成测试数据 (15条)",
-                    subtitle = "仅供调试。为当前月份随机生成测试用的收支记录",
+                    title = "鐢熸垚娴嬭瘯鏁版嵁 (15鏉?",
+                    subtitle = "浠呬緵璋冭瘯銆備负褰撳墠鏈堜唤闅忔満鐢熸垚娴嬭瘯鐢ㄧ殑鏀舵敮璁板綍",
                     onClick = {
                         onGenerateTestData()
-                        Toast.makeText(context, "已成功生成本月测试数据！", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "宸叉垚鍔熺敓鎴愭湰鏈堟祴璇曟暟鎹紒", Toast.LENGTH_SHORT).show()
                     }
                 )
             }
@@ -815,3 +884,4 @@ fun ThemeBadge(config: ThemePaletteConfig, isSelected: Boolean, onClick: () -> U
         )
     }
 }
+
