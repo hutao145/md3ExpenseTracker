@@ -109,12 +109,12 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("璁剧疆") },
+                title = { Text("设置") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "杩斿洖"
+                            contentDescription = "返回"
                         )
                     }
                 },
@@ -133,7 +133,7 @@ fun SettingsScreen(
         ) {
             // Data Management Header
             Text(
-                text = "鏁版嵁绠＄悊",
+                text = "数据管理",
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 12.dp)
@@ -151,7 +151,7 @@ fun SettingsScreen(
                 SettingsItem(
                     icon = Icons.Default.Backup,
                     title = "备份与恢复",
-                    subtitle = "浣跨敤 WebDAV 鎴栨湰鍦板瓨鍌ㄨ繘琛屾暟鎹浠戒笌鎭㈠",
+                    subtitle = "使用 WebDAV 或本地存储进行数据备份与恢复",
                     onClick = onBackupClick
                 )
 
@@ -181,13 +181,13 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = "璧勪骇椤甸潰",
+                                text = "资产页面",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "鍦ㄤ富鐣岄潰鏄剧ず璧勪骇绠＄悊椤甸潰",
+                                text = "在主界面显示资产管理页面",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -214,8 +214,8 @@ fun SettingsScreen(
             ) {
                 SettingsItem(
                     icon = Icons.Default.Psychology,
-                    title = "AI 璐㈠姟鍒嗘瀽",
-                    subtitle = "浣跨敤 AI 鍒嗘瀽鏀舵敮鏁版嵁骞剁敓鎴愬彲瑙嗗寲鎶ュ憡",
+                    title = "AI 财务分析",
+                    subtitle = "使用 AI 分析收支数据并生成可视化报告",
                     onClick = onAiAnalysisClick
                 )
 
@@ -223,7 +223,15 @@ fun SettingsScreen(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
+
                 var showAiConfig by remember { mutableStateOf(false) }
+
+                SettingsItem(
+                    icon = Icons.Default.Settings,
+                    title = "AI API 配置",
+                    subtitle = if (showAiConfig) "收起配置项" else "配置 API 域名、密钥和模型",
+                    onClick = { showAiConfig = !showAiConfig }
+                )
                 AnimatedVisibility(
                     visible = showAiConfig,
                     enter = fadeIn() + expandVertically(),
@@ -451,7 +459,7 @@ fun SettingsScreen(
                         )
                         SettingsItem(
                             icon = Icons.Default.Password,
-                            title = "淇敼 PIN 瀵嗙爜",
+                            title = "修改 PIN 密码",
                             subtitle = "修改应用锁 PIN 密码",
                             onClick = { showVerifyPinForChange = true }
                         )
@@ -485,7 +493,7 @@ fun SettingsScreen(
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Column {
                                     Text(
-                                        text = "鐢熺墿璇嗗埆瑙ｉ攣",
+                                        text = "生物识别解锁",
                                         style = MaterialTheme.typography.titleMedium,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
@@ -514,7 +522,7 @@ fun SettingsScreen(
                     onPinSet = {
                         showSetPinDialog = false
                         onAppLockChange(true)
-                        Toast.makeText(context, "搴旂敤閿佸凡鍚敤", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "应用锁已启用", Toast.LENGTH_SHORT).show()
                     }
                 )
             }
@@ -529,7 +537,7 @@ fun SettingsScreen(
                         onAppLockChange(false)
                         onBiometricUnlockChange(false)
                         PinManager.clearPin(sharedPreferences)
-                        Toast.makeText(context, "搴旂敤閿佸凡鍏抽棴", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "应用锁已关闭", Toast.LENGTH_SHORT).show()
                     }
                 )
             }
@@ -537,7 +545,7 @@ fun SettingsScreen(
             if (showVerifyPinForChange) {
                 VerifyPinDialog(
                     sharedPreferences = sharedPreferences,
-                    title = "楠岃瘉褰撳墠瀵嗙爜",
+                    title = "验证当前密码",
                     onDismissRequest = { showVerifyPinForChange = false },
                     onVerified = {
                         showVerifyPinForChange = false
@@ -559,7 +567,7 @@ fun SettingsScreen(
 
             // Theme and Appearance header
             Text(
-                text = "涓婚璁剧疆",
+                text = "主题设置",
                 style = MaterialTheme.typography.titleSmall,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 12.dp)
@@ -622,8 +630,8 @@ fun SettingsScreen(
                                 ThemePaletteConfig("Pink", "樱花粉", PrimaryPink, PrimaryContainerPink, SecondaryContainerPink, TertiaryContainerPink, SecondaryPink),
                                 ThemePaletteConfig("Gulf", "海湾蓝", PrimaryGulf, PrimaryContainerGulf, SecondaryContainerGulf, TertiaryContainerGulf, SecondaryGulf),
                                 ThemePaletteConfig("Field", "原野绿", PrimaryField, PrimaryContainerField, SecondaryContainerField, TertiaryContainerField, SecondaryField),
-                                ThemePaletteConfig("Autumn", "绉嬮粍", PrimaryAutumn, PrimaryContainerAutumn, SecondaryContainerAutumn, TertiaryContainerAutumn, SecondaryAutumn),
-                                ThemePaletteConfig("Neutral", "涓€ч粦", PrimaryNeutral, PrimaryContainerNeutral, SecondaryContainerNeutral, TertiaryContainerNeutral, SecondaryNeutral)
+                                ThemePaletteConfig("Autumn", "秋叶黄", PrimaryAutumn, PrimaryContainerAutumn, SecondaryContainerAutumn, TertiaryContainerAutumn, SecondaryAutumn),
+                                ThemePaletteConfig("Neutral", "中性黑", PrimaryNeutral, PrimaryContainerNeutral, SecondaryContainerNeutral, TertiaryContainerNeutral, SecondaryNeutral)
                             )
                             items(palettes) { palette ->
                                 ThemeBadge(
@@ -648,13 +656,13 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "涓婚妯″紡",
+                            text = "主题模式",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "绯荤粺 / 娴呰壊 / 娣辫壊",
+                            text = "系统 / 浅色 / 深色",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -662,11 +670,11 @@ fun SettingsScreen(
 
                     var expanded by remember { mutableStateOf(false) }
                     val options = listOf(
-                        "system" to "绯荤粺",
-                        "light" to "娴呰壊",
-                        "dark" to "娣辫壊"
+                        "system" to "系统",
+                        "light" to "浅色",
+                        "dark" to "深色"
                     )
-                    val selectedLabel = options.firstOrNull { it.first == uiState.themeMode }?.second ?: "绯荤粺"
+                    val selectedLabel = options.firstOrNull { it.first == uiState.themeMode }?.second ?: "系统"
 
 
                     ExposedDropdownMenuBox(
@@ -712,13 +720,13 @@ fun SettingsScreen(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "AMOLED 鏆楄壊妯″紡",
+                            text = "AMOLED 暗色模式",
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "鍦ㄦ殫鑹蹭富棰樹腑浣跨敤绾粦鑳屾櫙锛岄€傚悎 AMOLED 灞忓箷",
+                            text = "在暗色主题中使用纯黑背景，更适合 AMOLED 屏幕",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -749,11 +757,11 @@ fun SettingsScreen(
             ) {
                 SettingsItem(
                     icon = Icons.Default.Science,
-                    title = "鐢熸垚娴嬭瘯鏁版嵁 (15鏉?",
-                    subtitle = "浠呬緵璋冭瘯銆備负褰撳墠鏈堜唤闅忔満鐢熸垚娴嬭瘯鐢ㄧ殑鏀舵敮璁板綍",
+                    title = "生成测试数据（15 条）",
+                    subtitle = "仅供调试。为当前月份随机生成测试用的收支记录",
                     onClick = {
                         onGenerateTestData()
-                        Toast.makeText(context, "宸叉垚鍔熺敓鎴愭湰鏈堟祴璇曟暟鎹紒", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "已成功生成本月测试数据！", Toast.LENGTH_SHORT).show()
                     }
                 )
             }
@@ -866,7 +874,7 @@ fun ThemeBadge(config: ThemePaletteConfig, isSelected: Boolean, onClick: () -> U
             if (isSelected) {
                 Icon(
                     imageVector = Icons.Default.Check,
-                    contentDescription = "Selected",
+                    contentDescription = "已选中",
                     tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier
                         .size(24.dp)
@@ -884,4 +892,5 @@ fun ThemeBadge(config: ThemePaletteConfig, isSelected: Boolean, onClick: () -> U
         )
     }
 }
+
 
