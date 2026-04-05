@@ -39,6 +39,26 @@ class ExpenseRepository(
         }
     }
 
+    suspend fun addExpenses(expenses: List<ExpenseEntity>) {
+        if (expenses.isEmpty()) return
+        database.withTransaction {
+            expenses.forEach { expense ->
+                val normalizedCategory = expense.category.trim().ifEmpty { "其他" }
+                expenseDao.insert(
+                    expense.copy(
+                        category = normalizedCategory,
+                        note = expense.note.trim()
+                    )
+                )
+
+                if (expense.assetId != null) {
+                    val diffCent = if (expense.type == 0) -expense.amountCent else expense.amountCent
+                    assetDao.updateAssetBalance(expense.assetId, diffCent)
+                }
+            }
+        }
+    }
+
     suspend fun insertAllExpenses(expenses: List<ExpenseEntity>) {
         expenseDao.insertAll(expenses)
     }

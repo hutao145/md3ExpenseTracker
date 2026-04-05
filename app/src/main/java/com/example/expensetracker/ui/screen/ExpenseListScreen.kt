@@ -81,10 +81,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.expensetracker.ui.component.AiAccountingConfirmSheet
+import com.example.expensetracker.ui.component.AiAccountingInputSheet
 import com.example.expensetracker.ui.component.ExpenseFormSheet
 import com.example.expensetracker.ui.model.CategorySummaryUiModel
 import com.example.expensetracker.ui.model.DailyExpenseUiModel
 import com.example.expensetracker.ui.model.ExpenseItemUiModel
+import com.example.expensetracker.ui.viewmodel.AiAccountingUiState
 import com.example.expensetracker.ui.viewmodel.ExpenseUiState
 import com.example.expensetracker.ui.util.getCategoryIcon
 import com.example.expensetracker.ui.util.formatAmountWithSymbol
@@ -176,6 +179,8 @@ fun ExpenseListScreen(
     onCurrentMonth: () -> Unit,
     onSettingsClick: () -> Unit,
     onStatisticsClick: () -> Unit,
+    aiAccountingUiState: AiAccountingUiState,
+    onAiAccountingSaved: () -> Unit,
     viewModel: ExpenseViewModel
 ) {
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
@@ -228,6 +233,19 @@ fun ExpenseListScreen(
         if (addExpenseTrigger > 0L) {
             showAddDialog = true
         }
+    }
+
+    LaunchedEffect(aiAccountingUiState.hasShownEntryHint) {
+        if (!aiAccountingUiState.hasShownEntryHint) {
+            snackbarHostState.showSnackbar("提示：长按右下角加号可使用 AI 自然语言记账")
+            viewModel.markAiAccountingHintShown()
+        }
+    }
+
+    LaunchedEffect(aiAccountingUiState.infoMessage) {
+        val message = aiAccountingUiState.infoMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message)
+        viewModel.clearAiAccountingInfoMessage()
     }
 
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
@@ -517,12 +535,30 @@ fun ExpenseListScreen(
                     }
                 }
 
-                FloatingActionButton(
-                    onClick = { if (!isSelectionMode) showAddDialog = true },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                Surface(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .combinedClickable(
+                            onClick = {
+                                if (!isSelectionMode) {
+                                    showAddDialog = true
+                                }
+                            },
+                            onLongClick = {
+                                if (!isSelectionMode) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    viewModel.openAiAccountingInput()
+                                }
+                            }
+                        ),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    shadowElevation = 6.dp
                 ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
+                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                        Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
+                    }
                 }
             }
         }
@@ -571,6 +607,35 @@ fun ExpenseListScreen(
             onAdd = { amountInput, type, category, note, assetId, dateMillis ->
                 onAddExpense(amountInput, type, category, note, assetId, dateMillis)
                 showAddDialog = false
+            }
+        )
+    }
+
+    if (aiAccountingUiState.showInputSheet) {
+        AiAccountingInputSheet(
+            inputText = aiAccountingUiState.inputText,
+            isLoading = aiAccountingUiState.isParsing,
+            errorMessage = aiAccountingUiState.errorMessage,
+            onInputChange = viewModel::updateAiAccountingInput,
+            onDismissRequest = viewModel::dismissAiAccountingInput,
+            onSubmit = { viewModel.parseAiAccountingInput() }
+        )
+    }
+
+    if (aiAccountingUiState.showConfirmSheet) {
+        AiAccountingConfirmSheet(
+            inputText = aiAccountingUiState.inputText,
+            drafts = aiAccountingUiState.drafts,
+            infoMessage = aiAccountingUiState.infoMessage,
+            errorMessage = aiAccountingUiState.errorMessage,
+            isSaving = aiAccountingUiState.isSaving,
+            onDismissRequest = viewModel::clearAiAccountingSession,
+            onBackToEdit = viewModel::backToAiAccountingInput,
+            onRetry = viewModel::retryAiAccountingParse,
+            onConfirm = { drafts ->
+                viewModel.confirmAiAccounting(drafts) {
+                    onAiAccountingSaved()
+                }
             }
         )
     }

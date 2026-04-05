@@ -66,6 +66,7 @@ class MainActivity : AppCompatActivity() {
             )
             val uiState by expenseViewModel.uiState.collectAsStateWithLifecycle()
             val aiConfigState by expenseViewModel.aiConfigState.collectAsStateWithLifecycle()
+            val aiAccountingUiState by expenseViewModel.aiAccountingUiState.collectAsStateWithLifecycle()
 
             ExpenseTrackerTheme(
                 dynamicColor = uiState.dynamicColorEnabled,
@@ -187,6 +188,10 @@ class MainActivity : AppCompatActivity() {
                                     },
                                     onStatisticsClick = {
                                         currentScreen = Screen.Statistics
+                                    },
+                                    aiAccountingUiState = aiAccountingUiState,
+                                    onAiAccountingSaved = {
+                                        updateWidget()
                                     },
                                     viewModel = expenseViewModel
                                 )

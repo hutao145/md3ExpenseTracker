@@ -103,6 +103,30 @@ data class AiConfigState(
     val isAiTestError: Boolean = false
 )
 
+data class AiAccountingDraft(
+    val amountCent: Long,
+    val type: Int,
+    val category: String,
+    val note: String,
+    val dateMillis: Long,
+    val assetId: Long? = null,
+    val assetNameOrNull: String? = null,
+    val confidenceOrReason: String = "",
+    val usedFallbackFields: List<String> = emptyList()
+)
+
+data class AiAccountingUiState(
+    val showInputSheet: Boolean = false,
+    val showConfirmSheet: Boolean = false,
+    val inputText: String = "",
+    val isParsing: Boolean = false,
+    val isSaving: Boolean = false,
+    val errorMessage: String? = null,
+    val infoMessage: String? = null,
+    val drafts: List<AiAccountingDraft> = emptyList(),
+    val hasShownEntryHint: Boolean = false
+)
+
 class ExpenseViewModel(
     private val repository: ExpenseRepository,
     private val sharedPreferences: SharedPreferences
@@ -129,6 +153,15 @@ class ExpenseViewModel(
     private val aiTestingConnectionState = MutableStateFlow(false)
     private val aiTestMessageState = MutableStateFlow<String?>(null)
     private val aiTestErrorState = MutableStateFlow(false)
+    private val aiAccountingShowInputSheetState = MutableStateFlow(false)
+    private val aiAccountingShowConfirmSheetState = MutableStateFlow(false)
+    private val aiAccountingInputTextState = MutableStateFlow("")
+    private val aiAccountingParsingState = MutableStateFlow(false)
+    private val aiAccountingSavingState = MutableStateFlow(false)
+    private val aiAccountingErrorState = MutableStateFlow<String?>(null)
+    private val aiAccountingInfoState = MutableStateFlow<String?>(null)
+    private val aiAccountingDraftsState = MutableStateFlow<List<AiAccountingDraft>>(emptyList())
+    private val aiAccountingHasShownHintState = MutableStateFlow(sharedPreferences.getBoolean("ai_accounting_hint_shown", false))
 
     val aiConfigState: StateFlow<AiConfigState> = combine(
         combine(aiBaseUrlState, aiApiKeyState, aiModelState) { baseUrl, apiKey, model ->
@@ -159,6 +192,34 @@ class ExpenseViewModel(
             apiKey = aiApiKeyState.value,
             model = aiModelState.value
         )
+    )
+
+    val aiAccountingUiState: StateFlow<AiAccountingUiState> = combine(
+        aiAccountingShowInputSheetState,
+        aiAccountingShowConfirmSheetState,
+        aiAccountingInputTextState,
+        aiAccountingParsingState,
+        aiAccountingSavingState,
+        aiAccountingErrorState,
+        aiAccountingInfoState,
+        aiAccountingDraftsState,
+        aiAccountingHasShownHintState
+    ) { values ->
+        AiAccountingUiState(
+            showInputSheet = values[0] as Boolean,
+            showConfirmSheet = values[1] as Boolean,
+            inputText = values[2] as String,
+            isParsing = values[3] as Boolean,
+            isSaving = values[4] as Boolean,
+            errorMessage = values[5] as String?,
+            infoMessage = values[6] as String?,
+            drafts = values[7] as List<AiAccountingDraft>,
+            hasShownEntryHint = values[8] as Boolean
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = AiAccountingUiState(hasShownEntryHint = aiAccountingHasShownHintState.value)
     )
 
     private val zoneId: ZoneId = ZoneId.systemDefault()
@@ -460,6 +521,163 @@ class ExpenseViewModel(
     fun clearAiTestMessage() {
         aiTestMessageState.value = null
         aiTestErrorState.value = false
+    }
+
+    fun openAiAccountingInput() {
+        aiAccountingErrorState.value = null
+        aiAccountingInfoState.value = null
+        aiAccountingShowConfirmSheetState.value = false
+        aiAccountingShowInputSheetState.value = true
+    }
+
+    fun dismissAiAccountingInput() {
+        aiAccountingShowInputSheetState.value = false
+        if (!aiAccountingShowConfirmSheetState.value && !aiAccountingParsingState.value) {
+            aiAccountingErrorState.value = null
+            aiAccountingInfoState.value = null
+        }
+    }
+
+    fun updateAiAccountingInput(value: String) {
+        aiAccountingInputTextState.value = value
+        aiAccountingErrorState.value = null
+    }
+
+    fun markAiAccountingHintShown() {
+        if (aiAccountingHasShownHintState.value) return
+        aiAccountingHasShownHintState.value = true
+        sharedPreferences.edit().putBoolean("ai_accounting_hint_shown", true).apply()
+    }
+
+    fun retryAiAccountingParse() {
+        parseAiAccountingInput(aiAccountingInputTextState.value)
+    }
+
+    fun backToAiAccountingInput() {
+        aiAccountingShowConfirmSheetState.value = false
+        aiAccountingShowInputSheetState.value = true
+        aiAccountingErrorState.value = null
+    }
+
+    fun clearAiAccountingSession() {
+        aiAccountingShowInputSheetState.value = false
+        aiAccountingShowConfirmSheetState.value = false
+        aiAccountingInputTextState.value = ""
+        aiAccountingParsingState.value = false
+        aiAccountingSavingState.value = false
+        aiAccountingErrorState.value = null
+        aiAccountingInfoState.value = null
+        aiAccountingDraftsState.value = emptyList()
+    }
+
+    fun clearAiAccountingInfoMessage() {
+        aiAccountingInfoState.value = null
+    }
+
+    fun parseAiAccountingInput(input: String = aiAccountingInputTextState.value) {
+        if (aiAccountingParsingState.value) return
+
+        val normalizedInput = input.trim()
+        aiAccountingInputTextState.value = input
+        aiAccountingErrorState.value = null
+        aiAccountingInfoState.value = null
+
+        if (normalizedInput.isBlank()) {
+            aiAccountingErrorState.value = "请先输入记账内容"
+            return
+        }
+
+        val baseUrl = aiBaseUrlState.value.trim()
+        val apiKey = aiApiKeyState.value.trim()
+        val model = aiModelState.value.trim()
+        if (baseUrl.isBlank() || apiKey.isBlank() || model.isBlank()) {
+            aiAccountingErrorState.value = "请先在设置中完成 AI 配置"
+            aiAccountingShowInputSheetState.value = true
+            aiAccountingShowConfirmSheetState.value = false
+            return
+        }
+
+        viewModelScope.launch {
+            aiAccountingParsingState.value = true
+            aiAccountingErrorState.value = null
+
+            val assets = uiState.value.assets
+            val result = withContext(Dispatchers.IO) {
+                AiApiClient.parseNaturalLanguageExpense(
+                    baseUrl = baseUrl,
+                    apiKey = apiKey,
+                    model = model,
+                    input = normalizedInput,
+                    assetNames = assets.map { it.name }
+                )
+            }
+
+            result.onSuccess { raw ->
+                runCatching {
+                    parseAiAccountingDrafts(raw, assets)
+                }.onSuccess { drafts ->
+                    if (drafts.isEmpty()) {
+                        aiAccountingErrorState.value = "AI 未解析出可保存的账单，请换个说法再试"
+                    } else {
+                        aiAccountingDraftsState.value = drafts
+                        aiAccountingInfoState.value = if (drafts.any { it.usedFallbackFields.isNotEmpty() }) {
+                            "部分字段使用了默认值，请确认后再保存"
+                        } else {
+                            "已解析 ${drafts.size} 笔账单"
+                        }
+                        aiAccountingShowInputSheetState.value = false
+                        aiAccountingShowConfirmSheetState.value = true
+                    }
+                }.onFailure { error ->
+                    aiAccountingErrorState.value = error.message ?: "解析结果格式无效，请重试"
+                }
+            }.onFailure { error ->
+                aiAccountingErrorState.value = "AI 解析失败：${error.message ?: "未知错误"}"
+            }
+
+            aiAccountingParsingState.value = false
+        }
+    }
+
+    fun confirmAiAccounting(
+        drafts: List<AiAccountingDraft> = aiAccountingDraftsState.value,
+        onSuccess: (() -> Unit)? = null
+    ) {
+        if (drafts.isEmpty() || aiAccountingSavingState.value) return
+
+        viewModelScope.launch {
+            aiAccountingSavingState.value = true
+            aiAccountingErrorState.value = null
+
+            val result = runCatching {
+                repository.addExpenses(
+                    drafts.map {
+                        ExpenseEntity(
+                            amountCent = it.amountCent,
+                            type = it.type,
+                            category = it.category,
+                            note = it.note,
+                            assetId = it.assetId,
+                            createdAtEpochMillis = it.dateMillis
+                        )
+                    }
+                )
+            }
+
+            result.onSuccess {
+                aiAccountingSavingState.value = false
+                aiAccountingInfoState.value = "已写入 ${drafts.size} 笔账单"
+                onSuccess?.invoke()
+                aiAccountingShowInputSheetState.value = false
+                aiAccountingShowConfirmSheetState.value = false
+                aiAccountingInputTextState.value = ""
+                aiAccountingErrorState.value = null
+                aiAccountingDraftsState.value = emptyList()
+            }.onFailure { error ->
+                aiAccountingSavingState.value = false
+                aiAccountingErrorState.value = "保存失败：${error.message ?: "未知错误"}"
+            }
+        }
     }
 
     fun updateThemeColor(color: String) {
@@ -931,6 +1149,90 @@ class ExpenseViewModel(
         } catch (_: Exception) {
             null
         }
+    }
+
+    private fun parseAiAccountingDrafts(raw: String, assets: List<AssetEntity>): List<AiAccountingDraft> {
+        val jsonText = extractJsonObject(raw)
+        val root = JSONObject(jsonText)
+        val items = root.optJSONArray("items") ?: JSONArray()
+        val today = LocalDate.now(zoneId)
+        return buildList {
+            for (index in 0 until items.length()) {
+                val item = items.optJSONObject(index) ?: continue
+                val fallbackFields = mutableListOf<String>()
+
+                val amountCent = when {
+                    item.has("amount") && !item.isNull("amount") -> {
+                        parseAmountToCent(item.opt("amount").toString())
+                    }
+                    else -> null
+                } ?: continue
+
+                val type = when (item.optString("type").trim().lowercase(Locale.ROOT)) {
+                    "income", "收入" -> 1
+                    "expense", "支出" -> 0
+                    else -> {
+                        fallbackFields += "类型"
+                        0
+                    }
+                }
+
+                val category = item.optString("category").trim().ifBlank {
+                    fallbackFields += "分类"
+                    "其他"
+                }
+
+                val note = item.optString("note").trim().ifBlank {
+                    fallbackFields += "备注"
+                    category
+                }
+
+                val date = parseDateInput(item.optString("date").trim()) ?: today.also {
+                    fallbackFields += "日期"
+                }
+                val dateMillis = date.atStartOfDay(zoneId).toInstant().toEpochMilli()
+
+                val assetName = item.optString("assetName").trim().ifBlank { null }
+                val matchedAsset = matchAsset(assetName, assets)
+                val finalAssetName = matchedAsset?.name ?: assetName
+                if (assetName != null && matchedAsset == null) {
+                    fallbackFields += "资产"
+                }
+
+                add(
+                    AiAccountingDraft(
+                        amountCent = amountCent,
+                        type = type,
+                        category = category,
+                        note = note,
+                        dateMillis = dateMillis,
+                        assetId = matchedAsset?.id,
+                        assetNameOrNull = finalAssetName,
+                        confidenceOrReason = item.optString("confidenceReason").trim(),
+                        usedFallbackFields = fallbackFields.distinct()
+                    )
+                )
+            }
+        }
+    }
+
+    private fun extractJsonObject(raw: String): String {
+        val trimmed = raw.trim()
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) return trimmed
+        val start = trimmed.indexOf('{')
+        val end = trimmed.lastIndexOf('}')
+        require(start >= 0 && end > start) { "AI 返回中未找到有效 JSON" }
+        return trimmed.substring(start, end + 1)
+    }
+
+    private fun matchAsset(assetName: String?, assets: List<AssetEntity>): AssetEntity? {
+        if (assetName.isNullOrBlank()) return null
+        val normalized = assetName.trim().lowercase(Locale.ROOT)
+        return assets.firstOrNull { it.name.trim().equals(assetName.trim(), ignoreCase = true) }
+            ?: assets.firstOrNull {
+                val candidate = it.name.trim().lowercase(Locale.ROOT)
+                candidate.contains(normalized) || normalized.contains(candidate)
+            }
     }
 
     private fun parseDateInput(dateInput: String): LocalDate? {

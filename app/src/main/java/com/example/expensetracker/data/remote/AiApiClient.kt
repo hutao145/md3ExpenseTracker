@@ -142,6 +142,45 @@ object AiApiClient {
         return analyze(baseUrl = baseUrl, apiKey = apiKey, model = model, prompt = "你好")
     }
 
+    fun parseNaturalLanguageExpense(
+        baseUrl: String,
+        apiKey: String,
+        model: String,
+        input: String,
+        assetNames: List<String>
+    ): Result<String> {
+        val assetHints = if (assetNames.isEmpty()) "当前没有可关联资产。" else "当前可关联资产：${assetNames.joinToString("、")}"
+        val prompt = """
+            你是记账解析助手。请把用户输入的自然语言记账文本解析为严格 JSON，不要输出 Markdown，不要输出解释文字。
+
+            要求：
+            1. 输出必须是一个 JSON 对象。
+            2. JSON 结构固定为：
+            {
+              "items": [
+                {
+                  "amount": 32.5,
+                  "type": "expense" | "income",
+                  "category": "餐饮",
+                  "note": "午饭",
+                  "date": "2026-04-05",
+                  "assetName": "招商银行卡",
+                  "confidenceReason": "金额和分类来自明确文本"
+                }
+              ]
+            }
+            3. 支持把一段文本拆成多笔 items。
+            4. 若无法确定字段，请填 null，不要编造。
+            5. category 使用简体中文短词；note 尽量简短自然。
+            6. date 使用 yyyy-MM-dd。
+
+            $assetHints
+
+            用户输入：$input
+        """.trimIndent()
+        return analyze(baseUrl = baseUrl, apiKey = apiKey, model = model, prompt = prompt)
+    }
+
     private fun sortModels(models: List<String>): List<String> {
         val uniqueModels = models.distinct()
         val prioritized = uniqueModels.filter(::isPreferredChatModel)
