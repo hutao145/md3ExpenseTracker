@@ -160,28 +160,22 @@ fun AiAccountingConfirmSheet(
                     Text("AI 智能记账", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 }
 
-                OutlinedTextField(
-                    value = inputText,
-                    onValueChange = {},
-                    readOnly = true,
-                    enabled = false,
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = MaterialTheme.typography.titleMedium,
-                    trailingIcon = {
-                        IconButton(onClick = onBackToEdit, enabled = !isSaving) {
-                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "返回修改")
-                        }
-                    },
-                    shape = RoundedCornerShape(18.dp)
-                )
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "共解析 ${editableDrafts.size} 条，可修改后确认",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    TextButton(onClick = onBackToEdit, enabled = !isSaving) {
+                        Text("修改原文")
+                    }
+                }
 
                 HorizontalDivider()
-
-                Text(
-                    text = "共解析 ${editableDrafts.size} 条，可修改后确认",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
 
                 if (infoMessage != null) {
                     Text(infoMessage, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)

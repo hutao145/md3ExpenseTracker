@@ -81,6 +81,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.shadow
 import com.example.expensetracker.ui.component.AiAccountingConfirmSheet
 import com.example.expensetracker.ui.component.AiAccountingInputSheet
 import com.example.expensetracker.ui.component.ExpenseFormSheet
@@ -535,29 +536,45 @@ fun ExpenseListScreen(
                     }
                 }
 
-                Surface(
+                Box(
                     modifier = Modifier
                         .size(56.dp)
-                        .combinedClickable(
-                            onClick = {
-                                if (!isSelectionMode) {
-                                    showAddDialog = true
-                                }
-                            },
-                            onLongClick = {
-                                if (!isSelectionMode) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    viewModel.openAiAccountingInput()
-                                }
-                            }
-                        ),
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    shadowElevation = 6.dp
                 ) {
-                    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                        Icon(imageVector = Icons.Default.Add, contentDescription = "Add")
+                    Surface(
+                        modifier = Modifier
+                            .shadow(
+                                elevation = 6.dp,
+                                shape = RoundedCornerShape(18.dp),
+                                clip = false
+                            )
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(18.dp))
+                            .combinedClickable(
+                                onClick = {
+                                    if (!isSelectionMode) {
+                                        showAddDialog = true
+                                    }
+                                },
+                                onLongClick = {
+                                    if (!isSelectionMode) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        viewModel.openAiAccountingInput()
+                                    }
+                                }
+                            ),
+                        shape = RoundedCornerShape(18.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        shadowElevation = 6.dp,
+                        tonalElevation = 1.dp
+                    ) {
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "记账",
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                     }
                 }
             }
