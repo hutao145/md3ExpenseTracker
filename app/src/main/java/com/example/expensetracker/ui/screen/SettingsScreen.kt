@@ -93,6 +93,7 @@ fun SettingsScreen(
     onAppLockChange: (Boolean) -> Unit,
     onBiometricUnlockChange: (Boolean) -> Unit,
     onAssetPageChange: (Boolean) -> Unit,
+    onAutoWebDavBackupOnEntryChange: (Boolean) -> Unit,
     onBackClick: () -> Unit,
     onBackupClick: () -> Unit,
     onAiAnalysisClick: () -> Unit,
@@ -154,6 +155,50 @@ fun SettingsScreen(
                     subtitle = "使用 WebDAV 或本地存储进行数据备份与恢复",
                     onClick = onBackupClick
                 )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                // Auto WebDAV backup on every entry
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Backup,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text(
+                                text = "记账后自动网络备份",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "每次记账/自动记账后上传到 WebDAV，仅保留最新 3 份",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Switch(
+                        checked = uiState.autoWebDavBackupOnEntryEnabled,
+                        onCheckedChange = { onAutoWebDavBackupOnEntryChange(it) }
+                    )
+                }
 
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 16.dp),

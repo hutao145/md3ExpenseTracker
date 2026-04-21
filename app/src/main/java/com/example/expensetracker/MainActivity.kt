@@ -211,6 +211,7 @@ class MainActivity : AppCompatActivity() {
                                     onAppLockChange = { expenseViewModel.updateAppLockEnabled(it) },
                                     onBiometricUnlockChange = { expenseViewModel.updateBiometricUnlockEnabled(it) },
                                     onAssetPageChange = { expenseViewModel.updateAssetPageEnabled(it) },
+                                    onAutoWebDavBackupOnEntryChange = { expenseViewModel.updateAutoWebDavBackupOnEntryEnabled(it) },
                                     onBackClick = { currentScreen = Screen.Home },
                                     onBackupClick = { currentScreen = Screen.Backup },
                                     onAiAnalysisClick = {

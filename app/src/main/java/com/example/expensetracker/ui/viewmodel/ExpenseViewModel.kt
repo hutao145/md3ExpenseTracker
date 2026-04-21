@@ -29,6 +29,10 @@ import android.content.SharedPreferences
 import android.net.Uri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.LocalDateTime
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -66,7 +70,8 @@ data class ExpenseUiState(
     val autoBackupEnabled: Boolean = false,
     val autoBackupIntervalHours: Int = 24,
     val lastAutoBackupTime: Long = 0L,
-    val assetPageEnabled: Boolean = true
+    val assetPageEnabled: Boolean = true,
+    val autoWebDavBackupOnEntryEnabled: Boolean = false
 )
 
 data class DateRangeFilterState(
@@ -241,6 +246,7 @@ class ExpenseViewModel(
     private val autoBackupIntervalHoursState = MutableStateFlow(sharedPreferences.getInt("auto_backup_interval_hours", 24))
     private val lastAutoBackupTimeState = MutableStateFlow(sharedPreferences.getLong("last_auto_backup_time", 0L))
     private val assetPageEnabledState = MutableStateFlow(sharedPreferences.getBoolean("asset_page_enabled", true))
+    private val autoWebDavBackupOnEntryEnabledState = MutableStateFlow(sharedPreferences.getBoolean("auto_webdav_backup_on_entry_enabled", false))
 
     init {
         goToCurrentMonth()
@@ -268,19 +274,20 @@ class ExpenseViewModel(
                 autoBackupEnabledState,
                 autoBackupIntervalHoursState,
                 lastAutoBackupTimeState,
-                assetPageEnabledState
-            ) { enabled, interval, lastTime, assetPage ->
-                data class Extra2(val enabled: Boolean, val interval: Int, val lastTime: Long, val assetPage: Boolean)
-                Extra2(enabled, interval, lastTime, assetPage)
+                assetPageEnabledState,
+                autoWebDavBackupOnEntryEnabledState
+            ) { enabled, interval, lastTime, assetPage, autoOnEntry ->
+                data class Extra2(val enabled: Boolean, val interval: Int, val lastTime: Long, val assetPage: Boolean, val autoOnEntry: Boolean)
+                Extra2(enabled, interval, lastTime, assetPage, autoOnEntry)
             }
         ) { q, d, t, extra1, extra2 ->
             data class Config(
                 val q: String, val d: Boolean, val t: String,
                 val a: Boolean, val m: String, val lock: Boolean, val bio: Boolean,
                 val autoBackup: Boolean, val autoInterval: Int, val lastAutoTime: Long,
-                val assetPage: Boolean
+                val assetPage: Boolean, val autoOnEntry: Boolean
             )
-            Config(q, d, t, extra1.a, extra1.m, extra1.lock, extra1.bio, extra2.enabled, extra2.interval, extra2.lastTime, extra2.assetPage)
+            Config(q, d, t, extra1.a, extra1.m, extra1.lock, extra1.bio, extra2.enabled, extra2.interval, extra2.lastTime, extra2.assetPage, extra2.autoOnEntry)
         }
     ) { expenses, assets, dateRangeFilter, monthlyBudgetCent, config ->
         val searchQuery = config.q
@@ -408,7 +415,8 @@ class ExpenseViewModel(
             autoBackupEnabled = config.autoBackup,
             autoBackupIntervalHours = config.autoInterval,
             lastAutoBackupTime = config.lastAutoTime,
-            assetPageEnabled = config.assetPage
+            assetPageEnabled = config.assetPage,
+            autoWebDavBackupOnEntryEnabled = config.autoOnEntry
         )
     }
         .stateIn(
@@ -673,6 +681,7 @@ class ExpenseViewModel(
                 aiAccountingInputTextState.value = ""
                 aiAccountingErrorState.value = null
                 aiAccountingDraftsState.value = emptyList()
+                performAutoWebDavBackup()
             }.onFailure { error ->
                 aiAccountingSavingState.value = false
                 aiAccountingErrorState.value = "保存失败：${error.message ?: "未知错误"}"
@@ -732,6 +741,11 @@ class ExpenseViewModel(
         assetPageEnabledState.value = enabled
     }
 
+    fun updateAutoWebDavBackupOnEntryEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("auto_webdav_backup_on_entry_enabled", enabled).apply()
+        autoWebDavBackupOnEntryEnabledState.value = enabled
+    }
+
     fun addExpense(amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) {
         val amountCent = parseAmountToCent(amountInput) ?: return
 
@@ -744,6 +758,7 @@ class ExpenseViewModel(
                 assetId = assetId,
                 dateMillis = dateMillis
             )
+            performAutoWebDavBackup()
         }
     }
 
@@ -876,6 +891,9 @@ class ExpenseViewModel(
             }
             
             _syncMessage.value = "成功同步了 $successCount 笔新账单"
+            if (successCount > 0) {
+                performAutoWebDavBackup()
+            }
         }
     }
 
@@ -1473,6 +1491,91 @@ class ExpenseViewModel(
                 message = if (success) "恢复成功" else "从云端恢复失败"
             )
         }
+    }
+
+    /**
+     * 在每次记账（手动 / AI / 自动记账）成功后触发的网络备份。
+     * 仅在 WebDAV 配置完整时执行；上传成功后只保留最新 3 个 auto_backup_*.csv，删除其余旧的。
+     * 静默运行，不影响主流程，也不修改 _webDavState 的 message。
+     * 采用 3 秒防抖合并高频触发，并用互斥锁避免并发上传。
+     */
+    private val autoBackupMutex = Mutex()
+    private var autoBackupDebounceJob: Job? = null
+
+    private fun performAutoWebDavBackup() {
+        if (!autoWebDavBackupOnEntryEnabledState.value) return
+        val state = _webDavState.value
+        if (state.url.isBlank() || state.username.isBlank() ||
+            state.password.isBlank() || state.path.isBlank()
+        ) {
+            return
+        }
+
+        autoBackupDebounceJob?.cancel()
+        autoBackupDebounceJob = viewModelScope.launch {
+            delay(3_000)
+            autoBackupMutex.withLock {
+                runAutoBackupOnce(_webDavState.value)
+            }
+        }
+    }
+
+    private suspend fun runAutoBackupOnce(state: WebDavState) {
+        withContext(Dispatchers.IO) {
+            var tempFile: java.io.File? = null
+            try {
+                val csv = buildExpensesCsv(repository.getAllExpensesSnapshot())
+
+                val dirUrl = buildWebDavDirUrl(state.url, state.path)
+                val timestamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                    .format(java.util.Date())
+                val fileName = "auto_backup_$timestamp.csv"
+                val targetUrl = dirUrl + fileName
+
+                tempFile = java.io.File.createTempFile("auto_webdav_backup", ".csv").apply {
+                    writeText(csv)
+                }
+
+                val uploaded = webDavClient.uploadFile(targetUrl, state.username, state.password, tempFile)
+                if (!uploaded) return@withContext
+
+                // 保留最新 3 个 auto_backup_*.csv，删除其余
+                val autos = webDavClient.listFiles(dirUrl, state.username, state.password)
+                    .filter { it.name.startsWith("auto_backup_") }
+                    .sortedByDescending { it.dateModified }
+                autos.drop(3).forEach { item ->
+                    webDavClient.deleteFile(dirUrl + item.name, state.username, state.password)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                tempFile?.delete()
+            }
+        }
+    }
+
+    private fun buildExpensesCsv(expenses: List<ExpenseEntity>): String {
+        val sb = StringBuilder()
+        sb.append("\uFEFF")
+        sb.append("日期,类型,分类,金额(元),备注\n")
+        val csvFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        expenses.forEach { entity ->
+            val date = LocalDateTime.ofInstant(
+                Instant.ofEpochMilli(entity.createdAtEpochMillis),
+                ZoneId.systemDefault()
+            ).format(csvFormatter)
+            val amount = centToYuanString(entity.amountCent)
+            val typeStr = if (entity.type == 1) "收入" else "支出"
+            val noteEsc = entity.note.replace("\"", "\"\"")
+            val safeNote = if (noteEsc.contains(",") || noteEsc.contains("\n")) "\"$noteEsc\"" else noteEsc
+            sb.append("$date,$typeStr,${entity.category},$amount,$safeNote\n")
+        }
+        return sb.toString()
+    }
+
+    private fun buildWebDavDirUrl(url: String, path: String): String {
+        val fullUrl = if (url.endsWith("/")) url + path else "$url/$path"
+        return if (fullUrl.endsWith("/")) fullUrl else "$fullUrl/"
     }
 
     suspend fun collectAiAnalysisData(startDate: LocalDate, endDate: LocalDate): String {
