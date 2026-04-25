@@ -1178,57 +1178,66 @@ private fun HomeHeader(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Budget Progress
-            if (monthlyBudgetCent != null && monthlyBudgetCent > 0) {
-                val targetProgress = (totalExpenseCent.toFloat() / monthlyBudgetCent.toFloat()).coerceIn(0f, 1f)
-                val animatedProgress by animateFloatAsState(
-                    targetValue = targetProgress,
-                    animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
-                    label = "BudgetProgress"
-                )
-                val remaining = monthlyBudgetCent - totalExpenseCent
-                
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "预算剩余 ${formatAmountWithSymbol(remaining)}",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                        )
-                        Text(
-                            text = "${(targetProgress * 100).toInt()}%",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+            // Budget area with fixed height to avoid layout jump between states
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                if (monthlyBudgetCent != null && monthlyBudgetCent > 0) {
+                    val targetProgress = (totalExpenseCent.toFloat() / monthlyBudgetCent.toFloat()).coerceIn(0f, 1f)
+                    val animatedProgress by animateFloatAsState(
+                        targetValue = targetProgress,
+                        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
+                        label = "BudgetProgress"
+                    )
+                    val remaining = monthlyBudgetCent - totalExpenseCent
+
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "预算剩余 ${formatAmountWithSymbol(remaining)}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                            Text(
+                                text = "${(targetProgress * 100).toInt()}%",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        LinearProgressIndicator(
+                            animatedProgress,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(8.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable { onBudgetClick() },
+                            color = if (targetProgress > 0.9f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                         )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    LinearProgressIndicator(
-                        animatedProgress,
+                } else {
+                    OutlinedButton(
+                        onClick = onBudgetClick,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .clickable { onBudgetClick() },
-                        color = if (targetProgress > 0.9f) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    )
+                            .height(40.dp),
+                        colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f))
+                    ) {
+                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("设置本月预算")
+                    }
                 }
-            } else {
-                 OutlinedButton(
-                    onClick = onBudgetClick,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = androidx.compose.material3.ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.5f))
-                 ) {
-                     Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
-                     Spacer(modifier = Modifier.width(8.dp))
-                     Text("设置本月预算")
-                 }
             }
         }
     }

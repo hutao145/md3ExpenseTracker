@@ -139,6 +139,7 @@ class ExpenseViewModel(
 ) : ViewModel() {
 
     private val defaultAiBaseUrl = "https://api.openai.com"
+    private val monthlyBudgetByMonthKey = "monthly_budget_by_month_json"
 
     private val _webDavState = MutableStateFlow(
         WebDavState(
@@ -235,7 +236,7 @@ class ExpenseViewModel(
         .withResolverStyle(ResolverStyle.STRICT)
 
     val dateRangeFilterState = MutableStateFlow(DateRangeFilterState())
-    private val monthlyBudgetCentState = MutableStateFlow<Long?>(null)
+    private val monthlyBudgetByMonthState = MutableStateFlow(loadMonthlyBudgetByMonth())
     private val searchQueryState = MutableStateFlow("")
     private val dynamicColorEnabledState = MutableStateFlow(sharedPreferences.getBoolean("theme_dynamic_color", true))
     private val themeColorState = MutableStateFlow(sharedPreferences.getString("theme_color_seed", "Pink") ?: "Pink")
@@ -258,7 +259,7 @@ class ExpenseViewModel(
         repository.observeExpenses(),
         repository.observeAssets(),
         dateRangeFilterState,
-        monthlyBudgetCentState,
+        monthlyBudgetByMonthState,
         combine(
             searchQueryState,
             dynamicColorEnabledState,
@@ -313,7 +314,7 @@ class ExpenseViewModel(
                 extra2.assetPage, extra2.autoOnEntry, extra2.autoSyncOnForeground
             )
         }
-    ) { expenses, assets, dateRangeFilter, monthlyBudgetCent, config ->
+    ) { expenses, assets, dateRangeFilter, monthlyBudgetByMonth, config ->
         val searchQuery = config.q
         val dynamicColorEnabled = config.d
         val themeColor = config.t
@@ -379,6 +380,7 @@ class ExpenseViewModel(
             baseMonth.year,
             baseMonth.monthValue
         )
+        val monthlyBudgetCent = monthlyBudgetByMonth[toYearMonthKey(baseMonth)]
 
         val categorySummaries = filteredExpenses
             .filter { it.type == 0 } // Default category summary to Expenses only
@@ -1059,11 +1061,24 @@ class ExpenseViewModel(
 
     fun setMonthlyBudget(amountInput: String) {
         val amountCent = parseAmountToCent(amountInput) ?: return
-        monthlyBudgetCentState.value = amountCent
+        val targetMonth = resolveBudgetTargetMonth()
+        val key = toYearMonthKey(targetMonth)
+        val updated = monthlyBudgetByMonthState.value.toMutableMap().apply {
+            this[key] = amountCent
+        }
+        monthlyBudgetByMonthState.value = updated
+        persistMonthlyBudgetByMonth(updated)
     }
 
     fun clearMonthlyBudget() {
-        monthlyBudgetCentState.value = null
+        val targetMonth = resolveBudgetTargetMonth()
+        val key = toYearMonthKey(targetMonth)
+        if (!monthlyBudgetByMonthState.value.containsKey(key)) return
+        val updated = monthlyBudgetByMonthState.value.toMutableMap().apply {
+            remove(key)
+        }
+        monthlyBudgetByMonthState.value = updated
+        persistMonthlyBudgetByMonth(updated)
     }
 
     fun isAmountValid(amountInput: String): Boolean = parseAmountToCent(amountInput) != null
@@ -1684,7 +1699,7 @@ class ExpenseViewModel(
     suspend fun collectAiAnalysisData(startDate: LocalDate, endDate: LocalDate): String {
         val allExpenses = repository.getAllExpensesSnapshot()
         val allAssets = repository.observeAssets().first()
-        val budget = monthlyBudgetCentState.value
+        val budget = monthlyBudgetByMonthState.value[toYearMonthKey(endDate.withDayOfMonth(1))]
 
         val recentExpenses = allExpenses.filter { entity ->
             val date = Instant.ofEpochMilli(entity.createdAtEpochMillis)
@@ -1739,6 +1754,52 @@ class ExpenseViewModel(
         result.put("assets", assetsJson)
 
         return result.toString()
+    }
+
+    private fun resolveBudgetTargetMonth(): LocalDate {
+        val filter = dateRangeFilterState.value
+        return if (
+            filter.startDate != null &&
+            filter.endDate != null &&
+            filter.startDate.year == filter.endDate.year &&
+            filter.startDate.month == filter.endDate.month &&
+            filter.startDate.dayOfMonth == 1 &&
+            filter.endDate.dayOfMonth == filter.endDate.lengthOfMonth()
+        ) {
+            filter.startDate.withDayOfMonth(1)
+        } else {
+            LocalDate.now(zoneId).withDayOfMonth(1)
+        }
+    }
+
+    private fun toYearMonthKey(date: LocalDate): String {
+        return String.format(Locale.ROOT, "%04d-%02d", date.year, date.monthValue)
+    }
+
+    private fun loadMonthlyBudgetByMonth(): Map<String, Long> {
+        val raw = sharedPreferences.getString(monthlyBudgetByMonthKey, null).orEmpty()
+        if (raw.isBlank()) return emptyMap()
+        return try {
+            val obj = JSONObject(raw)
+            val result = mutableMapOf<String, Long>()
+            val keys = obj.keys()
+            while (keys.hasNext()) {
+                val key = keys.next().toString()
+                val amountCent = obj.optLong(key, Long.MIN_VALUE)
+                if (amountCent != Long.MIN_VALUE) {
+                    result[key] = amountCent
+                }
+            }
+            result
+        } catch (_: Exception) {
+            emptyMap()
+        }
+    }
+
+    private fun persistMonthlyBudgetByMonth(value: Map<String, Long>) {
+        val obj = JSONObject()
+        value.forEach { (key, amountCent) -> obj.put(key, amountCent) }
+        sharedPreferences.edit().putString(monthlyBudgetByMonthKey, obj.toString()).apply()
     }
 
     companion object {
