@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Upload
@@ -135,6 +136,7 @@ fun BackupScreen(
 fun WebDavBackupTab(viewModel: ExpenseViewModel) {
     val context = LocalContext.current
     val webDavState by viewModel.webDavState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var passwordVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(webDavState.message) {
@@ -229,6 +231,50 @@ fun WebDavBackupTab(viewModel: ExpenseViewModel) {
                         enabled = false
                     )
                 }
+            }
+        }
+
+        // 记账后自动网络备份
+        Card(
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Backup,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = "记账后自动网络备份",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "每次记账/自动记账后上传到 WebDAV，仅保留最新 3 份",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Switch(
+                    checked = uiState.autoWebDavBackupOnEntryEnabled,
+                    onCheckedChange = { viewModel.updateAutoWebDavBackupOnEntryEnabled(it) }
+                )
             }
         }
 

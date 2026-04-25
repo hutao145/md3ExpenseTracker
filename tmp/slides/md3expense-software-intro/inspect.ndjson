@@ -1,0 +1,106 @@
+{"kind":"deck","id":"md3expense-software-intro","slideCount":9,"slideSize":{"width":1280,"height":720}}
+{"kind":"textbox","slide":1,"role":"header","text":"MD3 EXPENSE TRACKER","textChars":19,"textLines":1,"bbox":[68,26,500,24]}
+{"kind":"textbox","slide":1,"role":"header-page","text":"01 / 09","textChars":7,"textLines":1,"bbox":[1110,26,100,24]}
+{"kind":"textbox","slide":1,"role":"title","text":"MD3 Expense Tracker\nAndroid 本地记账软件介绍","textChars":36,"textLines":2,"bbox":[68,84,860,110]}
+{"kind":"textbox","slide":1,"role":"subtitle","text":"面向个人用户的高颜值、强功能、可持续迭代的财务管理应用","textChars":27,"textLines":1,"bbox":[70,205,860,56]}
+{"kind":"textbox","slide":1,"role":"tag","text":"Kotlin · Compose · Room · MVVM","textChars":30,"textLines":1,"bbox":[94,315,520,30]}
+{"kind":"textbox","slide":1,"role":"定位标签","text":"一句话定位","textChars":5,"textLines":1,"bbox":[96,426,220,28]}
+{"kind":"textbox","slide":1,"role":"定位说明","text":"MD3 Expense Tracker 是一款以本地优先为核心、兼具智能分析能力的 Android 记账应用，帮助用户把日常流水沉淀为可执行的财务决策。","textChars":76,"textLines":1,"bbox":[96,462,1080,118]}
+{"kind":"textbox","slide":2,"role":"header","text":"产品定位","textChars":4,"textLines":1,"bbox":[68,26,500,24]}
+{"kind":"textbox","slide":2,"role":"header-page","text":"02 / 09","textChars":7,"textLines":1,"bbox":[1110,26,100,24]}
+{"kind":"textbox","slide":2,"role":"title","text":"为什么要做这款记账软件","textChars":11,"textLines":1,"bbox":[68,84,860,110]}
+{"kind":"textbox","slide":2,"role":"subtitle","text":"目标是把“记录、分析、决策”做成低门槛的每日财务闭环","textChars":26,"textLines":1,"bbox":[70,205,860,56]}
+{"kind":"textbox","slide":2,"role":"card-title","text":"记录成本高","textChars":5,"textLines":1,"bbox":[90,316,324,26]}
+{"kind":"textbox","slide":2,"role":"card-body","text":"传统记账步骤繁琐，容易中断，长期坚持困难。","textChars":21,"textLines":1,"bbox":[90,352,320,230]}
+{"kind":"textbox","slide":2,"role":"card-title","text":"复盘效率低","textChars":5,"textLines":1,"bbox":[468,316,324,26]}
+{"kind":"textbox","slide":2,"role":"card-body","text":"数据分散在流水中，缺少趋势与结构化洞察。","textChars":20,"textLines":1,"bbox":[468,352,320,230]}
+{"kind":"textbox","slide":2,"role":"card-title","text":"安全感不足","textChars":5,"textLines":1,"bbox":[846,316,324,26]}
+{"kind":"textbox","slide":2,"role":"card-body","text":"用户既要云同步，也要本地可控与隐私保护。","textChars":20,"textLines":1,"bbox":[846,352,320,230]}
+{"kind":"textbox","slide":3,"role":"header","text":"核心能力","textChars":4,"textLines":1,"bbox":[68,26,500,24]}
+{"kind":"textbox","slide":3,"role":"header-page","text":"03 / 09","textChars":7,"textLines":1,"bbox":[1110,26,100,24]}
+{"kind":"textbox","slide":3,"role":"title","text":"核心能力全景","textChars":6,"textLines":1,"bbox":[68,84,860,110]}
+{"kind":"textbox","slide":3,"role":"subtitle","text":"覆盖从日常记账到长期资产管理的关键场景","textChars":19,"textLines":1,"bbox":[70,205,860,56]}
+{"kind":"textbox","slide":3,"role":"metric-value","text":"23+","textChars":3,"textLines":1,"bbox":[86,318,520,48]}
+{"kind":"textbox","slide":3,"role":"metric-label","text":"内置分类","textChars":4,"textLines":1,"bbox":[86,370,520,26]}
+{"kind":"textbox","slide":3,"role":"metric-note","text":"含餐饮/交通/购物/薪资等","textChars":13,"textLines":1,"bbox":[86,398,520,20]}
+{"kind":"textbox","slide":3,"role":"metric-value","text":"6","textChars":1,"textLines":1,"bbox":[660,318,520,48]}
+{"kind":"textbox","slide":3,"role":"metric-label","text":"主题配色","textChars":4,"textLines":1,"bbox":[660,370,520,26]}
+{"kind":"textbox","slide":3,"role":"metric-note","text":"支持动态取色与深浅模式","textChars":11,"textLines":1,"bbox":[660,398,520,20]}
+{"kind":"textbox","slide":3,"role":"metric-value","text":"1-72h","textChars":5,"textLines":1,"bbox":[86,488,520,48]}
+{"kind":"textbox","slide":3,"role":"metric-label","text":"自动备份周期","textChars":6,"textLines":1,"bbox":[86,540,520,26]}
+{"kind":"textbox","slide":3,"role":"metric-note","text":"WorkManager 后台调度","textChars":16,"textLines":1,"bbox":[86,568,520,20]}
+{"kind":"textbox","slide":3,"role":"metric-value","text":"30min","textChars":5,"textLines":1,"bbox":[660,488,520,48]}
+{"kind":"textbox","slide":3,"role":"metric-label","text":"小组件刷新","textChars":5,"textLines":1,"bbox":[660,540,520,26]}
+{"kind":"textbox","slide":3,"role":"metric-note","text":"桌面直达本月支出","textChars":8,"textLines":1,"bbox":[660,568,520,20]}
+{"kind":"textbox","slide":4,"role":"header","text":"智能分析","textChars":4,"textLines":1,"bbox":[68,26,500,24]}
+{"kind":"textbox","slide":4,"role":"header-page","text":"04 / 09","textChars":7,"textLines":1,"bbox":[1110,26,100,24]}
+{"kind":"textbox","slide":4,"role":"title","text":"AI 财务分析能力","textChars":9,"textLines":1,"bbox":[68,84,860,110]}
+{"kind":"textbox","slide":4,"role":"subtitle","text":"接入 OpenAI 兼容 API，输出健康评分、风险提示与行动清单","textChars":33,"textLines":1,"bbox":[70,205,860,56]}
+{"kind":"textbox","slide":4,"role":"card-title","text":"健康评分","textChars":4,"textLines":1,"bbox":[90,316,324,26]}
+{"kind":"textbox","slide":4,"role":"card-body","text":"基于收支结构和波动特征生成 0-100 综合评分。","textChars":25,"textLines":1,"bbox":[90,352,320,230]}
+{"kind":"textbox","slide":4,"role":"card-title","text":"深度洞察","textChars":4,"textLines":1,"bbox":[468,316,324,26]}
+{"kind":"textbox","slide":4,"role":"card-body","text":"识别异常消费、行为模式与阶段性变化趋势。","textChars":20,"textLines":1,"bbox":[468,352,320,230]}
+{"kind":"textbox","slide":4,"role":"card-title","text":"行动建议","textChars":4,"textLines":1,"bbox":[846,316,324,26]}
+{"kind":"textbox","slide":4,"role":"card-body","text":"给出可执行、按优先级排序的改善方案。","textChars":18,"textLines":1,"bbox":[846,352,320,230]}
+{"kind":"textbox","slide":5,"role":"header","text":"数据安全","textChars":4,"textLines":1,"bbox":[68,26,500,24]}
+{"kind":"textbox","slide":5,"role":"header-page","text":"05 / 09","textChars":7,"textLines":1,"bbox":[1110,26,100,24]}
+{"kind":"textbox","slide":5,"role":"title","text":"隐私与数据安全设计","textChars":9,"textLines":1,"bbox":[68,84,860,110]}
+{"kind":"textbox","slide":5,"role":"subtitle","text":"本地优先 + 多路径备份 + 身份验证，确保数据可控可靠","textChars":28,"textLines":1,"bbox":[70,205,860,56]}
+{"kind":"textbox","slide":5,"role":"card-title","text":"本地数据库","textChars":5,"textLines":1,"bbox":[90,316,324,26]}
+{"kind":"textbox","slide":5,"role":"card-body","text":"使用 Room 持久化核心数据，离线可用、响应稳定。","textChars":26,"textLines":1,"bbox":[90,352,320,230]}
+{"kind":"textbox","slide":5,"role":"card-title","text":"双通道备份","textChars":5,"textLines":1,"bbox":[468,316,324,26]}
+{"kind":"textbox","slide":5,"role":"card-body","text":"支持 WebDAV 与本地 CSV 导出，降低单点风险。","textChars":28,"textLines":1,"bbox":[468,352,320,230]}
+{"kind":"textbox","slide":5,"role":"card-title","text":"应用锁","textChars":3,"textLines":1,"bbox":[846,316,324,26]}
+{"kind":"textbox","slide":5,"role":"card-body","text":"PIN + 生物识别，防止未授权访问账本。","textChars":21,"textLines":1,"bbox":[846,352,320,230]}
+{"kind":"textbox","slide":6,"role":"header","text":"系统架构","textChars":4,"textLines":1,"bbox":[68,26,500,24]}
+{"kind":"textbox","slide":6,"role":"header-page","text":"06 / 09","textChars":7,"textLines":1,"bbox":[1110,26,100,24]}
+{"kind":"textbox","slide":6,"role":"title","text":"技术架构与模块分层","textChars":9,"textLines":1,"bbox":[68,84,860,110]}
+{"kind":"textbox","slide":6,"role":"subtitle","text":"单 Activity + MVVM，按数据、业务、界面职责解耦","textChars":31,"textLines":1,"bbox":[70,205,860,56]}
+{"kind":"textbox","slide":6,"role":"架构列标题","text":"数据层","textChars":3,"textLines":1,"bbox":[104,332,300,32]}
+{"kind":"textbox","slide":6,"role":"架构项","text":"Room 数据库","textChars":8,"textLines":1,"bbox":[126,370,286,28]}
+{"kind":"textbox","slide":6,"role":"架构项","text":"DAO + Repository","textChars":16,"textLines":1,"bbox":[126,432,286,28]}
+{"kind":"textbox","slide":6,"role":"架构项","text":"WebDAV / AI / 同步服务","textChars":18,"textLines":1,"bbox":[126,494,286,28]}
+{"kind":"textbox","slide":6,"role":"架构列标题","text":"业务层","textChars":3,"textLines":1,"bbox":[496,332,300,32]}
+{"kind":"textbox","slide":6,"role":"架构项","text":"ExpenseViewModel","textChars":16,"textLines":1,"bbox":[518,370,286,28]}
+{"kind":"textbox","slide":6,"role":"架构项","text":"预算与统计聚合","textChars":7,"textLines":1,"bbox":[518,432,286,28]}
+{"kind":"textbox","slide":6,"role":"架构项","text":"备份与安全策略","textChars":7,"textLines":1,"bbox":[518,494,286,28]}
+{"kind":"textbox","slide":6,"role":"架构列标题","text":"表现层","textChars":3,"textLines":1,"bbox":[888,332,300,32]}
+{"kind":"textbox","slide":6,"role":"架构项","text":"Compose Screens","textChars":15,"textLines":1,"bbox":[910,370,286,28]}
+{"kind":"textbox","slide":6,"role":"架构项","text":"组件化 UI","textChars":6,"textLines":1,"bbox":[910,432,286,28]}
+{"kind":"textbox","slide":6,"role":"架构项","text":"桌面小组件","textChars":5,"textLines":1,"bbox":[910,494,286,28]}
+{"kind":"textbox","slide":7,"role":"header","text":"工程实现","textChars":4,"textLines":1,"bbox":[68,26,500,24]}
+{"kind":"textbox","slide":7,"role":"header-page","text":"07 / 09","textChars":7,"textLines":1,"bbox":[1110,26,100,24]}
+{"kind":"textbox","slide":7,"role":"title","text":"技术栈与工程质量","textChars":8,"textLines":1,"bbox":[68,84,860,110]}
+{"kind":"textbox","slide":7,"role":"subtitle","text":"现代 Android 技术体系，兼顾开发效率与稳定性","textChars":26,"textLines":1,"bbox":[70,205,860,56]}
+{"kind":"textbox","slide":7,"role":"tech-highlights-title","text":"技术亮点","textChars":4,"textLines":1,"bbox":[896,354,200,30]}
+{"kind":"textbox","slide":7,"role":"tech-highlights-body","text":"• Kotlin + Compose 提升开发效率\n• Room + Flow 支持响应式数据更新\n• WorkManager 实现可靠后台任务\n• 生物识别与 PIN 提升访问安全","textChars":91,"textLines":4,"bbox":[896,392,274,168]}
+{"kind":"chart","slide":7,"role":"bar-chart","bbox":[100,330,740,245]}
+{"kind":"textbox","slide":8,"role":"header","text":"业务流程","textChars":4,"textLines":1,"bbox":[68,26,500,24]}
+{"kind":"textbox","slide":8,"role":"header-page","text":"08 / 09","textChars":7,"textLines":1,"bbox":[1110,26,100,24]}
+{"kind":"textbox","slide":8,"role":"title","text":"典型使用流程","textChars":6,"textLines":1,"bbox":[68,84,860,110]}
+{"kind":"textbox","slide":8,"role":"subtitle","text":"从记录到复盘的闭环路径，帮助用户形成财务管理习惯","textChars":24,"textLines":1,"bbox":[70,205,860,56]}
+{"kind":"textbox","slide":8,"role":"流程序号","text":"1","textChars":1,"textLines":1,"bbox":[92,422,14,18]}
+{"kind":"textbox","slide":8,"role":"流程标题","text":"快速记账","textChars":4,"textLines":1,"bbox":[126,416,136,32]}
+{"kind":"textbox","slide":8,"role":"流程说明","text":"随手录入收支","textChars":6,"textLines":1,"bbox":[82,456,172,56]}
+{"kind":"textbox","slide":8,"role":"流程序号","text":"2","textChars":1,"textLines":1,"bbox":[330,422,14,18]}
+{"kind":"textbox","slide":8,"role":"流程标题","text":"分类归集","textChars":4,"textLines":1,"bbox":[364,416,136,32]}
+{"kind":"textbox","slide":8,"role":"流程说明","text":"自动归类与关联","textChars":7,"textLines":1,"bbox":[320,456,172,56]}
+{"kind":"textbox","slide":8,"role":"流程序号","text":"3","textChars":1,"textLines":1,"bbox":[568,422,14,18]}
+{"kind":"textbox","slide":8,"role":"流程标题","text":"预算追踪","textChars":4,"textLines":1,"bbox":[602,416,136,32]}
+{"kind":"textbox","slide":8,"role":"流程说明","text":"预算进度可视化","textChars":7,"textLines":1,"bbox":[558,456,172,56]}
+{"kind":"textbox","slide":8,"role":"流程序号","text":"4","textChars":1,"textLines":1,"bbox":[806,422,14,18]}
+{"kind":"textbox","slide":8,"role":"流程标题","text":"统计复盘","textChars":4,"textLines":1,"bbox":[840,416,136,32]}
+{"kind":"textbox","slide":8,"role":"流程说明","text":"趋势与结构复盘","textChars":7,"textLines":1,"bbox":[796,456,172,56]}
+{"kind":"textbox","slide":8,"role":"流程序号","text":"5","textChars":1,"textLines":1,"bbox":[1044,422,14,18]}
+{"kind":"textbox","slide":8,"role":"流程标题","text":"AI 建议执行","textChars":7,"textLines":1,"bbox":[1078,416,136,32]}
+{"kind":"textbox","slide":8,"role":"流程说明","text":"形成行动清单","textChars":6,"textLines":1,"bbox":[1034,456,172,56]}
+{"kind":"textbox","slide":9,"role":"header","text":"总结与规划","textChars":5,"textLines":1,"bbox":[68,26,500,24]}
+{"kind":"textbox","slide":9,"role":"header-page","text":"09 / 09","textChars":7,"textLines":1,"bbox":[1110,26,100,24]}
+{"kind":"textbox","slide":9,"role":"title","text":"当前成果与后续路线","textChars":9,"textLines":1,"bbox":[68,84,860,110]}
+{"kind":"textbox","slide":9,"role":"subtitle","text":"在稳定可用基础上持续增强智能化和生态连接能力","textChars":22,"textLines":1,"bbox":[70,205,860,56]}
+{"kind":"textbox","slide":9,"role":"card-title","text":"已具备","textChars":3,"textLines":1,"bbox":[90,316,324,26]}
+{"kind":"textbox","slide":9,"role":"card-body","text":"完整记账能力、统计分析、资产管理、备份同步与安全防护。","textChars":27,"textLines":1,"bbox":[90,352,320,230]}
+{"kind":"textbox","slide":9,"role":"card-title","text":"下一步","textChars":3,"textLines":1,"bbox":[468,316,324,26]}
+{"kind":"textbox","slide":9,"role":"card-body","text":"优化多设备体验，增强智能提醒与异常事件预警。","textChars":22,"textLines":1,"bbox":[468,352,320,230]}
+{"kind":"textbox","slide":9,"role":"card-title","text":"长期方向","textChars":4,"textLines":1,"bbox":[846,316,324,26]}
+{"kind":"textbox","slide":9,"role":"card-body","text":"构建更主动的个人财务助手，实现自动化决策支持。","textChars":23,"textLines":1,"bbox":[846,352,320,230]}

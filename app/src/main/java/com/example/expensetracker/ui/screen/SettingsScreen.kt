@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -93,7 +94,7 @@ fun SettingsScreen(
     onAppLockChange: (Boolean) -> Unit,
     onBiometricUnlockChange: (Boolean) -> Unit,
     onAssetPageChange: (Boolean) -> Unit,
-    onAutoWebDavBackupOnEntryChange: (Boolean) -> Unit,
+    onAutoSyncOnForegroundChange: (Boolean) -> Unit,
     onBackClick: () -> Unit,
     onBackupClick: () -> Unit,
     onAiAnalysisClick: () -> Unit,
@@ -161,7 +162,7 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
                 )
 
-                // Auto WebDAV backup on every entry
+                // Auto sync from AutoAccounting on foreground
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -174,7 +175,7 @@ fun SettingsScreen(
                         modifier = Modifier.weight(1f)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Backup,
+                            imageVector = Icons.Default.Sync,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(24.dp)
@@ -182,21 +183,21 @@ fun SettingsScreen(
                         Spacer(modifier = Modifier.width(16.dp))
                         Column {
                             Text(
-                                text = "记账后自动网络备份",
+                                text = "前台自动同步账单",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "每次记账/自动记账后上传到 WebDAV，仅保留最新 3 份",
+                                text = "应用回到前台时自动从 AutoAccounting 拉取本机账单",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
                     Switch(
-                        checked = uiState.autoWebDavBackupOnEntryEnabled,
-                        onCheckedChange = { onAutoWebDavBackupOnEntryChange(it) }
+                        checked = uiState.autoSyncOnForegroundEnabled,
+                        onCheckedChange = { onAutoSyncOnForegroundChange(it) }
                     )
                 }
 

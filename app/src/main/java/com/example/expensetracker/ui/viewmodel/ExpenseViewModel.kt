@@ -71,7 +71,8 @@ data class ExpenseUiState(
     val autoBackupIntervalHours: Int = 24,
     val lastAutoBackupTime: Long = 0L,
     val assetPageEnabled: Boolean = true,
-    val autoWebDavBackupOnEntryEnabled: Boolean = false
+    val autoWebDavBackupOnEntryEnabled: Boolean = false,
+    val autoSyncOnForegroundEnabled: Boolean = true
 )
 
 data class DateRangeFilterState(
@@ -247,6 +248,7 @@ class ExpenseViewModel(
     private val lastAutoBackupTimeState = MutableStateFlow(sharedPreferences.getLong("last_auto_backup_time", 0L))
     private val assetPageEnabledState = MutableStateFlow(sharedPreferences.getBoolean("asset_page_enabled", true))
     private val autoWebDavBackupOnEntryEnabledState = MutableStateFlow(sharedPreferences.getBoolean("auto_webdav_backup_on_entry_enabled", false))
+    private val autoSyncOnForegroundEnabledState = MutableStateFlow(sharedPreferences.getBoolean("auto_sync_on_foreground_enabled", true))
 
     init {
         goToCurrentMonth()
@@ -271,23 +273,45 @@ class ExpenseViewModel(
                 Extra1(a, m, lock, bio)
             },
             combine(
-                autoBackupEnabledState,
-                autoBackupIntervalHoursState,
-                lastAutoBackupTimeState,
-                assetPageEnabledState,
-                autoWebDavBackupOnEntryEnabledState
-            ) { enabled, interval, lastTime, assetPage, autoOnEntry ->
-                data class Extra2(val enabled: Boolean, val interval: Int, val lastTime: Long, val assetPage: Boolean, val autoOnEntry: Boolean)
-                Extra2(enabled, interval, lastTime, assetPage, autoOnEntry)
+                combine(
+                    autoBackupEnabledState,
+                    autoBackupIntervalHoursState,
+                    lastAutoBackupTimeState,
+                    assetPageEnabledState
+                ) { enabled, interval, lastTime, assetPage ->
+                    data class Extra2Base(
+                        val enabled: Boolean,
+                        val interval: Int,
+                        val lastTime: Long,
+                        val assetPage: Boolean
+                    )
+                    Extra2Base(enabled, interval, lastTime, assetPage)
+                },
+                autoWebDavBackupOnEntryEnabledState,
+                autoSyncOnForegroundEnabledState
+            ) { base, autoOnEntry, autoSyncOnForeground ->
+                data class Extra2(
+                    val enabled: Boolean,
+                    val interval: Int,
+                    val lastTime: Long,
+                    val assetPage: Boolean,
+                    val autoOnEntry: Boolean,
+                    val autoSyncOnForeground: Boolean
+                )
+                Extra2(base.enabled, base.interval, base.lastTime, base.assetPage, autoOnEntry, autoSyncOnForeground)
             }
         ) { q, d, t, extra1, extra2 ->
             data class Config(
                 val q: String, val d: Boolean, val t: String,
                 val a: Boolean, val m: String, val lock: Boolean, val bio: Boolean,
                 val autoBackup: Boolean, val autoInterval: Int, val lastAutoTime: Long,
-                val assetPage: Boolean, val autoOnEntry: Boolean
+                val assetPage: Boolean, val autoOnEntry: Boolean, val autoSyncOnForeground: Boolean
             )
-            Config(q, d, t, extra1.a, extra1.m, extra1.lock, extra1.bio, extra2.enabled, extra2.interval, extra2.lastTime, extra2.assetPage, extra2.autoOnEntry)
+            Config(
+                q, d, t, extra1.a, extra1.m, extra1.lock, extra1.bio,
+                extra2.enabled, extra2.interval, extra2.lastTime,
+                extra2.assetPage, extra2.autoOnEntry, extra2.autoSyncOnForeground
+            )
         }
     ) { expenses, assets, dateRangeFilter, monthlyBudgetCent, config ->
         val searchQuery = config.q
@@ -416,7 +440,8 @@ class ExpenseViewModel(
             autoBackupIntervalHours = config.autoInterval,
             lastAutoBackupTime = config.lastAutoTime,
             assetPageEnabled = config.assetPage,
-            autoWebDavBackupOnEntryEnabled = config.autoOnEntry
+            autoWebDavBackupOnEntryEnabled = config.autoOnEntry,
+            autoSyncOnForegroundEnabled = config.autoSyncOnForeground
         )
     }
         .stateIn(
@@ -746,6 +771,11 @@ class ExpenseViewModel(
         autoWebDavBackupOnEntryEnabledState.value = enabled
     }
 
+    fun updateAutoSyncOnForegroundEnabled(enabled: Boolean) {
+        sharedPreferences.edit().putBoolean("auto_sync_on_foreground_enabled", enabled).apply()
+        autoSyncOnForegroundEnabledState.value = enabled
+    }
+
     fun addExpense(amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) {
         val amountCent = parseAmountToCent(amountInput) ?: return
 
@@ -818,6 +848,11 @@ class ExpenseViewModel(
 
     private val _syncMessage = MutableStateFlow<String?>(null)
     val syncMessage: StateFlow<String?> = _syncMessage.asStateFlow()
+    private val autoSyncMutex = Mutex()
+    private var autoSyncDebounceJob: Job? = null
+    private var lastAutoSyncStartedAt: Long = 0L
+    private val autoSyncDebounceMs = 1_200L
+    private val autoSyncMinIntervalMs = 30_000L
 
     fun clearSyncMessage() {
         _syncMessage.value = null
@@ -825,75 +860,97 @@ class ExpenseViewModel(
 
     fun syncFromAutoAccounting() {
         viewModelScope.launch {
-            // 在 IO 线程执行网路请求
-            val currentAssets = uiState.value.assets
-            val currentHash = currentAssets.hashCode().toString()
-            val lastHash = sharedPreferences.getString("last_synced_assets_hash", "")
-            
-            if (currentHash != lastHash) {
-                val pushSuccess = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    com.example.expensetracker.data.remote.AutoAccountingService.syncAssets(currentAssets)
-                }
-                if (pushSuccess) {
-                    sharedPreferences.edit().putString("last_synced_assets_hash", currentHash).apply()
-                }
-            }
+            syncFromAutoAccountingInternal(showNoNewBillsMessage = true)
+        }
+    }
 
-            val newBills = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                com.example.expensetracker.data.remote.AutoAccountingService.fetchUnsyncedBills()
+    fun syncFromAutoAccountingOnForeground() {
+        if (!autoSyncOnForegroundEnabledState.value) return
+        autoSyncDebounceJob?.cancel()
+        autoSyncDebounceJob = viewModelScope.launch {
+            delay(autoSyncDebounceMs)
+            autoSyncMutex.withLock {
+                val now = System.currentTimeMillis()
+                if (now - lastAutoSyncStartedAt < autoSyncMinIntervalMs) {
+                    return@withLock
+                }
+                lastAutoSyncStartedAt = now
+                syncFromAutoAccountingInternal(showNoNewBillsMessage = false)
             }
+        }
+    }
 
-            if (newBills.isEmpty()) {
+    private suspend fun syncFromAutoAccountingInternal(showNoNewBillsMessage: Boolean) {
+        // 在 IO 线程执行网路请求
+        val currentAssets = uiState.value.assets
+        val currentHash = currentAssets.hashCode().toString()
+        val lastHash = sharedPreferences.getString("last_synced_assets_hash", "")
+
+        if (currentHash != lastHash) {
+            val pushSuccess = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                com.example.expensetracker.data.remote.AutoAccountingService.syncAssets(currentAssets)
+            }
+            if (pushSuccess) {
+                sharedPreferences.edit().putString("last_synced_assets_hash", currentHash).apply()
+            }
+        }
+
+        val newBills = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            com.example.expensetracker.data.remote.AutoAccountingService.fetchUnsyncedBills()
+        }
+
+        if (newBills.isEmpty()) {
+            if (showNoNewBillsMessage) {
                 _syncMessage.value = "没有需要同步的账单"
-                return@launch
             }
+            return
+        }
 
-            var successCount = 0
-            for (bill in newBills) {
-                // 将服务器金额 (元) 转换为我们应用存储的 (分)
-                val amountCent = (bill.money * 100).toLong()
-                
-                // 拼接备注
-                val note = buildString {
-                    if (bill.shopName.isNotEmpty()) append(bill.shopName).append(" ")
-                    if (bill.shopItem.isNotEmpty()) append(bill.shopItem).append(" ")
-                    if (bill.remark.isNotEmpty()) append(bill.remark)
-                }.trim()
+        var successCount = 0
+        for (bill in newBills) {
+            // 将服务器金额 (元) 转换为我们应用存储的 (分)
+            val amountCent = (bill.money * 100).toLong()
 
-                // 记录资产映射：优先取账单自带的 accountName，如果没有则进行模糊匹配
-                var matchedAssetId: Long? = null
-                val searchKeys = listOf(bill.accountName, bill.shopName, bill.remark).filter { it.isNotBlank() }
-                
-                for (asset in currentAssets) {
-                    if (searchKeys.any { it.contains(asset.name, ignoreCase = true) }) {
-                        matchedAssetId = asset.id
-                        break
-                    }
-                }
+            // 拼接备注
+            val note = buildString {
+                if (bill.shopName.isNotEmpty()) append(bill.shopName).append(" ")
+                if (bill.shopItem.isNotEmpty()) append(bill.shopItem).append(" ")
+                if (bill.remark.isNotEmpty()) append(bill.remark)
+            }.trim()
 
-                // 落库
-                repository.addExpense(
-                    amountCent = amountCent,
-                    type = bill.typeId,
-                    category = if (bill.cateName.isEmpty()) "其他" else bill.cateName,
-                    note = note,
-                    dateMillis = bill.time,
-                    assetId = matchedAssetId
-                )
+            // 记录资产映射：优先取账单自带的 accountName，如果没有则进行模糊匹配
+            var matchedAssetId: Long? = null
+            val searchKeys = listOf(bill.accountName, bill.shopName, bill.remark).filter { it.isNotBlank() }
 
-                // 标记为已同步
-                val marked = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    com.example.expensetracker.data.remote.AutoAccountingService.markAsSynced(bill.id)
-                }
-                if (marked) {
-                    successCount++
+            for (asset in currentAssets) {
+                if (searchKeys.any { it.contains(asset.name, ignoreCase = true) }) {
+                    matchedAssetId = asset.id
+                    break
                 }
             }
-            
-            _syncMessage.value = "成功同步了 $successCount 笔新账单"
-            if (successCount > 0) {
-                performAutoWebDavBackup()
+
+            // 落库
+            repository.addExpense(
+                amountCent = amountCent,
+                type = bill.typeId,
+                category = if (bill.cateName.isEmpty()) "其他" else bill.cateName,
+                note = note,
+                dateMillis = bill.time,
+                assetId = matchedAssetId
+            )
+
+            // 标记为已同步
+            val marked = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                com.example.expensetracker.data.remote.AutoAccountingService.markAsSynced(bill.id)
             }
+            if (marked) {
+                successCount++
+            }
+        }
+
+        _syncMessage.value = "成功同步了 $successCount 笔新账单"
+        if (successCount > 0) {
+            performAutoWebDavBackup()
         }
     }
 
@@ -1114,7 +1171,10 @@ class ExpenseViewModel(
                     }
 
                     if (expensesToInsert.isNotEmpty()) {
-                        repository.insertAllExpenses(expensesToInsert)
+                        val uniqueExpenses = deduplicateImportedExpenses(expensesToInsert)
+                        if (uniqueExpenses.isNotEmpty()) {
+                            repository.insertAllExpenses(uniqueExpenses)
+                        }
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -1146,6 +1206,46 @@ class ExpenseViewModel(
             .map { it.trim() }
             .map { if (it.startsWith("\"") && it.endsWith("\"")) it.substring(1, it.length - 1) else it }
             .map { it.replace("\"\"", "\"") }
+    }
+
+    private data class ImportDedupKey(
+        val createdAtEpochMillis: Long,
+        val type: Int,
+        val category: String,
+        val amountCent: Long,
+        val note: String
+    )
+
+    private fun ExpenseEntity.toImportDedupKey(): ImportDedupKey {
+        return ImportDedupKey(
+            createdAtEpochMillis = createdAtEpochMillis,
+            type = type,
+            category = category.trim(),
+            amountCent = amountCent,
+            note = note.trim()
+        )
+    }
+
+    private suspend fun deduplicateImportedExpenses(expenses: List<ExpenseEntity>): List<ExpenseEntity> {
+        if (expenses.isEmpty()) return emptyList()
+
+        val existingKeys = repository.getAllExpensesSnapshot()
+            .asSequence()
+            .map { it.toImportDedupKey() }
+            .toMutableSet()
+
+        val uniqueExpenses = ArrayList<ExpenseEntity>(expenses.size)
+        expenses.forEach { raw ->
+            val normalized = raw.copy(
+                category = raw.category.trim().ifEmpty { "其他" },
+                note = raw.note.trim()
+            )
+            if (existingKeys.add(normalized.toImportDedupKey())) {
+                uniqueExpenses.add(normalized)
+            }
+        }
+
+        return uniqueExpenses
     }
 
     private fun parseAmountToCent(amountInput: String): Long? {
@@ -1473,7 +1573,10 @@ class ExpenseViewModel(
                         }
 
                         if (expensesToInsert.isNotEmpty()) {
-                            repository.insertAllExpenses(expensesToInsert)
+                            val uniqueExpenses = deduplicateImportedExpenses(expensesToInsert)
+                            if (uniqueExpenses.isNotEmpty()) {
+                                repository.insertAllExpenses(uniqueExpenses)
+                            }
                         }
                         file.delete()
                         true

@@ -58,8 +58,10 @@
 ### ☁️ Backup & Sync — Your data, safe and sound
 
 - 🌐 **WebDAV backup** — upload / download / delete, custom server path (Nutcloud, NextCloud, etc.)
+- 🔁 **Auto WebDAV backup after each entry** — when enabled, every manual/auto entry is uploaded automatically (entry moved into the **Backup & Restore** page)
 - 📄 **Local CSV** — UTF-8 BOM export (opens in Excel without garbled text), backward-compatible import
-- 🔄 **AutoAccounting sync** — connect to [AutoAccounting](https://github.com/AutoAccountingOrg/AutoAccounting) to auto-pull bills from Alipay / WeChat
+- 🧹 **Import dedup protection** — local import / WebDAV restore now deduplicate records to prevent duplicate bills
+- 🔄 **AutoAccounting sync** — connect to [AutoAccounting](https://github.com/AutoAccountingOrg/AutoAccounting), with both foreground auto-sync and manual sync
 
 ### 🎨 Theme System — Make it yours
 
@@ -163,8 +165,9 @@ This app supports [AutoAccounting](https://github.com/AutoAccountingOrg/AutoAcco
 
 **Steps:**
 1. 📲 Install and start AutoAccounting, enable its LSPosed module to hook Alipay / WeChat
-2. 📖 Open this app, go to the Backup screen and tap the sync button
-3. 🔄 The app will auto-fetch unsynced bills via `http://127.0.0.1:52045`
+2. 📖 In this app, enable **Auto-sync bills on app foreground** in Settings (enabled by default, can be turned off anytime)
+3. 🔄 When the app returns to foreground, it will auto-fetch unsynced bills via `http://127.0.0.1:52045`
+4. 👆 You can still tap the sync button on the home screen for an immediate manual sync
 
 > ⚠️ **Note**: Do **not** add this expense tracker to AutoAccounting's LSPosed scope — that will cause crashes. AutoAccounting only needs to hook payment apps.
 

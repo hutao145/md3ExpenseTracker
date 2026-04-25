@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelProvider
 import com.example.expensetracker.data.ExpenseRepository
 import com.example.expensetracker.data.local.ExpenseDatabase
 import com.example.expensetracker.security.BiometricHelper
@@ -52,6 +52,12 @@ class MainActivity : AppCompatActivity() {
 
     private val database by lazy { ExpenseDatabase.getInstance(applicationContext) }
     private val repository by lazy { ExpenseRepository(database.expenseDao(), database.assetDao(), database) }
+    private val sharedPreferences by lazy {
+        applicationContext.getSharedPreferences("ExpenseAppPrefs", android.content.Context.MODE_PRIVATE)
+    }
+    private val expenseViewModel: ExpenseViewModel by lazy {
+        ViewModelProvider(this, ExpenseViewModel.factory(repository, sharedPreferences))[ExpenseViewModel::class.java]
+    }
     
     private val addExpenseTrigger = MutableStateFlow(0L)
 
@@ -60,10 +66,6 @@ class MainActivity : AppCompatActivity() {
         handleIntent(intent)
         enableEdgeToEdge()
         setContent {
-            val sharedPreferences = applicationContext.getSharedPreferences("ExpenseAppPrefs", android.content.Context.MODE_PRIVATE)
-            val expenseViewModel: ExpenseViewModel = viewModel(
-                factory = ExpenseViewModel.factory(repository, sharedPreferences)
-            )
             val uiState by expenseViewModel.uiState.collectAsStateWithLifecycle()
             val aiConfigState by expenseViewModel.aiConfigState.collectAsStateWithLifecycle()
             val aiAccountingUiState by expenseViewModel.aiAccountingUiState.collectAsStateWithLifecycle()
@@ -211,7 +213,7 @@ class MainActivity : AppCompatActivity() {
                                     onAppLockChange = { expenseViewModel.updateAppLockEnabled(it) },
                                     onBiometricUnlockChange = { expenseViewModel.updateBiometricUnlockEnabled(it) },
                                     onAssetPageChange = { expenseViewModel.updateAssetPageEnabled(it) },
-                                    onAutoWebDavBackupOnEntryChange = { expenseViewModel.updateAutoWebDavBackupOnEntryEnabled(it) },
+                                    onAutoSyncOnForegroundChange = { expenseViewModel.updateAutoSyncOnForegroundEnabled(it) },
                                     onBackClick = { currentScreen = Screen.Home },
                                     onBackupClick = { currentScreen = Screen.Backup },
                                     onAiAnalysisClick = {
@@ -272,6 +274,11 @@ class MainActivity : AppCompatActivity() {
                 } // Box
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        expenseViewModel.syncFromAutoAccountingOnForeground()
     }
 
     override fun onNewIntent(intent: Intent) {

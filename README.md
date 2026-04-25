@@ -70,9 +70,11 @@
 ### ☁️ 备份与同步 — 数据安全，高枕无忧
 
 - 🌐 **WebDAV 备份** — 上传 / 下载 / 删除，支持自定义服务器路径（坚果云、NextCloud 等）
+- 🔁 **记账后自动网络备份** — 开启后每次记账/自动记账自动上传到 WebDAV（入口已整合到「备份与恢复」页面）
 - ⏰ **定时自动备份** — 自定义 1-72 小时间隔，WorkManager 后台调度，本地 + WebDAV 双重保障
 - 📄 **本地 CSV** — UTF-8 BOM 导出（Excel 直接打开不乱码），兼容旧版导入
-- 🔄 **AutoAccounting 同步** — 对接 [AutoAccounting](https://github.com/AutoAccountingOrg/AutoAccounting)，自动从支付宝 / 微信拉取账单，告别手动记账
+- 🧹 **导入去重保护** — 本地导入 / WebDAV 恢复自动去重，避免重复导入产生重复账单
+- 🔄 **AutoAccounting 同步** — 对接 [AutoAccounting](https://github.com/AutoAccountingOrg/AutoAccounting)，支持前台自动拉取与手动同步，告别重复操作
 
 ### 🎨 主题系统 — 你的记账本你做主
 
@@ -215,8 +217,9 @@ com.example.expensetracker
 
 **使用步骤：**
 1. 📲 在设备上安装并启动 AutoAccounting，启用 LSPosed 模块 hook 支付宝 / 微信
-2. 📖 打开本应用，进入备份页面点击同步按钮
-3. 🔄 应用将通过 `http://127.0.0.1:52045` 自动拉取未同步的账单
+2. 📖 在本应用设置中开启 **前台自动同步账单**（默认开启，可随时关闭）
+3. 🔄 应用回到前台时将通过 `http://127.0.0.1:52045` 自动拉取未同步账单
+4. 👆 也可在首页手动点击同步按钮立即拉取
 
 > ⚠️ **注意**：请勿将本记账应用添加到 AutoAccounting 的 LSPosed 作用域中，否则会导致崩溃。AutoAccounting 仅需 hook 支付类应用。
 
