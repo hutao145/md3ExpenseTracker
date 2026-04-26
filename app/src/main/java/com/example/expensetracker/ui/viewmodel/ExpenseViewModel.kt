@@ -913,12 +913,12 @@ class ExpenseViewModel(
             // 将服务器金额 (元) 转换为我们应用存储的 (分)
             val amountCent = (bill.money * 100).toLong()
 
-            // 拼接备注
-            val note = buildString {
-                if (bill.shopName.isNotEmpty()) append(bill.shopName).append(" ")
-                if (bill.shopItem.isNotEmpty()) append(bill.shopItem).append(" ")
-                if (bill.remark.isNotEmpty()) append(bill.remark)
-            }.trim()
+            // 拼接备注（去重，避免 shopName/shopItem/remark 内容重复时显示两次）
+            val note = listOf(bill.shopName, bill.shopItem, bill.remark)
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+                .joinToString(" ")
 
             // 记录资产映射：优先取账单自带的 accountName，如果没有则进行模糊匹配
             var matchedAssetId: Long? = null
