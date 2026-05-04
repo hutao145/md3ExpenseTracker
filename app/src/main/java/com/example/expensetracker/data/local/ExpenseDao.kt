@@ -43,7 +43,8 @@ interface ExpenseDao {
             type = :type,
             category = :category,
             note = :note,
-            assetId = :assetId
+            assetId = :assetId,
+            createdAtEpochMillis = :createdAtEpochMillis
         WHERE id = :id
         """
     )
@@ -53,7 +54,8 @@ interface ExpenseDao {
         type: Int,
         category: String,
         note: String,
-        assetId: Long?
+        assetId: Long?,
+        createdAtEpochMillis: Long
     ): Int
 
     @Query("DELETE FROM expenses WHERE id = :id")

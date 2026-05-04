@@ -63,7 +63,7 @@ class ExpenseRepository(
         expenseDao.insertAll(expenses)
     }
 
-    suspend fun updateExpense(id: Long, amountCent: Long, type: Int, category: String, note: String, assetId: Long? = null): Boolean {
+    suspend fun updateExpense(id: Long, amountCent: Long, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long): Boolean {
         return database.withTransaction {
             val oldExpense = expenseDao.getExpenseById(id) ?: return@withTransaction false
 
@@ -74,7 +74,8 @@ class ExpenseRepository(
                 type = type,
                 category = normalizedCategory,
                 note = note.trim(),
-                assetId = assetId
+                assetId = assetId,
+                createdAtEpochMillis = dateMillis
             ) > 0
 
             if (updated) {

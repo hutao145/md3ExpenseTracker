@@ -149,8 +149,8 @@ class MainActivity : AppCompatActivity() {
                                         expenseViewModel.addExpense(amountInput, type, category, note, assetId, dateMillis)
                                         updateWidget()
                                     },
-                                    onUpdateExpense = { id, amountInput, type, category, note, assetId ->
-                                        expenseViewModel.updateExpense(id, amountInput, type, category, note, assetId)
+                                    onUpdateExpense = { id, amountInput, type, category, note, assetId, dateMillis ->
+                                        expenseViewModel.updateExpense(id, amountInput, type, category, note, assetId, dateMillis)
                                         updateWidget()
                                     },
                                     onDeleteExpense = { id ->

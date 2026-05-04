@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -30,6 +31,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Password
@@ -44,12 +46,14 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.OutlinedTextField
@@ -80,6 +84,10 @@ import com.example.expensetracker.theme.*
 import com.example.expensetracker.ui.viewmodel.AiConfigState
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.layout.heightIn
+import com.example.expensetracker.ui.util.CATEGORY_ICON_UNIQUE_COUNT
+import com.example.expensetracker.ui.util.categoryIconPreviewCategories
+import com.example.expensetracker.ui.util.getCategoryIcon
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -107,6 +115,7 @@ fun SettingsScreen(
     onGenerateTestData: () -> Unit
 ) {
     val context = LocalContext.current
+    var showCategoryIconPreview by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -802,6 +811,18 @@ fun SettingsScreen(
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
                 SettingsItem(
+                    icon = Icons.Default.Category,
+                    title = "分类图标预览",
+                    subtitle = "一次性查看 $CATEGORY_ICON_UNIQUE_COUNT 个图标和 ${categoryIconPreviewCategories.size} 个分类关键词",
+                    onClick = { showCategoryIconPreview = true }
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                SettingsItem(
                     icon = Icons.Default.Science,
                     title = "生成测试数据（15 条）",
                     subtitle = "仅供调试。为当前月份随机生成测试用的收支记录",
@@ -813,6 +834,87 @@ fun SettingsScreen(
             }
             Spacer(modifier = Modifier.height(32.dp))
         }
+    }
+
+    if (showCategoryIconPreview) {
+        CategoryIconPreviewDialog(
+            onDismissRequest = { showCategoryIconPreview = false }
+        )
+    }
+}
+
+@Composable
+private fun CategoryIconPreviewDialog(
+    onDismissRequest: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text("分类图标预览") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = "$CATEGORY_ICON_UNIQUE_COUNT 个图标，${categoryIconPreviewCategories.size} 个分类关键词",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 460.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(categoryIconPreviewCategories.chunked(2)) { row ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            row.forEach { category ->
+                                CategoryIconPreviewCell(
+                                    category = category,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            if (row.size == 1) {
+                                Spacer(modifier = Modifier.weight(1f))
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text("关闭")
+            }
+        }
+    )
+}
+
+@Composable
+private fun CategoryIconPreviewCell(
+    category: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = getCategoryIcon(category),
+            contentDescription = category,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = category,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1
+        )
     }
 }
 

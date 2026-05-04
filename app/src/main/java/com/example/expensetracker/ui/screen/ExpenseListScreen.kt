@@ -167,7 +167,7 @@ fun ExpenseListScreen(
     addExpenseTrigger: Long = 0L,
     onSearchQueryChange: (String) -> Unit,
     onAddExpense: (amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) -> Unit,
-    onUpdateExpense: (id: Long, amountInput: String, type: Int, category: String, note: String, assetId: Long?) -> Unit,
+    onUpdateExpense: (id: Long, amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) -> Unit,
     onDeleteExpense: (id: Long) -> Unit,
     onDeleteMultipleExpenses: (ids: Set<Long>) -> Unit,
     onBatchUpdateCategory: (ids: Set<Long>, category: String) -> Unit,
@@ -695,8 +695,9 @@ fun ExpenseListScreen(
             initialCategory = target.category,
             initialNote = target.note,
             initialAssetId = target.assetId,
-            onUpdate = { id, amountInput, type, category, note, assetId ->
-                onUpdateExpense(id, amountInput, type, category, note, assetId)
+            initialDateMillis = target.createdAtEpochMillis,
+            onUpdate = { id, amountInput, type, category, note, assetId, dateMillis ->
+                onUpdateExpense(id, amountInput, type, category, note, assetId, dateMillis)
                 editingItem = null
             }
         )

@@ -42,7 +42,6 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -76,7 +75,7 @@ private val md3ExitEasing = CubicBezierEasing(0.3f, 0.0f, 0.8f, 0.15f)
 /**
  * Unified expense form for both adding and editing.
  * - Add mode: editId = null, shows date picker
- * - Edit mode: editId != null, no date picker
+ * - Edit mode: editId != null, shows current date picker
  */
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -87,14 +86,15 @@ fun ExpenseFormSheet(
     // Add mode callback
     onAdd: ((amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) -> Unit)? = null,
     // Edit mode callback
-    onUpdate: ((id: Long, amountInput: String, type: Int, category: String, note: String, assetId: Long?) -> Unit)? = null,
+    onUpdate: ((id: Long, amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) -> Unit)? = null,
     // Edit mode initial values
     editId: Long? = null,
     initialAmount: String = "",
     initialType: Int = 0,
     initialCategory: String = "其他",
     initialNote: String = "",
-    initialAssetId: Long? = null
+    initialAssetId: Long? = null,
+    initialDateMillis: Long? = null
 ) {
     val isEditMode = editId != null
     val stateKey = editId ?: -1L
@@ -111,7 +111,7 @@ fun ExpenseFormSheet(
     }
     var noteInput by rememberSaveable(stateKey) { mutableStateOf(initialNote) }
     var selectedAssetId by rememberSaveable(stateKey) { mutableStateOf(initialAssetId) }
-    var dateMillis by rememberSaveable(stateKey) { mutableStateOf(System.currentTimeMillis()) }
+    var dateMillis by rememberSaveable(stateKey) { mutableStateOf(initialDateMillis ?: System.currentTimeMillis()) }
     var showDatePicker by remember { mutableStateOf(false) }
 
     val currentSuggestions = if (selectedType == 0) expenseSuggestions else incomeSuggestions
@@ -140,7 +140,7 @@ fun ExpenseFormSheet(
         } else categoryInput
 
         if (isEditMode) {
-            onUpdate?.invoke(editId!!, amountInput, selectedType, finalCategory, noteInput, selectedAssetId)
+            onUpdate?.invoke(editId!!, amountInput, selectedType, finalCategory, noteInput, selectedAssetId, dateMillis)
         } else {
             onAdd?.invoke(amountInput, selectedType, finalCategory, noteInput, selectedAssetId, dateMillis)
         }
@@ -283,7 +283,20 @@ fun ExpenseFormSheet(
             }
 
             if (isEditMode) {
-                // Edit mode: note only
+                OutlinedTextField(
+                    value = dateFormatter.format(Instant.ofEpochMilli(dateMillis)),
+                    onValueChange = {},
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("日期") },
+                    readOnly = true,
+                    singleLine = true,
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = true }) {
+                            Icon(Icons.Default.DateRange, "选择日期")
+                        }
+                    }
+                )
+
                 OutlinedTextField(
                     value = noteInput,
                     onValueChange = { noteInput = it },
@@ -310,15 +323,7 @@ fun ExpenseFormSheet(
                             IconButton(onClick = { showDatePicker = true }) {
                                 Icon(Icons.Default.DateRange, "选择日期")
                             }
-                        },
-                        enabled = false,
-                        colors = TextFieldDefaults.colors(
-                            disabledContainerColor = Color.Transparent,
-                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            disabledIndicatorColor = MaterialTheme.colorScheme.outline,
-                            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        }
                     )
                     OutlinedTextField(
                         value = noteInput,
@@ -347,8 +352,7 @@ fun ExpenseFormSheet(
         }
     }
 
-    // Date picker dialog (add mode only)
-    if (!isEditMode && showDatePicker) {
+    if (showDatePicker) {
         val datePickerState = rememberDatePickerState(initialSelectedDateMillis = dateMillis)
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },

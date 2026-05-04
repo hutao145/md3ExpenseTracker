@@ -410,6 +410,7 @@ class ExpenseViewModel(
                                 type = item.type,
                                 category = item.category,
                                 note = item.note,
+                                createdAtEpochMillis = item.createdAtEpochMillis,
                                 assetId = item.assetId,
                                 assetName = item.assetId?.let { assetId -> assets.find { it.id == assetId }?.name }
                             )
@@ -794,7 +795,7 @@ class ExpenseViewModel(
         }
     }
 
-    fun updateExpense(id: Long, amountInput: String, type: Int, category: String, note: String, assetId: Long?) {
+    fun updateExpense(id: Long, amountInput: String, type: Int, category: String, note: String, assetId: Long?, dateMillis: Long) {
         val amountCent = parseAmountToCent(amountInput) ?: return
 
         viewModelScope.launch {
@@ -804,7 +805,8 @@ class ExpenseViewModel(
                 type = type,
                 category = category,
                 note = note,
-                assetId = assetId
+                assetId = assetId,
+                dateMillis = dateMillis
             )
         }
     }

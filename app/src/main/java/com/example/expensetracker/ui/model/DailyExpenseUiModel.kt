@@ -6,6 +6,7 @@ data class ExpenseItemUiModel(
     val type: Int,
     val category: String,
     val note: String,
+    val createdAtEpochMillis: Long,
     val assetId: Long? = null,
     val assetName: String? = null
 )
