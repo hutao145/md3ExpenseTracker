@@ -26,6 +26,15 @@ interface AssetDao {
 
     @Query(
         """
+        SELECT *
+        FROM assets
+        ORDER BY createdAtEpochMillis DESC
+        """
+    )
+    suspend fun getAllAssetsSnapshot(): List<AssetEntity>
+
+    @Query(
+        """
         UPDATE assets
         SET name = :name,
             amountCent = :amountCent,

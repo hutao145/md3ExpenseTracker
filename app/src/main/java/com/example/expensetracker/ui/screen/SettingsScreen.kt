@@ -74,6 +74,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import android.widget.Toast
 import android.content.SharedPreferences
 import com.example.expensetracker.security.BiometricHelper
@@ -112,10 +117,14 @@ fun SettingsScreen(
     onFetchAiModels: () -> Unit,
     onTestAiConnection: () -> Unit,
     onClearAiTestMessage: () -> Unit,
+    onAutoTrackLogClick: () -> Unit,
     onGenerateTestData: () -> Unit
 ) {
     val context = LocalContext.current
     var showCategoryIconPreview by remember { mutableStateOf(false) }
+    var autoTrackLogEnabled by remember {
+        mutableStateOf(sharedPreferences.getBoolean("autotrack_in_app_log_enabled", true))
+    }
 
     Scaffold(
         topBar = {
@@ -164,6 +173,20 @@ fun SettingsScreen(
                     title = "备份与恢复",
                     subtitle = "使用 WebDAV 或本地存储进行数据备份与恢复",
                     onClick = onBackupClick
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                SettingsItem(
+                    icon = Icons.Default.Settings,
+                    title = "无障碍自动记账",
+                    subtitle = "开启 MD3记账本 服务后，可识别微信和支付宝支付页面并自动入账",
+                    onClick = {
+                        context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                    }
                 )
 
                 HorizontalDivider(
@@ -823,6 +846,18 @@ fun SettingsScreen(
                 )
 
                 SettingsItem(
+                    icon = Icons.Default.Settings,
+                    title = "自动记账日志",
+                    subtitle = if (autoTrackLogEnabled) "查看、复制或清空无障碍页面日志" else "日志记录已关闭",
+                    onClick = onAutoTrackLogClick
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                SettingsItem(
                     icon = Icons.Default.Science,
                     title = "生成测试数据（15 条）",
                     subtitle = "仅供调试。为当前月份随机生成测试用的收支记录",
@@ -840,6 +875,143 @@ fun SettingsScreen(
         CategoryIconPreviewDialog(
             onDismissRequest = { showCategoryIconPreview = false }
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AutoTrackLogScreen(
+    sharedPreferences: SharedPreferences,
+    onBackClick: () -> Unit
+) {
+    val context = LocalContext.current
+    var logText by remember {
+        mutableStateOf(sharedPreferences.getString("autotrack_in_app_log_text", "") ?: "")
+    }
+    var enabled by remember {
+        mutableStateOf(sharedPreferences.getBoolean("autotrack_in_app_log_enabled", true))
+    }
+
+    fun refreshLog() {
+        logText = sharedPreferences.getString("autotrack_in_app_log_text", "") ?: ""
+        enabled = sharedPreferences.getBoolean("autotrack_in_app_log_enabled", true)
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("自动记账日志") },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "返回"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground
+                )
+            )
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "记录页面文本",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "仅 Debug 包写入，可能包含金额、昵称等隐私信息",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = enabled,
+                        onCheckedChange = {
+                            enabled = it
+                            sharedPreferences.edit().putBoolean("autotrack_in_app_log_enabled", it).apply()
+                        }
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { refreshLog() },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("刷新")
+                }
+                OutlinedButton(
+                    onClick = {
+                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        clipboard.setPrimaryClip(ClipData.newPlainText("自动记账日志", logText))
+                        Toast.makeText(context, "日志已复制", Toast.LENGTH_SHORT).show()
+                    },
+                    enabled = logText.isNotBlank(),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("复制")
+                }
+                OutlinedButton(
+                    onClick = {
+                        sharedPreferences.edit().remove("autotrack_in_app_log_text").apply()
+                        logText = ""
+                        Toast.makeText(context, "日志已清空", Toast.LENGTH_SHORT).show()
+                    },
+                    enabled = logText.isNotBlank(),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("清空")
+                }
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 360.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+            ) {
+                Text(
+                    text = if (logText.isBlank()) "暂无日志。开启后去微信/支付宝等页面停留 1-2 秒，再回到这里点刷新。" else logText,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(14.dp)
+                )
+            }
+        }
     }
 }
 

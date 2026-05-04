@@ -15,6 +15,7 @@ import com.example.expensetracker.security.BiometricHelper
 import com.example.expensetracker.theme.ExpenseTrackerTheme
 import com.example.expensetracker.ui.screen.ExpenseListScreen
 import com.example.expensetracker.ui.screen.LockScreen
+import com.example.expensetracker.ui.screen.AutoTrackLogScreen
 import com.example.expensetracker.ui.screen.SettingsScreen
 import com.example.expensetracker.ui.viewmodel.ExpenseViewModel
 import androidx.activity.compose.BackHandler
@@ -45,7 +46,7 @@ import androidx.compose.ui.Modifier
 import com.example.expensetracker.ui.screen.AssetScreen
 
 enum class Screen {
-    Home, Asset, Statistics, Settings, Backup
+    Home, Asset, Statistics, Settings, Backup, AutoTrackLog
 }
 
 class MainActivity : AppCompatActivity() {
@@ -83,7 +84,7 @@ class MainActivity : AppCompatActivity() {
                 var currentScreen by remember { mutableStateOf(Screen.Home) }
 
                 BackHandler(enabled = currentScreen != Screen.Home) {
-                    if (currentScreen == Screen.Backup) {
+                    if (currentScreen == Screen.Backup || currentScreen == Screen.AutoTrackLog) {
                         currentScreen = Screen.Settings
                     } else {
                         currentScreen = Screen.Home
@@ -225,6 +226,7 @@ class MainActivity : AppCompatActivity() {
                                     onFetchAiModels = expenseViewModel::fetchAiModels,
                                     onTestAiConnection = expenseViewModel::testAiConnection,
                                     onClearAiTestMessage = expenseViewModel::clearAiTestMessage,
+                                    onAutoTrackLogClick = { currentScreen = Screen.AutoTrackLog },
                                     onGenerateTestData = {
                                         expenseViewModel.generateTestData()
                                     }
@@ -240,6 +242,12 @@ class MainActivity : AppCompatActivity() {
                                     onImportUri = { uri ->
                                         expenseViewModel.importDataFromUri(applicationContext, uri)
                                     }
+                                )
+                            }
+                            Screen.AutoTrackLog -> {
+                                AutoTrackLogScreen(
+                                    sharedPreferences = sharedPreferences,
+                                    onBackClick = { currentScreen = Screen.Settings }
                                 )
                             }
                             Screen.Statistics -> {

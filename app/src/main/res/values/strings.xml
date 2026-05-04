@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">MD3记账本</string>
+    <string name="autotrack_accessibility_description">自动识别支付页面并写入 MD3 记账本</string>
 </resources>
