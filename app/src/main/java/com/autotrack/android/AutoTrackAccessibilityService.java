@@ -86,11 +86,10 @@ public abstract class AutoTrackAccessibilityService extends AccessibilityService
     }
 
     protected boolean isDebugSnapshotLoggingEnabled() {
-        return (getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+        return true;
     }
 
     protected boolean isInAppSnapshotLogEnabled() {
-        if (!isDebugSnapshotLoggingEnabled()) return false;
         return getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .getBoolean(KEY_IN_APP_LOG_ENABLED, true);
     }
