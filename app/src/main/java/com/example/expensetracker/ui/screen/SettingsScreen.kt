@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Psychology
@@ -186,6 +187,20 @@ fun SettingsScreen(
                     subtitle = "开启 MD3记账本 服务后，可识别微信和支付宝支付页面并自动入账",
                     onClick = {
                         context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                    }
+                )
+
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                )
+
+                SettingsItem(
+                    icon = Icons.Default.Notifications,
+                    title = "支付通知自动记账",
+                    subtitle = "无需 root。开启通知使用权后，可从微信/支付宝等支付通知识别金额并入账",
+                    onClick = {
+                        context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
                     }
                 )
 
@@ -946,7 +961,7 @@ fun AutoTrackLogScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "仅 Debug 包写入，可能包含金额、昵称等隐私信息",
+                            text = "可能包含金额、昵称等隐私信息，请按需开启",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
