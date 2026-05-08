@@ -13,6 +13,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -79,7 +80,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.provider.Settings
+import android.provider.Settings as AndroidSettings
 import android.widget.Toast
 import android.content.SharedPreferences
 import com.example.expensetracker.security.BiometricHelper
@@ -123,9 +124,15 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     var showCategoryIconPreview by remember { mutableStateOf(false) }
-    var autoTrackLogEnabled by remember {
+    val autoTrackLogEnabled by remember {
         mutableStateOf(sharedPreferences.getBoolean("autotrack_in_app_log_enabled", true))
     }
+    var showAiConfig by remember { mutableStateOf(false) }
+    var showSetPinDialog by remember { mutableStateOf(false) }
+    var showVerifyPinForDisable by remember { mutableStateOf(false) }
+    var showVerifyPinForChange by remember { mutableStateOf(false) }
+    var showSetNewPinAfterVerify by remember { mutableStateOf(false) }
+    val biometricAvailable = BiometricHelper.canAuthenticate(context)
 
     Scaffold(
         topBar = {
@@ -152,23 +159,48 @@ fun SettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            // Data Management Header
-            Text(
-                text = "数据管理",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 12.dp)
-            )
+            SettingsSection(title = "自动记账", topPadding = 16.dp) {
+                SettingsItem(
+                    icon = Icons.Default.Settings,
+                    title = "无障碍自动记账",
+                    subtitle = "开启 MD3记账本 服务后，可识别微信和支付宝支付页面并自动入账",
+                    onClick = {
+                        context.startActivity(Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS))
+                    }
+                )
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
+                SettingsDivider()
+
+                SettingsItem(
+                    icon = Icons.Default.Notifications,
+                    title = "支付通知自动记账",
+                    subtitle = "无需 root。开启通知使用权后，可从微信/支付宝等支付通知识别金额并入账",
+                    onClick = {
+                        context.startActivity(Intent(AndroidSettings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+                    }
+                )
+
+                SettingsDivider()
+
+                SettingsSwitchItem(
+                    icon = Icons.Default.Sync,
+                    title = "前台自动同步账单",
+                    subtitle = "应用回到前台时自动从 AutoAccounting 拉取本机账单",
+                    checked = uiState.autoSyncOnForegroundEnabled,
+                    onCheckedChange = onAutoSyncOnForegroundChange
+                )
+
+                SettingsDivider()
+
+                SettingsItem(
+                    icon = Icons.Default.Settings,
+                    title = "自动记账日志",
+                    subtitle = if (autoTrackLogEnabled) "查看、复制或清空无障碍页面日志" else "日志记录已关闭",
+                    onClick = onAutoTrackLogClick
+                )
+            }
+
+            SettingsSection(title = "数据与页面") {
                 SettingsItem(
                     icon = Icons.Default.Backup,
                     title = "备份与恢复",
@@ -176,135 +208,18 @@ fun SettingsScreen(
                     onClick = onBackupClick
                 )
 
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                SettingsDivider()
+
+                SettingsSwitchItem(
+                    icon = Icons.Default.AccountBalance,
+                    title = "资产页面",
+                    subtitle = "在主界面显示资产管理页面",
+                    checked = uiState.assetPageEnabled,
+                    onCheckedChange = onAssetPageChange
                 )
-
-                SettingsItem(
-                    icon = Icons.Default.Settings,
-                    title = "无障碍自动记账",
-                    subtitle = "开启 MD3记账本 服务后，可识别微信和支付宝支付页面并自动入账",
-                    onClick = {
-                        context.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                    }
-                )
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-
-                SettingsItem(
-                    icon = Icons.Default.Notifications,
-                    title = "支付通知自动记账",
-                    subtitle = "无需 root。开启通知使用权后，可从微信/支付宝等支付通知识别金额并入账",
-                    onClick = {
-                        context.startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-                    }
-                )
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-
-                // Auto sync from AutoAccounting on foreground
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Sync,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            Text(
-                                text = "前台自动同步账单",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "应用回到前台时自动从 AutoAccounting 拉取本机账单",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    Switch(
-                        checked = uiState.autoSyncOnForegroundEnabled,
-                        onCheckedChange = { onAutoSyncOnForegroundChange(it) }
-                    )
-                }
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-
-                // Asset page toggle
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AccountBalance,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            Text(
-                                text = "资产页面",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "在主界面显示资产管理页面",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                    Switch(
-                        checked = uiState.assetPageEnabled,
-                        onCheckedChange = { onAssetPageChange(it) }
-                    )
-                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // AI Analysis Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
+            SettingsSection(title = "AI 功能") {
                 SettingsItem(
                     icon = Icons.Default.Psychology,
                     title = "AI 财务分析",
@@ -312,15 +227,10 @@ fun SettingsScreen(
                     onClick = onAiAnalysisClick
                 )
 
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-
-                var showAiConfig by remember { mutableStateOf(false) }
+                SettingsDivider()
 
                 SettingsItem(
-                    icon = Icons.Default.Settings,
+                    icon = Icons.Default.Psychology,
                     title = "AI API 配置",
                     subtitle = if (showAiConfig) "收起配置项" else "配置 API 域名、密钥和模型",
                     onClick = { showAiConfig = !showAiConfig }
@@ -475,81 +385,24 @@ fun SettingsScreen(
                 }
             }
 
-            // Privacy & Security header
-            Text(
-                text = "隐私与安全",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 12.dp)
-            )
-
-            var showSetPinDialog by remember { mutableStateOf(false) }
-            var showVerifyPinForDisable by remember { mutableStateOf(false) }
-            var showVerifyPinForChange by remember { mutableStateOf(false) }
-            var showSetNewPinAfterVerify by remember { mutableStateOf(false) }
-            val biometricAvailable = BiometricHelper.canAuthenticate(context)
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                // App Lock Toggle
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Column {
-                            Text(
-                                text = "应用锁",
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "启用后每次打开应用都需要验证",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+            SettingsSection(title = "隐私与安全") {
+                SettingsSwitchItem(
+                    icon = Icons.Default.Lock,
+                    title = "应用锁",
+                    subtitle = "启用后每次打开应用都需要验证",
+                    checked = uiState.appLockEnabled,
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            showSetPinDialog = true
+                        } else {
+                            showVerifyPinForDisable = true
                         }
                     }
-                    Switch(
-                        checked = uiState.appLockEnabled,
-                        onCheckedChange = { enabled ->
-                            if (enabled) {
-                                showSetPinDialog = true
-                            } else {
-                                showVerifyPinForDisable = true
-                            }
-                        }
-                    )
-                }
+                )
 
-                // Change PIN (only when lock enabled)
                 AnimatedVisibility(visible = uiState.appLockEnabled) {
                     Column {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                        )
+                        SettingsDivider()
                         SettingsItem(
                             icon = Icons.Default.Password,
                             title = "修改 PIN 密码",
@@ -559,55 +412,20 @@ fun SettingsScreen(
                     }
                 }
 
-                // Biometric toggle (only when lock enabled AND device supports)
                 AnimatedVisibility(visible = uiState.appLockEnabled && biometricAvailable) {
                     Column {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        SettingsDivider()
+                        SettingsSwitchItem(
+                            icon = Icons.Default.Fingerprint,
+                            title = "生物识别解锁",
+                            subtitle = "使用指纹或面容识别解锁",
+                            checked = uiState.biometricUnlockEnabled,
+                            onCheckedChange = onBiometricUnlockChange
                         )
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Fingerprint,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(
-                                        text = "生物识别解锁",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = "使用指纹或面容识别解锁",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                            Switch(
-                                checked = uiState.biometricUnlockEnabled,
-                                onCheckedChange = { onBiometricUnlockChange(it) }
-                            )
-                        }
                     }
                 }
             }
 
-            // PIN Dialogs
             if (showSetPinDialog) {
                 SetPinDialog(
                     sharedPreferences = sharedPreferences,
@@ -658,53 +476,17 @@ fun SettingsScreen(
                 )
             }
 
-            // Theme and Appearance header
-            Text(
-                text = "主题设置",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 12.dp)
-            )
+            SettingsSection(title = "外观") {
+                SettingsSwitchItem(
+                    icon = Icons.Default.Settings,
+                    title = "动态配色",
+                    subtitle = "跟随系统壁纸生成 Material You 配色",
+                    checked = uiState.dynamicColorEnabled,
+                    onCheckedChange = onDynamicColorChange
+                )
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                // Dynamic Color Option
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "动态配色",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "是否使用动态配色",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = uiState.dynamicColorEnabled,
-                        onCheckedChange = { onDynamicColorChange(it) }
-                    )
-                }
+                SettingsDivider()
 
-                HorizontalDivider(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f), modifier = Modifier.padding(horizontal = 16.dp))
-
-                // Theme preset palettes
                 AnimatedVisibility(
                     visible = !uiState.dynamicColorEnabled,
                     enter = fadeIn() + expandVertically(),
@@ -738,8 +520,8 @@ fun SettingsScreen(
                     }
                 }
 
+                SettingsDivider()
 
-                // Theme Mode Option
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -801,53 +583,18 @@ fun SettingsScreen(
                     }
                 }
 
-                HorizontalDivider(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.5f), modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsDivider()
 
-                // AMOLED Dark Mode Option
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "AMOLED 暗色模式",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "在暗色主题中使用纯黑背景，更适合 AMOLED 屏幕",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = uiState.amoledDarkModeEnabled,
-                        onCheckedChange = { onAmoledDarkModeChange(it) }
-                    )
-                }
+                SettingsSwitchItem(
+                    icon = Icons.Default.Settings,
+                    title = "AMOLED 暗色模式",
+                    subtitle = "在暗色主题中使用纯黑背景，更适合 AMOLED 屏幕",
+                    checked = uiState.amoledDarkModeEnabled,
+                    onCheckedChange = onAmoledDarkModeChange
+                )
             }
 
-            // Advanced options header
-            Text(
-                text = "高级与测试",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 12.dp)
-            )
-            
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
+            SettingsSection(title = "开发与测试") {
                 SettingsItem(
                     icon = Icons.Default.Category,
                     title = "分类图标预览",
@@ -855,22 +602,7 @@ fun SettingsScreen(
                     onClick = { showCategoryIconPreview = true }
                 )
 
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
-
-                SettingsItem(
-                    icon = Icons.Default.Settings,
-                    title = "自动记账日志",
-                    subtitle = if (autoTrackLogEnabled) "查看、复制或清空无障碍页面日志" else "日志记录已关闭",
-                    onClick = onAutoTrackLogClick
-                )
-
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-                )
+                SettingsDivider()
 
                 SettingsItem(
                     icon = Icons.Default.Science,
@@ -889,6 +621,88 @@ fun SettingsScreen(
     if (showCategoryIconPreview) {
         CategoryIconPreviewDialog(
             onDismissRequest = { showCategoryIconPreview = false }
+        )
+    }
+}
+
+@Composable
+private fun SettingsSection(
+    title: String,
+    topPadding: androidx.compose.ui.unit.Dp = 24.dp,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 24.dp, top = topPadding, bottom = 12.dp)
+    )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun SettingsDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+    )
+}
+
+@Composable
+private fun SettingsSwitchItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
         )
     }
 }
@@ -1126,7 +940,7 @@ fun SettingsItem(
             modifier = Modifier.padding(end = 16.dp)
 
         )
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,

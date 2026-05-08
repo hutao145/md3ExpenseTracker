@@ -31,6 +31,9 @@ public abstract class AutoTrackAccessibilityService extends AccessibilityService
     private static final String TAG = "AutoTrackService";
     private static final int MAX_DEBUG_TEXT_LENGTH = 3500;
     private static final long DEBUG_LOG_INTERVAL_MILLIS = 1500;
+    private static final long EVENT_FRAGMENT_LOG_DEBOUNCE_MILLIS = 800;
+    private static final long EVENT_FRAGMENT_GROUP_WINDOW_MILLIS = 3000;
+    private static final int MAX_EVENT_FRAGMENT_TEXT_LENGTH = 1200;
     private static final int MAX_IN_APP_LOG_LENGTH = 30000;
     private static final String PREFS_NAME = "ExpenseAppPrefs";
     private static final String KEY_IN_APP_LOG_ENABLED = "autotrack_in_app_log_enabled";
@@ -48,11 +51,23 @@ public abstract class AutoTrackAccessibilityService extends AccessibilityService
     private long lastDiagnosticLogAt = 0;
     private String lastEventLogPackage = "";
     private long lastEventLogAt = 0;
+    private final List<String> pendingEventFragments = new ArrayList<>();
+    private String pendingEventFragmentPackageName = "";
+    private String pendingEventFragmentAppName = "";
+    private long pendingEventFragmentFirstAt = 0;
+    private long pendingEventFragmentLastAt = 0;
 
     private final Runnable scanRunnable = new Runnable() {
         @Override
         public void run() {
             handleCurrentWindow(pendingScanPackageName);
+        }
+    };
+
+    private final Runnable flushEventFragmentLogRunnable = new Runnable() {
+        @Override
+        public void run() {
+            flushEventFragmentLog();
         }
     };
 
@@ -110,7 +125,16 @@ public abstract class AutoTrackAccessibilityService extends AccessibilityService
 
     @Override
     public void onInterrupt() {
+        flushEventFragmentLog();
         clearPendingWindowScans();
+    }
+
+    @Override
+    public void onDestroy() {
+        flushEventFragmentLog();
+        clearPendingWindowScans();
+        handler.removeCallbacks(flushEventFragmentLogRunnable);
+        super.onDestroy();
     }
 
     private void scheduleWindowScans(String eventPackageName) {
@@ -182,46 +206,53 @@ public abstract class AutoTrackAccessibilityService extends AccessibilityService
     private void handleCurrentWindow(String eventPackageName) {
         handling = true;
         try {
-            ScanResult scanResult = ScanResult.skipped();
-            int readableRootCount = 0;
-            StringBuilder skippedPackages = new StringBuilder();
-            List<AccessibilityWindowInfo> windows = getWindows();
-            if (windows != null && !windows.isEmpty()) {
-                for (AccessibilityWindowInfo window : windows) {
-                    AccessibilityNodeInfo root = window.getRoot();
-                    if (root == null) continue;
-                    readableRootCount++;
-                    try {
-                        scanResult = scanResult.merge(handleRoot(root, eventPackageName));
-                        if (scanResult.handled) return;
-                    } finally {
-                        appendSkippedPackage(skippedPackages, root);
-                        root.recycle();
-                    }
-                }
-            }
-
-            AccessibilityNodeInfo root = getRootInActiveWindow();
-            if (root == null) {
-                logScanMiss(eventPackageName, readableRootCount, skippedPackages.toString(), "activeRoot=null");
-                return;
-            }
-            try {
-                readableRootCount++;
-                scanResult = scanResult.merge(handleRoot(root, eventPackageName));
-            } finally {
-                appendSkippedPackage(skippedPackages, root);
-                root.recycle();
-            }
-            if (!scanResult.handled) {
-                logScanMiss(eventPackageName, readableRootCount, skippedPackages.toString(), scanResult.missReason());
-            }
+            handleCurrentWindowOnce(eventPackageName);
         } catch (Exception e) {
             Log.e(TAG, "Scan failed", e);
             appendDiagnosticLog("scan", eventPackageName, "扫描异常：" + e.getClass().getSimpleName() + " " + e.getMessage());
         } finally {
             handling = false;
         }
+    }
+
+    private ScanResult handleCurrentWindowOnce(String eventPackageName) {
+        ScanResult scanResult = ScanResult.skipped();
+        int readableRootCount = 0;
+        StringBuilder skippedPackages = new StringBuilder();
+        List<AccessibilityWindowInfo> windows = getWindows();
+        if (windows != null && !windows.isEmpty()) {
+            for (AccessibilityWindowInfo window : windows) {
+                AccessibilityNodeInfo root = window.getRoot();
+                if (root == null) continue;
+                readableRootCount++;
+                try {
+                    scanResult = scanResult.merge(handleRoot(root, eventPackageName));
+                    if (scanResult.handled) return scanResult;
+                } finally {
+                    appendSkippedPackage(skippedPackages, root);
+                    root.recycle();
+                }
+            }
+        }
+
+        AccessibilityNodeInfo root = getRootInActiveWindow();
+        if (root == null) {
+            if (scanResult.scannedPayment) {
+                logScanMiss(eventPackageName, readableRootCount, skippedPackages.toString(), "activeRoot=null");
+            }
+            return scanResult;
+        }
+        try {
+            readableRootCount++;
+            scanResult = scanResult.merge(handleRoot(root, eventPackageName));
+        } finally {
+            appendSkippedPackage(skippedPackages, root);
+            root.recycle();
+        }
+        if (scanResult.scannedPayment && !scanResult.handled) {
+            logScanMiss(eventPackageName, readableRootCount, skippedPackages.toString(), scanResult.missReason());
+        }
+        return scanResult;
     }
 
     private ScanResult handleEventText(AccessibilityEvent event, String eventPackageName) {
@@ -235,9 +266,6 @@ public abstract class AutoTrackAccessibilityService extends AccessibilityService
         );
         boolean wroteSnapshot = logDebugSnapshot(snapshot);
         boolean handled = coordinator.handle(snapshot);
-        if (wroteSnapshot && !handled) {
-            appendDiagnosticLog("event-text", eventPackageName, "事件文本已写入，但未命中识别规则");
-        }
         return new ScanResult(true, wroteSnapshot, handled);
     }
 
@@ -248,9 +276,6 @@ public abstract class AutoTrackAccessibilityService extends AccessibilityService
         try {
             root.refresh();
             ScanResult result = handleRoot(root, eventPackageName);
-            if (result.scannedPayment && !result.wroteSnapshot) {
-                appendDiagnosticLog("source", eventPackageName, "事件源节点没有可读文本，继续扫描窗口根节点");
-            }
             return result;
         } finally {
             root.recycle();
@@ -281,9 +306,6 @@ public abstract class AutoTrackAccessibilityService extends AccessibilityService
         );
         boolean wroteSnapshot = logDebugSnapshot(snapshot);
         boolean handled = coordinator.handle(snapshot);
-        if (!wroteSnapshot) {
-            appendDiagnosticLog("empty-root", packageName, describeNodeStructure(root));
-        }
         return new ScanResult(true, wroteSnapshot, handled);
     }
 
@@ -364,24 +386,90 @@ public abstract class AutoTrackAccessibilityService extends AccessibilityService
         Log.d(TAG, "snapshot package=" + packageName
                 + ", app=" + snapshot.getAppName()
                 + ", text=" + normalizedText);
+        if (isAccessibilityEventSnapshot(snapshot)) {
+            appendEventFragmentLog(now, packageName, snapshot.getAppName(), normalizedText);
+            return true;
+        }
         appendInAppLog(now, packageName, snapshot.getAppName(), normalizedText);
         return true;
     }
 
+    private boolean isAccessibilityEventSnapshot(PageSnapshot snapshot) {
+        NodeSnapshot root = snapshot == null ? null : snapshot.getRoot();
+        return root != null && "AccessibilityEvent".equals(root.getClassName());
+    }
+
+    private void appendEventFragmentLog(long timestamp, String packageName, String appName, String text) {
+        if (!isInAppSnapshotLogEnabled()) return;
+        boolean newGroup = pendingEventFragments.isEmpty()
+                || !packageName.equals(pendingEventFragmentPackageName)
+                || timestamp - pendingEventFragmentLastAt > EVENT_FRAGMENT_GROUP_WINDOW_MILLIS;
+        if (newGroup) {
+            flushEventFragmentLog();
+            pendingEventFragmentPackageName = packageName == null ? "" : packageName;
+            pendingEventFragmentAppName = appName == null ? "" : appName;
+            pendingEventFragmentFirstAt = timestamp;
+        }
+        pendingEventFragmentLastAt = timestamp;
+        appendUniqueFragment(text);
+        handler.removeCallbacks(flushEventFragmentLogRunnable);
+        handler.postDelayed(flushEventFragmentLogRunnable, EVENT_FRAGMENT_LOG_DEBOUNCE_MILLIS);
+    }
+
+    private void appendUniqueFragment(String text) {
+        if (text == null || text.isEmpty()) return;
+        if (pendingEventFragments.contains(text)) return;
+        pendingEventFragments.add(text);
+        while (joinFragments().length() > MAX_EVENT_FRAGMENT_TEXT_LENGTH && pendingEventFragments.size() > 1) {
+            pendingEventFragments.remove(0);
+        }
+    }
+
+    private void flushEventFragmentLog() {
+        handler.removeCallbacks(flushEventFragmentLogRunnable);
+        if (pendingEventFragments.isEmpty()) return;
+        String combined = joinFragments();
+        appendInAppLog(
+                pendingEventFragmentLastAt == 0 ? System.currentTimeMillis() : pendingEventFragmentLastAt,
+                pendingEventFragmentPackageName,
+                pendingEventFragmentAppName,
+                "[event-fragments] " + combined
+        );
+        pendingEventFragments.clear();
+        pendingEventFragmentPackageName = "";
+        pendingEventFragmentAppName = "";
+        pendingEventFragmentFirstAt = 0;
+        pendingEventFragmentLastAt = 0;
+    }
+
+    private String joinFragments() {
+        StringBuilder builder = new StringBuilder();
+        for (String fragment : pendingEventFragments) {
+            if (fragment == null || fragment.isEmpty()) continue;
+            if (builder.length() > 0) builder.append(" | ");
+            builder.append(fragment);
+        }
+        return builder.toString();
+    }
+
     private void appendInAppLog(long timestamp, String packageName, String appName, String text) {
         if (!isInAppSnapshotLogEnabled()) return;
+        appendLogToPreference(KEY_IN_APP_LOG_TEXT, timestamp, packageName, appName, text);
+    }
+
+    private void appendLogToPreference(String key, long timestamp, String packageName, String appName, String text) {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         String line = formatLogTime(timestamp)
                 + " package=" + packageName
                 + ", app=" + appName
                 + ", text=" + text
                 + "\n\n";
-        String oldLog = prefs.getString(KEY_IN_APP_LOG_TEXT, "");
+        String oldLog = prefs.getString(key, "");
         String newLog = line + (oldLog == null ? "" : oldLog);
         if (newLog.length() > MAX_IN_APP_LOG_LENGTH) {
             newLog = newLog.substring(0, MAX_IN_APP_LOG_LENGTH);
         }
-        prefs.edit().putString(KEY_IN_APP_LOG_TEXT, newLog).apply();
+        prefs.edit().putString(key, newLog).apply();
     }
 
     private void appendDiagnosticLog(String stage, String packageName, String message) {
@@ -397,14 +485,13 @@ public abstract class AutoTrackAccessibilityService extends AccessibilityService
     }
 
     private void appendEventLog(String packageName, int eventType) {
-        if (!isInAppSnapshotLogEnabled()) return;
         long now = System.currentTimeMillis();
         if (packageName.equals(lastEventLogPackage) && now - lastEventLogAt < 2000) {
             return;
         }
         lastEventLogPackage = packageName;
         lastEventLogAt = now;
-        appendInAppLog(now, packageName, "AutoTrack", "[event] 收到支付类应用事件 type=" + eventType);
+        Log.d(TAG, "payment event package=" + packageName + ", type=" + eventType);
     }
 
     private void logScanMiss(String eventPackageName, int readableRootCount, String skippedPackages, String reason) {
@@ -427,8 +514,8 @@ public abstract class AutoTrackAccessibilityService extends AccessibilityService
     private String describeNodeStructure(AccessibilityNodeInfo root) {
         StringBuilder builder = new StringBuilder();
         appendNodeStructure(builder, root, 0, new int[]{0});
-        if (builder.length() == 0) return "微信根节点没有可读文本，且节点结构为空";
-        return "微信根节点没有可读文本，节点结构=" + builder;
+        if (builder.length() == 0) return "支付应用根节点没有可读文本，且节点结构为空";
+        return "支付应用根节点没有可读文本，节点结构=" + builder;
     }
 
     private void appendNodeStructure(StringBuilder builder, AccessibilityNodeInfo node, int depth, int[] count) {
